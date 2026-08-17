@@ -39,7 +39,20 @@ const limiters = redis ? {
   })
 } : null;
 
-type RateLimitResultType = { success: boolean; limit: number; remaining: number; reset: number } | undefined;
+type RateLimitResultType = { success: boolean; limit: number; remaining: number; reset: number };
+
+function executeLimit(limitersObj: NonNullable<typeof limiters>, isAuth: boolean, isUpload: boolean, isMutation: boolean, ip: string) {
+  if (isAuth) {
+    return limitersObj.auth.limit(`auth:${ip}`);
+  }
+  if (isUpload) {
+    return limitersObj.upload.limit(`up:${ip}`);
+  }
+  if (isMutation) {
+    return limitersObj.mutation.limit(`mut:${ip}`);
+  }
+  return limitersObj.public.limit(`pub:${ip}`);
+}
 
 async function checkRateLimit(request: NextRequest, pathname: string): Promise<{ response?: NextResponse; result?: RateLimitResultType }> {
   if (process.env.NODE_ENV === 'development' || (!pathname.startsWith('/api') && !pathname.startsWith('/auth'))) {
@@ -47,29 +60,14 @@ async function checkRateLimit(request: NextRequest, pathname: string): Promise<{
   }
   
   const ip = request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown-ip';
+  const isMutation = request.method !== 'GET';
   const isUpload = pathname.startsWith('/api/upload');
-  const isAuth = pathname.startsWith('/auth');
-  const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && !isUpload && !isAuth;
-  const isPublicRead = request.method === 'GET' && pathname.startsWith('/api');
+  const isAuth = pathname.startsWith('/auth') || pathname.startsWith('/admin/login');
 
-  if (!limiters) {
-    if (isMutation || isUpload || isAuth) {
-      return { response: NextResponse.json({ error: 'Rate limiting infrastructure unavailable' }, { status: 429 }) };
-    }
-    return {};
-  }
+  if (!limiters) return {};
 
   try {
-    let rateLimitResult: RateLimitResultType;
-    if (isAuth) {
-      rateLimitResult = await limiters.auth.limit(`auth:${ip}`);
-    } else if (isUpload) {
-      rateLimitResult = await limiters.upload.limit(`upload:${ip}`);
-    } else if (isMutation) {
-      rateLimitResult = await limiters.mutation.limit(`mut:${ip}`);
-    } else if (isPublicRead) {
-      rateLimitResult = await limiters.public.limit(`pub:${ip}`);
-    }
+    const rateLimitResult = await executeLimit(limiters, isAuth, isUpload, isMutation, ip);
 
     if (rateLimitResult && !rateLimitResult.success) {
       return { 
@@ -95,7 +93,7 @@ async function checkRateLimit(request: NextRequest, pathname: string): Promise<{
   }
 }
 
-function setSecurityHeaders(res: NextResponse, rateLimitResult: RateLimitResultType) {
+function setSecurityHeaders(res: NextResponse, rateLimitResult?: RateLimitResultType) {
   res.headers.set('X-Content-Type-Options', 'nosniff');
   res.headers.set('X-Frame-Options', 'DENY');
   res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
