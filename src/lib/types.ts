@@ -49,7 +49,7 @@ export type Article = {
   seo_description: string | null;
   slug: string;
   video_url: string | null;
-  status: 'draft' | 'published' | 'archived' | string;
+  status: string;
   is_trending: boolean;
   view_count: number;
   author: string | null;

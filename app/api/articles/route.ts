@@ -65,6 +65,14 @@ async function fetchSingleArticle(supabase: any, id: string | null, slug: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyBooleanFilters(query: any, trending: string | null, video: string | null, related: string | null) {
+  if (trending === '1' || trending === 'true') query = query.eq('is_trending', true);
+  if (video === '1' || video === 'true') query = query.not('video_url', 'is', null).neq('video_url', '');
+  if (related) query = query.neq('id', related);
+  return query;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
   const status = searchParams.get('status');
   const category = searchParams.get('category');
@@ -97,10 +105,7 @@ async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
     else return { empty: true };
   }
 
-  if (trending === '1' || trending === 'true') query = query.eq('is_trending', true);
-  if (video === '1' || video === 'true') query = query.not('video_url', 'is', null).neq('video_url', '');
-  if (related) query = query.neq('id', related);
-
+  query = applyBooleanFilters(query, trending, video, related);
   query = applyArticleSearchAndOrder(query, q);
   return { query };
 }

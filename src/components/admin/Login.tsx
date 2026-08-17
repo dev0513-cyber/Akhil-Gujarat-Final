@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { loginAction, verifyMfaAction } from '../../../app/actions/auth';
-import SEO from '../SEO';
+import Seo from '../SEO';
 import { Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export default function Login() {
@@ -64,7 +64,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4 md:p-8 font-sans">
-      <SEO title="Admin Login" description="Akhil Gujarat CMS" />
+      <Seo title="Admin Login" description="Akhil Gujarat CMS" />
       
       {/* Main Card */}
       <div className="w-full max-w-5xl flex flex-col md:flex-row bg-white border border-rule shadow-sm overflow-hidden">

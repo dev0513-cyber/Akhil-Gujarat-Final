@@ -21,17 +21,19 @@ export function AdminLangProvider({ children }: Readonly<{ children: ReactNode }
     }
   }, []);
 
-  const setLang = (newLang: Lang) => {
+  const setLang = React.useCallback((newLang: Lang) => {
     setLangState(newLang);
     localStorage.setItem('admin_lang', newLang);
-  };
+  }, []);
 
-  const t = (gu: string, en: string) => {
+  const t = React.useCallback((gu: string, en: string) => {
     return lang === 'en' ? en : gu;
-  };
+  }, [lang]);
+
+  const value = React.useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
 
   return (
-    <AdminLangContext.Provider value={{ lang, setLang, t }}>
+    <AdminLangContext.Provider value={value}>
       {children}
     </AdminLangContext.Provider>
   );
