@@ -5,7 +5,7 @@ import { getArticles } from '../../../../src/lib/server-data';
 import { ErrorBanner } from '../../../../src/components/Skeleton';
 import { FilteredArticleView } from '../../../../src/components/FilteredArticleView';
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
   const { data } = await supabase.from('cities').select('*').eq('slug', slug).maybeSingle();
   if (!data) return { title: 'શહેર' };
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function CityPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CityPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
   const { data: city } = await supabase.from('cities').select('*').eq('slug', slug).maybeSingle();
   

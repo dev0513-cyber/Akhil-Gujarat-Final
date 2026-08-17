@@ -101,14 +101,29 @@ export default function EPaperClient() {
                   <div className="w-6 h-6 border-2 border-crimson border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
-              {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+              {Array.from({ length: firstDay }).map((_, i) => {
+                const padDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i - firstDay + 1);
+                return <div key={`empty-${padDate.getFullYear()}-${padDate.getMonth()}-${padDate.getDate()}`} />;
+              })}
               {days.map(day => {
                 const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const hasEPaper = monthEPapers.some(e => e.published_date === dateStr);
                 const isSelected = selectedDate === dateStr;
                 const isFuture = new Date(dateStr) > new Date();
                 
-                return (
+                  let stateClass = '';
+                  if (isSelected) {
+                    stateClass = 'bg-crimson text-white shadow-md';
+                  } else if (!isFuture) {
+                    stateClass = 'hover:bg-rule/30 text-ink';
+                  }
+
+                  let ringClass = '';
+                  if (hasEPaper && !isSelected) {
+                    ringClass = 'font-bold text-crimson ring-1 ring-inset ring-crimson/30';
+                  }
+
+                  return (
                   <button type="button"
                     key={day}
                     disabled={isFuture}
@@ -119,8 +134,8 @@ export default function EPaperClient() {
                     className={`
                       aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all
                       ${isFuture ? 'text-ink/20 cursor-not-allowed' : ''}
-                      ${isSelected ? 'bg-crimson text-white shadow-md' : (!isFuture ? 'hover:bg-rule/30 text-ink' : '')}
-                      ${hasEPaper && !isSelected ? 'font-bold text-crimson ring-1 ring-inset ring-crimson/30' : ''}
+                      ${stateClass}
+                      ${ringClass}
                     `}
                   >
                     {day}

@@ -3,12 +3,12 @@ import { AlertCircle } from 'lucide-react';
 import { useAdminLang } from '../contexts/AdminLangContext';
 import { BaseModal } from './BaseModal';
 
-interface AlertModalProps {
+type AlertModalProps = Readonly<{
   isOpen: boolean;
   title?: string;
   message: string;
   onConfirm: () => void;
-}
+}>;
 
 export function AlertModal({
   isOpen,

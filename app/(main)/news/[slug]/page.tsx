@@ -12,7 +12,7 @@ import type { Article } from '../../../../src/lib/types';
 import { ErrorBanner } from '../../../../src/components/Skeleton';
 import { hydrateArticles } from '../../../api/utils';
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
   const { data } = await supabase.from('articles').select('*').eq('slug', slug).maybeSingle();
   if (!data) return { title: 'Not Found' };
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function NewsPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function NewsPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
   const { data, error } = await supabase.from('articles').select('*').eq('slug', slug).maybeSingle();
   

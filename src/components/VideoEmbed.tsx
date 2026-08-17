@@ -4,11 +4,9 @@ export default function VideoEmbed({
   url,
   type,
   title,
-}: {
-  url?: string | null;
+}: Readonly<{ url?: string | null;
   type?: string | null;
-  title?: string;
-}) {
+  title?: string; }>) {
   if (!url) return null;
   const kind = (type || '').toLowerCase();
   const yt = getYoutubeId(url);

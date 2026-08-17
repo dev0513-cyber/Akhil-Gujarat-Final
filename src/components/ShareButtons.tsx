@@ -6,11 +6,9 @@ export default function ShareButtons({
   title,
   url,
   compact = false,
-}: {
-  title: string;
+}: Readonly<{ title: string;
   url?: string;
-  compact?: boolean;
-}) {
+  compact?: boolean; }>) {
   const [copied, setCopied] = useState(false);
   const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
   const encodedUrl = encodeURIComponent(shareUrl);

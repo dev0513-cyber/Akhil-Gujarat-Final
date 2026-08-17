@@ -2,7 +2,7 @@
 import Link from "next/link";
 import type { Article } from "../lib/types";
 
-export default function BreakingTicker({ items }: { items: Article[] }) {
+export default function BreakingTicker({ items }: Readonly<{ items: Article[] }>) {
   if (!items.length) return null;
   const loop = [...items, ...items];
 

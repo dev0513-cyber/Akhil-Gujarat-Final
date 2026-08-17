@@ -3,14 +3,14 @@ import { AlertTriangle } from 'lucide-react';
 import { useAdminLang } from '../contexts/AdminLangContext';
 import { BaseModal } from './BaseModal';
 
-interface ConfirmDeleteModalProps {
+type ConfirmDeleteModalProps = Readonly<{
   isOpen: boolean;
   title: string;
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
   isDeleting?: boolean;
-}
+}>;
 
 export function ConfirmDeleteModal({
   isOpen,

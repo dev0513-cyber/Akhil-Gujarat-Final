@@ -27,8 +27,8 @@ describe('Security Regression', () => {
         expect(anonKey).not.toEqual(serviceRoleKey);
       }
     } else {
-      // If no env file exists during CI, test trivially passes
-      expect(true).toBe(true);
+      // If no env file exists during CI, explicitly assert its absence as the reason for passing
+      expect(fs.existsSync(envPath)).toBe(false);
     }
   });
 });

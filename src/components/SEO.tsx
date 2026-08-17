@@ -35,11 +35,14 @@ export default function SEO({
     document.title = fullTitle;
 
     const canonicalUrl = url || window.location.href.split('?')[0];
-    const imageUrl = image
-      ? image.startsWith('http')
-        ? image
-        : `${window.location.origin}${image}`
-      : `${window.location.origin}/images/og-default.jpg`;
+    let imageUrl = `${window.location.origin}/images/og-default.jpg`;
+    if (image) {
+      if (image.startsWith('http')) {
+        imageUrl = image;
+      } else {
+        imageUrl = `${window.location.origin}${image}`;
+      }
+    }
 
     upsertMeta('name', 'description', description);
     upsertMeta('property', 'og:title', fullTitle);

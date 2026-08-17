@@ -3,12 +3,12 @@ import { CheckCircle } from 'lucide-react';
 import { useAdminLang } from '../contexts/AdminLangContext';
 import { BaseModal } from './BaseModal';
 
-interface SuccessModalProps {
+type SuccessModalProps = Readonly<{
   isOpen: boolean;
   title: string;
   message: string;
   onConfirm: () => void;
-}
+}>;
 
 export function SuccessModal({
   isOpen,

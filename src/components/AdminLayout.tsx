@@ -51,7 +51,7 @@ const links = [
   },
 ];
 
-function AdminSidebar({ children, email }: { children: React.ReactNode, email?: string }) {
+function AdminSidebar({ children, email }: Readonly<{ children: React.ReactNode, email?: string }>) {
 
   const { t, lang, setLang } = useAdminLang();
 

@@ -39,21 +39,83 @@ function buildArticleRow(body: Record<string, unknown>, isCreate: boolean) {
   return row;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchSingleArticle(supabase: any, id: string | null, slug: string | null, req: Request) {
+  let query = supabase.from('articles').select('*');
+  if (id) query = query.eq('id', id);
+  else query = query.eq('slug', slug);
+  
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  if (!data) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
+
+  if (data.status !== 'published') {
+    const adminError = await requireAdmin();
+    if (adminError) return adminError;
+  } else if (!req.headers.get('authorization')) {
+    await supabase
+      .from('articles')
+      .update({ view_count: (data.view_count || 0) + 1 })
+      .eq('id', data.id);
+    data.view_count = (data.view_count || 0) + 1;
+  }
+
+  const [hydrated] = await hydrateArticles(data);
+  return NextResponse.json(hydrated);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
+  const status = searchParams.get('status');
+  const category = searchParams.get('category');
+  const city = searchParams.get('city');
+  const trending = searchParams.get('trending');
+  const video = searchParams.get('video');
+  const q = searchParams.get('q');
+  const related = searchParams.get('related');
+
+  let query = supabase.from('articles').select('id, headline, description, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, view_count, author');
+
+  if (status === 'all') {
+    const adminError = await requireAdmin();
+    if (adminError) return { error: adminError };
+  } else if (status) {
+    query = query.eq('status', status);
+  } else {
+    query = query.eq('status', 'published');
+  }
+
+  if (category) {
+    const { data: cat } = await supabase.from('categories').select('id').eq('slug', category).maybeSingle();
+    if (cat) query = query.eq('category_id', cat.id);
+    else return { empty: true };
+  }
+
+  if (city) {
+    const { data: cty } = await supabase.from('cities').select('id').eq('slug', city).maybeSingle();
+    if (cty) query = query.eq('city_id', cty.id);
+    else return { empty: true };
+  }
+
+  if (trending === '1' || trending === 'true') query = query.eq('is_trending', true);
+  if (video === '1' || video === 'true') query = query.not('video_url', 'is', null).neq('video_url', '');
+  if (related) query = query.neq('id', related);
+
+  query = applyArticleSearchAndOrder(query, q);
+  return { query };
+}
+
 export async function GET(req: Request) {
   const supabase = await createClient();
   try {
     const { searchParams } = new URL(req.url);
     const slug = searchParams.get('slug');
     const id = searchParams.get('id');
-    const status = searchParams.get('status');
-    const category = searchParams.get('category');
-    const city = searchParams.get('city');
-    const trending = searchParams.get('trending');
-    const video = searchParams.get('video');
-    const q = searchParams.get('q');
-    const related = searchParams.get('related');
+
+    if (slug || id) {
+      return await fetchSingleArticle(supabase, id, slug, req);
+    }
     
-    // Pagination
     const pageParam = searchParams.get('page');
     const limitParam = searchParams.get('limit');
     
@@ -65,63 +127,14 @@ export async function GET(req: Request) {
     const page = pag.success ? pag.data.page : 1;
     const limit = pag.success ? pag.data.limit : 20;
 
-    if (slug || id) {
-      let query = supabase.from('articles').select('*');
-      if (id) query = query.eq('id', id);
-      else query = query.eq('slug', slug);
-      
-      const { data, error } = await query.maybeSingle();
-      if (error) throw error;
-      if (!data) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
-
-      if (data.status !== 'published') {
-        const adminError = await requireAdmin();
-        if (adminError) return adminError;
-      } else if (!req.headers.get('authorization')) {
-        await supabase
-          .from('articles')
-          .update({ view_count: (data.view_count || 0) + 1 })
-          .eq('id', data.id);
-        data.view_count = (data.view_count || 0) + 1;
-      }
-
-      const [hydrated] = await hydrateArticles(data);
-      return NextResponse.json(hydrated);
-    }
-
-    let query = supabase.from('articles').select('id, headline, description, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, view_count, author');
-
-    if (status === 'all') {
-      const adminError = await requireAdmin();
-    if (adminError) return adminError;
-    } else if (status) {
-      query = query.eq('status', status);
-    } else {
-      query = query.eq('status', 'published');
-    }
-
-    if (category) {
-      const { data: cat } = await supabase.from('categories').select('id').eq('slug', category).maybeSingle();
-      if (cat) query = query.eq('category_id', cat.id);
-      else return NextResponse.json([]);
-    }
-
-    if (city) {
-      const { data: cty } = await supabase.from('cities').select('id').eq('slug', city).maybeSingle();
-      if (cty) query = query.eq('city_id', cty.id);
-      else return NextResponse.json([]);
-    }
-
-    if (trending === '1' || trending === 'true') query = query.eq('is_trending', true);
-    if (video === '1' || video === 'true') query = query.not('video_url', 'is', null).neq('video_url', '');
-    if (related) query = query.neq('id', related);
-
-    query = applyArticleSearchAndOrder(query, q);
+    const { query, empty, error: filterErr } = await buildListQuery(supabase, searchParams);
+    if (filterErr) return filterErr;
+    if (empty) return NextResponse.json([]);
 
     const offset = (page - 1) * limit;
-    query = query.range(offset, offset + limit - 1);
+    const finalQuery = query.range(offset, offset + limit - 1);
 
-    const { data, error } = await query;
+    const { data, error } = await finalQuery;
     if (error) throw error;
     const hydrated = await hydrateArticles(data || []);
     return NextResponse.json(hydrated);

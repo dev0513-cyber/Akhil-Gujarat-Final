@@ -10,10 +10,8 @@ type Variant = 'hero' | 'feature' | 'standard' | 'row' | 'compact' | 'video';
 export default function NewsCard({
   article,
   variant = 'standard',
-}: {
-  article: Article;
-  variant?: Variant;
-}) {
+}: Readonly<{ article: Article;
+  variant?: Variant; }>) {
   const href = `/news/${article.slug}`;
   const img =
     article.image_url ||
@@ -143,7 +141,7 @@ export default function NewsCard({
   );
 }
 
-function Meta({ article }: { article: Article }) {
+function Meta({ article }: Readonly<{ article: Article }>) {
   return (
     <div className="flex items-center flex-wrap gap-2 text-[11px] text-ink/50 mt-2">
       {article.category && (
@@ -161,7 +159,7 @@ function Meta({ article }: { article: Article }) {
   );
 }
 
-function PlayBadge({ small = false }: { small?: boolean }) {
+function PlayBadge({ small = false }: Readonly<{ small?: boolean }>) {
   return (
     <span
       className={`absolute bottom-2 right-2 bg-crimson text-white rounded-full flex items-center justify-center ${small ? 'w-6 h-6' : 'w-8 h-8'}`}

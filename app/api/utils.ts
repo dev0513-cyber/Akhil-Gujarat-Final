@@ -8,7 +8,7 @@ export async function requireAdmin() {
   const supabaseAuth = await createClient();
   const { data: { user }, error } = await supabaseAuth.auth.getUser();
 
-  if (error || !user || user.aud !== 'authenticated') {
+  if (error || user?.aud !== 'authenticated') {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing session cookie' }, { status: 401 });
   }
   
@@ -44,7 +44,12 @@ export function parseImages(value: unknown) {
 }
 
 export async function hydrateArticles(articles: unknown) {
-  const list = Array.isArray(articles) ? articles : articles ? [articles] : [];
+  let list = [];
+  if (Array.isArray(articles)) {
+    list = articles;
+  } else if (articles) {
+    list = [articles];
+  }
   const [{ data: categories }, { data: cities }] = await Promise.all([
     supabasePublic.from('categories').select('*'),
     supabasePublic.from('cities').select('*'),

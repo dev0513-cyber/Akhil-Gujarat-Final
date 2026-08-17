@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { useAdminLang } from '../contexts/AdminLangContext';
 
-interface BaseModalProps {
+type BaseModalProps = Readonly<{
   isOpen: boolean;
   title: string;
   message: string;
@@ -13,7 +13,7 @@ interface BaseModalProps {
   iconColorClass: string;
   children: ReactNode;
   isActioning?: boolean;
-}
+}>;
 
 export function BaseModal({
   isOpen,
@@ -32,9 +32,8 @@ export function BaseModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4">
-      <div 
-        className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-        role="dialog"
+      <dialog open
+        className="m-0 p-0 border-0 bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         aria-modal="true"
       >
         <div className="flex justify-between items-start p-5 border-b border-rule">
@@ -66,7 +65,7 @@ export function BaseModal({
         <div className="bg-paper p-4 flex justify-end gap-3 border-t border-rule">
           {children}
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }

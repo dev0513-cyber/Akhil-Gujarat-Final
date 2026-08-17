@@ -2,12 +2,12 @@ import NewsCard from './NewsCard';
 import type { Article } from '../lib/types';
 import { ReactNode } from 'react';
 
-interface FilteredArticleViewProps {
+type FilteredArticleViewProps = Readonly<{
   items: Article[];
   title: string;
   emptyMessage: string;
   children?: ReactNode; // For header content like descriptions or breadcrumbs
-}
+}>;
 
 export function FilteredArticleView({ items, title, emptyMessage, children }: FilteredArticleViewProps) {
   return (
