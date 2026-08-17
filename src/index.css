@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Gujarati:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Noto+Sans+Gujarati:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f7f1e6;
+  --color-paper-dark: #ebe2d0;
+  --color-ink: #1c1410;
+  --color-crimson: #9b1d20;
+  --color-gold: #c9a227;
+  --color-rule: #d4c7b0;
+  --font-display: "Noto Serif Gujarati", "Source Serif 4", Georgia, serif;
+  --font-gujarati: "Noto Sans Gujarati", "Noto Serif Gujarati", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f7f1e6;
+  color: #1c1410;
+  font-family: "Noto Sans Gujarati", "Noto Serif Gujarati", system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: "Noto Serif Gujarati", "Source Serif 4", Georgia, serif;
+}
+
+.font-gujarati {
+  font-family: "Noto Sans Gujarati", "Noto Serif Gujarati", sans-serif;
+}
+
+.ticker-track {
+  animation: ticker 42s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+::selection {
+  background: #9b1d20;
+  color: #fff;
+}
+
+/* Global Form Legibility */
+input, textarea, select {
+  background-color: #ffffff;
+  color: var(--color-ink);
+  font-family: inherit;
+  font-weight: 500;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 1px solid var(--color-crimson);
+  outline-offset: -1px;
+}
+
+input::placeholder, textarea::placeholder {
+  color: rgba(28, 20, 16, 0.4);
+  font-weight: 400;
+}
+
+label {
+  color: var(--color-ink) !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  letter-spacing: 0.025em;
+}

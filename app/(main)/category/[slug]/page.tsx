@@ -1,0 +1,68 @@
+import { Metadata } from 'next';
+import Link from 'next/link';
+import supabase from '../../../../src/lib/supabase';
+import { getArticles, getCities } from '../../../../src/lib/server-data';
+import NewsCard from '../../../../src/components/NewsCard';
+import { ErrorBanner } from '../../../../src/components/Skeleton';
+import type { Article } from '../../../../src/lib/types';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const { data } = await supabase.from('categories').select('*').eq('slug', slug).maybeSingle();
+  if (!data) return { title: 'વિભાગ' };
+  return {
+    title: data.name_gu,
+    description: data.description || `${data.name_gu} ના તાજા ગુજરાતી સમાચાર — અખિલ ગુજરાત.`,
+  };
+}
+
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data: cat } = await supabase.from('categories').select('*').eq('slug', slug).maybeSingle();
+  
+  if (!cat) {
+    return <ErrorBanner message="આ વિભાગ મળ્યો નથી" />;
+  }
+
+  const [items, cities] = await Promise.all([
+    getArticles({ category_id: cat.id, limit: 40 }),
+    getCities(),
+  ]);
+
+  const title = cat.name_gu || 'વિભાગ';
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <p className="text-[11px] tracking-[0.3em] uppercase text-crimson">વિભાગ</p>
+      <h1 className="font-display text-3xl md:text-4xl mt-1">{title}</h1>
+      {cat.description && <p className="mt-2 text-ink/60 font-gujarati max-w-2xl">{cat.description}</p>}
+      
+      {slug === 'gujarat' && cities.length > 0 && (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {cities.map((c: any) => (
+             <Link 
+               key={c.id} 
+               href={`/city/${c.slug}`} 
+               className="px-4 py-1.5 bg-white border border-rule hover:border-crimson hover:text-crimson text-sm font-semibold font-gujarati rounded-full transition-all hover:shadow-sm"
+             >
+               {c.name_gu}
+             </Link>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-6 h-px bg-ink/10" />
+
+      {items.length === 0 ? (
+        <p className="py-16 text-center font-gujarati text-ink/50">આ વિભાગમાં હજુ સમાચાર નથી.</p>
+      ) : (
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+          {items.map((a: Article) => (
+            <NewsCard key={a.id} article={a} variant="feature" />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
