@@ -18,6 +18,7 @@ export default function EPaperClient() {
     setLoading(true);
     fetchEPapers({ month: currentMonth.getMonth() + 1, year: currentMonth.getFullYear() })
       .then(setMonthEPapers)
+      .catch((err) => console.error('Failed to fetch epapers', err))
       .finally(() => setLoading(false));
   }, [currentMonth]);
 
@@ -40,7 +41,9 @@ export default function EPaperClient() {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch {}
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
     } else {
       navigator.clipboard.writeText(window.location.href);
       alert('લિંક કોપી કરવામાં આવી છે!');

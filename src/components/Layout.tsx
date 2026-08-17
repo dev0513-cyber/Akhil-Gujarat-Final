@@ -45,7 +45,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         }
         setSettings(map);
       })
-      .catch(() => {});
+      .catch((err) => { console.error('Failed to load global layout data:', err); });
   }, []);
 
   const onSearch = (e: FormEvent) => {

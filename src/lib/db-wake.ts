@@ -12,6 +12,6 @@ export function triggerRestore() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ project_ref: PROJECT_REF }),
-  }).catch(() => {});
+  }).catch((err) => { console.error('Wake ping failed:', err); });
   setTimeout(() => { _restoreTriggered = false; }, 60000);
 }
