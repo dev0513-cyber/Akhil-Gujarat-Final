@@ -66,7 +66,8 @@ export function slugify(value: string): string {
     .replace(/['"]/g, '')
     .replace(/[^a-z0-9\u0A80-\u0AFF]+/g, '-')
     .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 export function readingTime(text: string): string {

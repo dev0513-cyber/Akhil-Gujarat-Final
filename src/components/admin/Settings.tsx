@@ -87,8 +87,9 @@ export default function Settings() {
           </h2>
           
           <div>
-            <label className="block text-sm font-semibold mb-1">Facebook URL</label>
+            <label htmlFor="facebook_url" className="block text-sm font-semibold mb-1">Facebook URL</label>
             <input
+              id="facebook_url"
               type="url"
               className="w-full border border-rule px-3 py-2 text-sm focus:outline-none focus:border-crimson"
               value={links.facebook_url}
@@ -98,8 +99,9 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">Instagram URL</label>
+            <label htmlFor="instagram_url" className="block text-sm font-semibold mb-1">Instagram URL</label>
             <input
+              id="instagram_url"
               type="url"
               className="w-full border border-rule px-3 py-2 text-sm focus:outline-none focus:border-crimson"
               value={links.instagram_url}
@@ -109,8 +111,9 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">YouTube URL</label>
+            <label htmlFor="youtube_url" className="block text-sm font-semibold mb-1">YouTube URL</label>
             <input
+              id="youtube_url"
               type="url"
               className="w-full border border-rule px-3 py-2 text-sm focus:outline-none focus:border-crimson"
               value={links.youtube_url}

@@ -87,7 +87,7 @@ function AdminSidebar({ children, email }: { children: React.ReactNode, email?: 
               <Globe size={12} className="shrink-0" />
               <span>{t("સાઇટ", "SITE")}</span>
             </Link>
-            <button
+            <button type="button"
               onClick={toggleLang}
               className="flex items-center justify-center gap-1.5 text-[10px] bg-white/10 hover:bg-white/20 transition-colors px-3 py-2 rounded text-white/90 tracking-widest font-bold shadow-sm flex-1 max-w-[90px]"
               title="Toggle Language"
@@ -95,7 +95,7 @@ function AdminSidebar({ children, email }: { children: React.ReactNode, email?: 
               <Languages size={12} className="shrink-0" />
               <span>{lang === "gu" ? "EN" : "GU"}</span>
             </button>
-            <button
+            <button type="button"
               onClick={handleLogout}
               className="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-100 transition-colors px-3 py-2 rounded tracking-widest font-bold shadow-sm border border-red-500/20 flex-1 max-w-[90px]"
               title="Sign Out"

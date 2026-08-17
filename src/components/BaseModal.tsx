@@ -48,7 +48,7 @@ export function BaseModal({
               </h3>
             </div>
           </div>
-          <button 
+          <button type="button"
             onClick={onClose}
             disabled={isActioning}
             className="text-ink/40 hover:text-ink transition-colors p-1"

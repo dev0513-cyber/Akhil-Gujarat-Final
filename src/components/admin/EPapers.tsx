@@ -170,7 +170,7 @@ export default function AdminEPapers() {
       <div className="flex flex-col lg:flex-row bg-white border border-rule shadow-sm">
         
         <div className="lg:hidden p-4 border-b border-rule bg-gray-50/50">
-          <button 
+          <button type="button"
             onClick={() => setShowMobileCalendar(!showMobileCalendar)}
             className={`w-full flex items-center justify-between p-3 border border-rule bg-white rounded shadow-sm font-bold text-ink ${lang === 'gu' ? 'font-gujarati' : ''}`}
           >
@@ -181,7 +181,7 @@ export default function AdminEPapers() {
 
         <div className={`${showMobileCalendar ? 'block' : 'hidden'} lg:block w-full lg:w-1/3 bg-gray-50/50 p-6 border-b lg:border-b-0 lg:border-r border-rule`}>
           <div className="flex items-center justify-between mb-6">
-            <button 
+            <button type="button"
               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
               className="p-2 hover:bg-paper rounded-full transition-colors"
             >
@@ -190,7 +190,7 @@ export default function AdminEPapers() {
             <h2 className={`text-lg font-bold ${lang === 'gu' ? 'font-gujarati' : ''}`}>
               {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </h2>
-            <button 
+            <button type="button"
               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
               className="p-2 hover:bg-paper rounded-full transition-colors"
             >
@@ -210,7 +210,7 @@ export default function AdminEPapers() {
               const isSelected = selectedDate === dateStr;
               
               return (
-                <button
+                <button type="button"
                   key={day}
                   onClick={() => {
                     setSelectedDate(dateStr);
@@ -266,7 +266,7 @@ export default function AdminEPapers() {
                   >
                     <ExternalLink size={18} /> {t('ઓપન PDF', 'Open PDF')}
                   </a>
-                  <button 
+                  <button type="button"
                     onClick={() => remove(selectedEPaper)}
                     className={`flex items-center gap-2 px-6 py-2 border border-red-500 text-red-500 rounded shadow hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
                   >
@@ -303,6 +303,14 @@ export default function AdminEPapers() {
                     ${isDragging ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}
                   `}
                   onClick={() => document.getElementById('pdf-upload')?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      document.getElementById('pdf-upload')?.click();
+                    }
+                  }}
                 >
                   <input 
                     id="pdf-upload"

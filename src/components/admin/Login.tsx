@@ -97,12 +97,13 @@ export default function Login() {
             {!requiresMfa ? (
               <form onSubmit={onSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-xs text-ink/70 uppercase tracking-widest font-bold mb-2">
+                  <label htmlFor="email" className="block text-xs text-ink/70 uppercase tracking-widest font-bold mb-2">
                     Email Address
                   </label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
                     <input
+                      id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -114,12 +115,13 @@ export default function Login() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-ink/70 uppercase tracking-widest font-bold mb-2">
+                  <label htmlFor="password" className="block text-xs text-ink/70 uppercase tracking-widest font-bold mb-2">
                     Password
                   </label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
                     <input
+                      id="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -149,12 +151,13 @@ export default function Login() {
             ) : (
               <form onSubmit={onSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-xs text-ink/70 uppercase tracking-widest font-bold mb-2">
+                  <label htmlFor="otp" className="block text-xs text-ink/70 uppercase tracking-widest font-bold mb-2">
                     Authenticator Code (MFA)
                   </label>
                   <div className="relative">
                     <ShieldCheck size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
                     <input
+                      id="otp"
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}

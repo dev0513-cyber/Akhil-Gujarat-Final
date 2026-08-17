@@ -274,6 +274,14 @@ export default function ArticleEditor() {
                 ${isDraggingPhoto ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}
               `}
               onClick={() => document.getElementById('main-photo-upload')?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  document.getElementById('main-photo-upload')?.click();
+                }
+              }}
             >
               <input 
                 id="main-photo-upload"
@@ -437,7 +445,7 @@ export default function ArticleEditor() {
 
 
         <div className="pt-2 mt-5">
-          <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} onClick={() => set('is_trending', !form.is_trending)}>
+          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set('is_trending', !form.is_trending); } }} className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} onClick={() => set('is_trending', !form.is_trending)}>
             <div>
               <div className={`font-bold flex items-center gap-2 ${form.is_trending ? 'text-crimson' : 'text-ink/70'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
                 <span className="text-lg">{form.is_trending ? '⭐' : '☆'}</span> 

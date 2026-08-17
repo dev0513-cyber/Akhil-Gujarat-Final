@@ -28,7 +28,7 @@ export function AlertModal({
       iconBgClass="bg-red-50"
       iconColorClass="text-crimson"
     >
-      <button
+      <button type="button"
         onClick={onConfirm}
         className={`px-6 py-2 text-sm bg-crimson hover:bg-red-700 text-white rounded transition-colors flex items-center gap-2 shadow-sm font-medium ${lang === 'gu' ? 'font-gujarati' : ''}`}
       >

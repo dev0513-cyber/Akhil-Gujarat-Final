@@ -143,7 +143,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     </button>
                     {gujaratOpen && (
                       <>
-                        <div className="fixed inset-0 z-40" onClick={() => setGujaratOpen(false)} />
+                        <div role="presentation" className="fixed inset-0 z-40 cursor-default" onClick={() => setGujaratOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setGujaratOpen(false); }} />
                         <div className="absolute left-0 top-full bg-white border border-rule shadow-xl py-2 min-w-[180px] z-50">
                           {cities.map(city => (
                             <Link 
@@ -182,7 +182,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+          <div role="presentation" className="absolute inset-0 bg-black/40 cursor-default" onClick={() => setOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }} />
           <aside className="absolute left-0 top-0 bottom-0 w-[82%] max-w-sm bg-paper shadow-xl p-5 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <span className="font-display text-2xl">અખિલ ગુજરાત</span>

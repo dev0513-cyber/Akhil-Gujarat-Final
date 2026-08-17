@@ -33,14 +33,14 @@ export function ConfirmDeleteModal({
       iconColorClass="text-crimson"
       isActioning={isDeleting}
     >
-      <button
+      <button type="button"
         onClick={onCancel}
         disabled={isDeleting}
         className={`px-4 py-2 text-sm border border-rule bg-white text-ink hover:bg-stone-50 rounded transition-colors font-medium ${lang === 'gu' ? 'font-gujarati' : ''}`}
       >
         {t('રદ કરો', 'Cancel')}
       </button>
-      <button
+      <button type="button"
         onClick={onConfirm}
         disabled={isDeleting}
         className={`px-4 py-2 text-sm bg-crimson hover:bg-red-700 text-white rounded transition-colors flex items-center gap-2 shadow-sm font-medium ${lang === 'gu' ? 'font-gujarati' : ''}`}

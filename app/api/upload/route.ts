@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (adminError) return adminError;
 
     const contentLength = req.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > 20 * 1024 * 1024) { // 20MB hard limit for photos/epapers
+    if (contentLength && Number.parseInt(contentLength, 10) > 20 * 1024 * 1024) { // 20MB hard limit for photos/epapers
       return NextResponse.json({ error: 'Payload Too Large' }, { status: 413 });
     }
 
