@@ -61,7 +61,7 @@ export default function EPaperClient() {
         <div className="flex flex-col md:flex-row bg-white border border-rule shadow-sm">
           
           <div className="md:hidden p-4 border-b border-rule bg-gray-50/50">
-            <button 
+            <button type="button"
               onClick={() => setShowMobileCalendar(!showMobileCalendar)}
               className="w-full flex items-center justify-between p-3 border border-rule bg-white rounded shadow-sm font-bold font-gujarati text-ink"
             >
@@ -74,7 +74,7 @@ export default function EPaperClient() {
             <h3 className="font-bold text-lg mb-6 border-b border-rule pb-2 text-ink">તારીખ પસંદ કરો</h3>
             
             <div className="flex items-center justify-between mb-6">
-              <button 
+              <button type="button"
                 onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
                 className="p-1.5 hover:bg-rule/30 rounded-full transition-colors text-ink"
               >
@@ -83,7 +83,7 @@ export default function EPaperClient() {
               <h2 className="text-base font-bold font-gujarati text-crimson">
                 {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
               </h2>
-              <button 
+              <button type="button"
                 onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
                 className="p-1.5 hover:bg-rule/30 rounded-full transition-colors text-ink"
               >
@@ -109,7 +109,7 @@ export default function EPaperClient() {
                 const isFuture = new Date(dateStr) > new Date();
                 
                 return (
-                  <button
+                  <button type="button"
                     key={day}
                     disabled={isFuture}
                     onClick={() => {
@@ -174,7 +174,7 @@ export default function EPaperClient() {
                     </a>
                   </div>
                   
-                  <button 
+                  <button type="button"
                     onClick={handleShare}
                     className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-crimson transition-colors"
                   >

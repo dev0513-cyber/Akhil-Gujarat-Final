@@ -135,7 +135,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               if (c.slug === 'gujarat' && cities.length > 0) {
                 return (
                   <div key={c.id} className="relative">
-                    <button 
+                    <button type="button"
                       onClick={() => setGujaratOpen(!gujaratOpen)}
                       className={`px-3 py-2.5 text-sm whitespace-nowrap border-b-2 font-gujarati flex items-center gap-1 outline-none ${gujaratOpen ? 'border-crimson text-crimson' : 'border-transparent text-ink/75 hover:text-crimson'}`}
                     >

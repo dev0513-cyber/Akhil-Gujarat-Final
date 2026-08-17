@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function applyArticleSearchAndOrder(query: any, q?: string | null) {
   if (q) {
     const term = `%${q}%`;
