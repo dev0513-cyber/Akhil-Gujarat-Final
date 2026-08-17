@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import supabasePublic from '../../src/lib/supabase';
 import type { Article } from '../../src/lib/types';
 import { createClient } from '../../src/utils/supabase/server';
@@ -71,5 +72,25 @@ export function handleApiError(err: unknown) {
   }
   const msg = err instanceof Error ? err.message : 'An unexpected error occurred';
   return NextResponse.json({ error: msg }, { status: 500 });
+}
+
+export async function handleAdminDelete(req: Request, tableName: string, cacheTag?: string, idKey: string = 'id') {
+  const supabase = await createClient();
+  try {
+    const adminError = await requireAdmin();
+    if (adminError) return adminError;
+
+    const body = await req.json();
+    if (!body[idKey]) return NextResponse.json({ error: `${idKey} is required` }, { status: 400 });
+
+    const { error } = await supabase.from(tableName).delete().eq(idKey, body[idKey]);
+    if (error) throw error;
+    if (cacheTag) {
+      (revalidateTag as (t: string) => void)(cacheTag);
+    }
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleApiError(err);
+  }
 }
 

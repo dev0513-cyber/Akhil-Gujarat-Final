@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
-import { requireAdmin, handleApiError } from '../utils';
+import { requireAdmin, handleApiError, handleAdminDelete } from '../utils';
 import { citySchema } from '../../../src/lib/validation';
 
 export async function GET() {
@@ -89,20 +89,6 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const supabase = await createClient();
-  try {
-    const adminError = await requireAdmin();
-    if (adminError) return adminError;
-
-    const body = await req.json();
-    if (!body.id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
-
-    const { error } = await supabase.from('cities').delete().eq('id', body.id);
-    if (error) throw error;
-    (revalidateTag as (t: string) => void)('cities');
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    return handleApiError(err);
-  }
+  return handleAdminDelete(req, 'cities', 'cities');
 }
 
