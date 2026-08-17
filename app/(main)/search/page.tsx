@@ -4,7 +4,7 @@ import { getArticles } from '../../../src/lib/server-data';
 import NewsCard from '../../../src/components/NewsCard';
 import type { Article } from '../../../src/lib/types';
 
-export async function generateMetadata({ searchParams }: { searchParams: Promise<{ q?: string }> }): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: Readonly<{ searchParams: Promise<{ q?: string }> }>): Promise<Metadata> {
   const { q } = await searchParams;
   return {
     title: q ? `શોધ: ${q}` : 'સમાચાર શોધો',
@@ -12,7 +12,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   };
 }
 
-export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function SearchPage({ searchParams }: Readonly<{ searchParams: Promise<{ q?: string }> }>) {
   const { q } = await searchParams;
   const term = q?.trim() || '';
 

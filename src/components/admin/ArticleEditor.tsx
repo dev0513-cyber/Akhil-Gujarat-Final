@@ -73,13 +73,56 @@ function fromArticle(a: Article): FormState {
   };
 }
 
-function Field({ label, children, lang }: { label: string; children: ReactNode; lang: string }) {
+function Field({ label, children, lang }: Readonly<{ label: string; children: ReactNode; lang: string }>) {
   return (
     <label className={`block text-xs text-ink/55 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
       {label}
       {children}
     </label>
   );
+}
+
+function updateFormState(prev: FormState, key: keyof FormState, value: FormState[keyof FormState], isNew: boolean): FormState {
+  const next = { ...prev, [key]: value };
+  if (key === 'headline' && !(!isNew)) {
+    const s = slugify(String(value));
+    next.slug = s || `news-${Date.now()}`;
+  }
+  if (key === 'headline' && !prev.seo_title) next.seo_title = String(value);
+  if (key === 'description' && !prev.seo_description) next.seo_description = String(value);
+  return next;
+}
+
+function validateArticleForm(form: FormState, t: (gu: string, en: string) => string): Record<string, string> {
+  const next: Record<string, string> = {};
+  if (!form.headline.trim()) next.headline = t('શીર્ષક જરૂરી છે', 'Headline is required');
+  if (!form.description.trim()) next.description = t('વર્ણન જરૂરી છે', 'Description is required');
+  if (!form.content.trim()) next.content = t('સમાચાર જરૂરી છે', 'Content is required');
+  if (!form.slug.trim()) next.slug = t('SEO URL / slug જરૂરી છે', 'SEO URL / slug is required');
+  if (!form.image_url) next.image_url = t('કવર ફોટો જરૂરી છે', 'Cover photo is required');
+  if (!form.category_id) next.category_id = t('વિભાગ પસંદ કરો', 'Please select a category');
+  return next;
+}
+
+function prepareArticlePayload(form: FormState, cats: Category[], id: string | undefined, isNew: boolean, status: string): Partial<Article> {
+  const autoTags = form.headline.split(' ').slice(0, 5).join(', ') + ', ' + (cats.find(c => String(c.id) === form.category_id)?.name_gu || '');
+  
+  const payload: Partial<Article> & Record<string, unknown> = {
+    ...form,
+    status,
+    image_url: form.image_url || null,
+    extra_images: form.extra_images,
+    video_url: form.video_url || null,
+    seo_title: form.seo_title || null,
+    seo_description: form.seo_description || null,
+    source: form.source || 'અખિલ ગુજરાત',
+    tags: form.tags || autoTags,
+    category_id: Number(form.category_id),
+    city_id: form.city_id ? Number(form.city_id) : null,
+    published_at: form.published_at || new Date().toISOString(),
+  };
+  if (!isNew && id) payload.id = Number(id);
+  return payload;
 }
 
 export default function ArticleEditor() {
@@ -116,16 +159,7 @@ export default function ArticleEditor() {
   }, [id, isNew]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      if (key === 'headline' && !(!isNew)) {
-        const s = slugify(String(value));
-        next.slug = s || `news-${Date.now()}`;
-      }
-      if (key === 'headline' && !prev.seo_title) next.seo_title = String(value);
-      if (key === 'description' && !prev.seo_description) next.seo_description = String(value);
-      return next;
-    });
+    setForm((prev) => updateFormState(prev, key, value, isNew));
   };
 
   const onUpload = async (file: File, isExtra = false) => {
@@ -146,13 +180,7 @@ export default function ArticleEditor() {
   };
 
   const validate = () => {
-    const next: Record<string, string> = {};
-    if (!form.headline.trim()) next.headline = t('શીર્ષક જરૂરી છે', 'Headline is required');
-    if (!form.description.trim()) next.description = t('વર્ણન જરૂરી છે', 'Description is required');
-    if (!form.content.trim()) next.content = t('સમાચાર જરૂરી છે', 'Content is required');
-    if (!form.slug.trim()) next.slug = t('SEO URL / slug જરૂરી છે', 'SEO URL / slug is required');
-    if (!form.image_url) next.image_url = t('કવર ફોટો જરૂરી છે', 'Cover photo is required');
-    if (!form.category_id) next.category_id = t('વિભાગ પસંદ કરો', 'Please select a category');
+    const next = validateArticleForm(form, t);
     if (Object.keys(next).length > 0) {
       const errList = Object.values(next).join(' \n• ');
       setError(t('કૃપા કરીને નીચેની ભૂલો સુધારો', 'Please correct the following errors') + ':\n\n• ' + errList);
@@ -165,23 +193,7 @@ export default function ArticleEditor() {
     if (!validate()) return;
     setBusy(true);
     try {
-      const autoTags = form.headline.split(' ').slice(0, 5).join(', ') + ', ' + (cats.find(c => String(c.id) === form.category_id)?.name_gu || '');
-      
-      const payload: Partial<Article> & Record<string, unknown> = {
-        ...form,
-        status,
-        image_url: form.image_url || null,
-        extra_images: form.extra_images,
-        video_url: form.video_url || null,
-        seo_title: form.seo_title || null,
-        seo_description: form.seo_description || null,
-        source: form.source || 'અખિલ ગુજરાત',
-        tags: form.tags || autoTags,
-        category_id: Number(form.category_id),
-        city_id: form.city_id ? Number(form.city_id) : null,
-        published_at: form.published_at || new Date().toISOString(),
-      };
-      if (!isNew && id) payload.id = Number(id);
+      const payload = prepareArticlePayload(form, cats, id, isNew, status);
       await saveArticle(payload);
       setShowSuccess(true);
     } catch (err) {
@@ -259,29 +271,22 @@ export default function ArticleEditor() {
           </label>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
             {/* Upload Box */}
-            <div 
+            <button 
+              type="button"
               onDragOver={e => { e.preventDefault(); setIsDraggingPhoto(true); }}
               onDragLeave={() => setIsDraggingPhoto(false)}
               onDrop={e => {
                 e.preventDefault();
                 setIsDraggingPhoto(false);
-                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                if (e.dataTransfer.files?.[0]) {
                   const file = e.dataTransfer.files[0];
                   if (file.type.startsWith('image/')) onUpload(file);
                 }
               }}
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer relative min-h-[160px] flex flex-col justify-center items-center
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer relative min-h-[160px] flex flex-col justify-center items-center w-full
                 ${isDraggingPhoto ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}
               `}
               onClick={() => document.getElementById('main-photo-upload')?.click()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  document.getElementById('main-photo-upload')?.click();
-                }
-              }}
             >
               <input 
                 id="main-photo-upload"
@@ -289,11 +294,11 @@ export default function ArticleEditor() {
                 accept="image/*"
                 className="hidden"
                 onChange={e => {
-                  if (e.target.files && e.target.files[0]) onUpload(e.target.files[0]);
+                  if (e.target.files?.[0]) onUpload(e.target.files[0]);
                 }}
               />
               
-              {form.image_url && form.image_url.includes('supabase') ? (
+              {form.image_url?.includes('supabase') ? (
                 <div className="flex flex-col items-center">
                   <img src={form.image_url} alt="Main" className="h-24 object-cover rounded shadow mb-3" />
                   <span className="font-semibold text-ink text-sm max-w-full truncate px-2">{t('ફોટો અપલોડ થયો', 'Photo uploaded')}</span>
@@ -321,7 +326,7 @@ export default function ArticleEditor() {
                   )}
                 </div>
               )}
-            </div>
+            </button>
 
             {/* Divider */}
             <div className="hidden md:flex flex-col items-center justify-center">
@@ -443,10 +448,9 @@ export default function ArticleEditor() {
           </Field>
         </div>
 
-
         <div className="pt-2 mt-5">
-          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set('is_trending', !form.is_trending); } }} className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} onClick={() => set('is_trending', !form.is_trending)}>
-            <div>
+          <button type="button" className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} onClick={() => set('is_trending', !form.is_trending)}>
+            <div className="text-left">
               <div className={`font-bold flex items-center gap-2 ${form.is_trending ? 'text-crimson' : 'text-ink/70'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
                 <span className="text-lg">{form.is_trending ? '⭐' : '☆'}</span> 
                 {t('ટ્રેન્ડિંગ / ટોપ ન્યૂઝ', 'Trending / Top News')}
@@ -458,7 +462,7 @@ export default function ArticleEditor() {
             <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.is_trending ? 'bg-crimson' : 'bg-ink/20'}`}>
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${form.is_trending ? 'translate-x-5' : 'translate-x-1'}`} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
             </div>
-          </div>
+          </button>
         </div>
       </fieldset>
 

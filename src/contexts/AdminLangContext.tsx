@@ -11,7 +11,7 @@ interface AdminLangContextType {
 
 const AdminLangContext = createContext<AdminLangContextType | undefined>(undefined);
 
-export function AdminLangProvider({ children }: { children: ReactNode }) {
+export function AdminLangProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [lang, setLangState] = useState<Lang>('gu');
 
   useEffect(() => {

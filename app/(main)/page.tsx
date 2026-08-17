@@ -89,7 +89,7 @@ export default async function Home() {
   );
 }
 
-function SectionHead({ title, to }: { title: string; to?: string }) {
+function SectionHead({ title, to }: Readonly<{ title: string; to?: string }>) {
   return (
     <div className="flex items-end justify-between mb-4 border-b-2 border-ink pb-1.5">
       <h2 className="font-display text-xl md:text-2xl">{title}</h2>
@@ -106,11 +106,11 @@ function HighlightBand({
   title,
   to,
   items,
-}: {
+}: Readonly<{
   title: string;
   to: string;
   items: Article[];
-}) {
+}>) {
   if (!items.length) return null;
   const [first, ...rest] = items;
   return (

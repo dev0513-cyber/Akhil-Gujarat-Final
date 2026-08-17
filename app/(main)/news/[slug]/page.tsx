@@ -138,7 +138,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
 
         <div className="mt-6 space-y-4 font-gujarati text-[17px] leading-[1.85] text-ink/90">
           {paragraphs.map((p: string, i: number) => (
-            <p key={i}>{p}</p>
+            <p key={p.slice(0, 30).replace(/\s+/g, '-') + '-' + i}>{p}</p>
           ))}
         </div>
 
@@ -147,7 +147,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
             <h2 className="font-display text-xl mb-4 border-b border-rule pb-2">ફોટો ગેલેરી (Photo Gallery)</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {article.extra_images.map((src: string, i: number) => (
-                <a key={i} href={src} target="_blank" rel="noopener noreferrer" className="relative aspect-[4/3] overflow-hidden group block rounded border border-rule">
+                <a key={src} href={src} target="_blank" rel="noopener noreferrer" className="relative aspect-[4/3] overflow-hidden group block rounded border border-rule">
                   <Image src={src} alt={`${article.headline} - photo ${i+1}`} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
                 </a>
               ))}

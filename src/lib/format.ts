@@ -81,7 +81,7 @@ export async function translateText(text: string, fromLang: 'en' | 'gu', toLang:
     if (fromLang === 'en' && toLang === 'gu') {
       const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=gu-t-i0-und&num=1`);
       const data = await res.json();
-      if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
+      if (data[0] === 'SUCCESS' && data[1]?.[0]?.[1]) {
         return data[1][0][1][0] || text;
       }
     }
@@ -96,37 +96,30 @@ export async function translateText(text: string, fromLang: 'en' | 'gu', toLang:
   }
 }
 
+const ERROR_MESSAGES_MAP: Record<string, [string, string]> = {
+  'RECORD_EXISTS': ['આ રેકોર્ડ પહેલાથી જ અસ્તિત્વમાં છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This record already exists. Please choose a different name.'],
+  'DATABASE_ERROR': ['સિસ્ટમમાં ભૂલ આવી છે. કૃપા કરીને ફરી પ્રયાસ કરો.', 'A database operation failed. Please try again.'],
+  'SLUG_EXISTS_IN_CITIES': ['આ નામ પહેલેથી જ શહેરોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Cities. Please choose a different name.'],
+  'SLUG_EXISTS_IN_CATEGORIES': ['આ નામ પહેલેથી જ વિભાગોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Categories. Please choose a different name.']
+};
+
 export function getErrorMessage(err: unknown, t: (gu: string, en: string) => string): string {
+  let msg = '';
   if (err instanceof Error) {
-    if (err.message === 'RECORD_EXISTS') {
-      return t('આ રેકોર્ડ પહેલાથી જ અસ્તિત્વમાં છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This record already exists. Please choose a different name.');
-    }
-    if (err.message === 'DATABASE_ERROR') {
-      return t('સિસ્ટમમાં ભૂલ આવી છે. કૃપા કરીને ફરી પ્રયાસ કરો.', 'A database operation failed. Please try again.');
-    }
-    if (err.message.includes('headline, description, content, slug and category_id are required')) {
-      return t('શીર્ષક, વર્ણન, સામગ્રી, સ્લગ અને વિભાગ જરૂરી છે.', 'Headline, description, content, slug and category are required.');
-    }
-    if (err.message === 'SLUG_EXISTS_IN_CITIES') {
-      return t('આ નામ પહેલેથી જ શહેરોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Cities. Please choose a different name.');
-    }
-    if (err.message === 'SLUG_EXISTS_IN_CATEGORIES') {
-      return t('આ નામ પહેલેથી જ વિભાગોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Categories. Please choose a different name.');
-    }
-    return err.message;
+    msg = err.message;
+  } else if (typeof err === 'string') {
+    msg = err;
+  } else {
+    return t('અજાણી ભૂલ આવી છે.', 'An unknown error occurred.');
+  }
+
+  if (ERROR_MESSAGES_MAP[msg]) {
+    return t(ERROR_MESSAGES_MAP[msg][0], ERROR_MESSAGES_MAP[msg][1]);
   }
   
-  if (typeof err === 'string') {
-    if (err.includes('headline, description, content, slug and category_id are required')) {
-      return t('શીર્ષક, વર્ણન, સામગ્રી, સ્લગ અને વિભાગ જરૂરી છે.', 'Headline, description, content, slug and category are required.');
-    }
-    if (err.includes('SLUG_EXISTS_IN_CITIES')) {
-      return t('આ નામ પહેલેથી જ શહેરોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Cities. Please choose a different name.');
-    }
-    if (err.includes('SLUG_EXISTS_IN_CATEGORIES')) {
-      return t('આ નામ પહેલેથી જ વિભાગોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Categories. Please choose a different name.');
-    }
+  if (msg.includes('headline, description, content, slug and category_id are required')) {
+    return t('શીર્ષક, વર્ણન, સામગ્રી, સ્લગ અને વિભાગ જરૂરી છે.', 'Headline, description, content, slug and category are required.');
   }
   
-  return typeof err === 'string' ? err : t('અજાણી ભૂલ આવી છે.', 'An unknown error occurred.');
+  return msg;
 }

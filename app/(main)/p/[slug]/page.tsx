@@ -32,7 +32,7 @@ export default async function StaticPage({ params }: Readonly<{ params: Promise<
       <div className="mt-6 h-px bg-ink" />
       <div className="mt-6 space-y-4 font-gujarati text-[17px] leading-[1.85] text-ink/85">
         {splitParagraphs(page.content).map((p: string, i: number) => (
-          <p key={i}>{p}</p>
+          <p key={p.slice(0, 30).replace(/\s+/g, '-') + '-' + i}>{p}</p>
         ))}
       </div>
     </div>

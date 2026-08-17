@@ -133,10 +133,10 @@ function AdminSidebar({ children, email }: Readonly<{ children: React.ReactNode,
 export default function AdminLayout({
   children,
   email,
-}: {
+}: Readonly<{
   children: React.ReactNode;
   email?: string;
-}) {
+}>) {
   return (
     <AdminLangProvider>
       <AdminSidebar email={email}>{children}</AdminSidebar>

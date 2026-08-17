@@ -5,7 +5,7 @@ export function getYoutubeId(url?: string | null): string | null {
     /[?&]v=([a-zA-Z0-9_-]{11})/,
   ];
   for (const p of patterns) {
-    const m = url.match(p);
+    const m = p.exec(url);
     if (m) return m[1];
   }
   if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) return url.trim();

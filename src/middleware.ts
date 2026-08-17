@@ -39,53 +39,83 @@ const limiters = redis ? {
   })
 } : null;
 
+type RateLimitResultType = { success: boolean; limit: number; remaining: number; reset: number } | undefined;
+
+async function checkRateLimit(request: NextRequest, pathname: string): Promise<{ response?: NextResponse; result?: RateLimitResultType }> {
+  if (process.env.NODE_ENV === 'development' || (!pathname.startsWith('/api') && !pathname.startsWith('/auth'))) {
+    return {};
+  }
+  
+  const ip = request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown-ip';
+  const isUpload = pathname.startsWith('/api/upload');
+  const isAuth = pathname.startsWith('/auth');
+  const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && !isUpload && !isAuth;
+  const isPublicRead = request.method === 'GET' && pathname.startsWith('/api');
+
+  if (!limiters) {
+    if (isMutation || isUpload || isAuth) {
+      return { response: NextResponse.json({ error: 'Rate limiting infrastructure unavailable' }, { status: 429 }) };
+    }
+    return {};
+  }
+
+  try {
+    let rateLimitResult: RateLimitResultType;
+    if (isAuth) {
+      rateLimitResult = await limiters.auth.limit(`auth:${ip}`);
+    } else if (isUpload) {
+      rateLimitResult = await limiters.upload.limit(`upload:${ip}`);
+    } else if (isMutation) {
+      rateLimitResult = await limiters.mutation.limit(`mut:${ip}`);
+    } else if (isPublicRead) {
+      rateLimitResult = await limiters.public.limit(`pub:${ip}`);
+    }
+
+    if (rateLimitResult && !rateLimitResult.success) {
+      return { 
+        response: NextResponse.json(
+          { error: 'Too many requests, please try again later.' },
+          { 
+            status: 429,
+            headers: {
+              'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+              'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+              'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+            }
+          }
+        ) 
+      };
+    }
+    return { result: rateLimitResult };
+  } catch {
+    if (isMutation || isUpload || isAuth) {
+      return { response: NextResponse.json({ error: 'Rate limiting service unavailable' }, { status: 429 }) };
+    }
+    return {};
+  }
+}
+
+function setSecurityHeaders(res: NextResponse, rateLimitResult: RateLimitResultType) {
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https:;");
+  
+  if (rateLimitResult) {
+    res.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString());
+    res.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
+    res.headers.set('X-RateLimit-Reset', rateLimitResult.reset.toString());
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  let rateLimitResult: { success: boolean; limit: number; remaining: number; reset: number } | undefined;
-
+  
   // Rate Limiting Logic
-  if (process.env.NODE_ENV !== 'development' && (pathname.startsWith('/api') || pathname.startsWith('/auth'))) {
-    const ip = request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown-ip';
-    const isUpload = pathname.startsWith('/api/upload');
-    const isAuth = pathname.startsWith('/auth');
-    const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && !isUpload && !isAuth;
-    const isPublicRead = request.method === 'GET' && pathname.startsWith('/api');
-
-    if (!limiters) {
-      if (isMutation || isUpload || isAuth) {
-        return NextResponse.json({ error: 'Rate limiting infrastructure unavailable' }, { status: 429 });
-      }
-    } else {
-      try {
-        if (isAuth) {
-          rateLimitResult = await limiters.auth.limit(`auth:${ip}`);
-        } else if (isUpload) {
-          rateLimitResult = await limiters.upload.limit(`upload:${ip}`);
-        } else if (isMutation) {
-          rateLimitResult = await limiters.mutation.limit(`mut:${ip}`);
-        } else if (isPublicRead) {
-          rateLimitResult = await limiters.public.limit(`pub:${ip}`);
-        }
-
-        if (rateLimitResult && !rateLimitResult.success) {
-          return NextResponse.json(
-            { error: 'Too many requests, please try again later.' },
-            { 
-              status: 429,
-              headers: {
-                'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-                'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-                'X-RateLimit-Reset': rateLimitResult.reset.toString(),
-              }
-            }
-          );
-        }
-      } catch {
-        if (isMutation || isUpload || isAuth) {
-          return NextResponse.json({ error: 'Rate limiting service unavailable' }, { status: 429 });
-        }
-      }
-    }
+  const { response: rateLimitResponse, result: rateLimitResult } = await checkRateLimit(request, pathname);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   let supabaseResponse = NextResponse.next({
@@ -93,21 +123,7 @@ export async function middleware(request: NextRequest) {
   })
 
   // Apply Security Headers globally
-  const setSecurityHeaders = (res: NextResponse) => {
-    res.headers.set('X-Content-Type-Options', 'nosniff');
-    res.headers.set('X-Frame-Options', 'DENY');
-    res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https:;");
-    
-    if (rateLimitResult) {
-      res.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString());
-      res.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
-      res.headers.set('X-RateLimit-Reset', rateLimitResult.reset.toString());
-    }
-  };
-
-  setSecurityHeaders(supabaseResponse);
+  setSecurityHeaders(supabaseResponse, rateLimitResult);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -122,7 +138,7 @@ export async function middleware(request: NextRequest) {
           supabaseResponse = NextResponse.next({
             request,
           })
-          setSecurityHeaders(supabaseResponse);
+          setSecurityHeaders(supabaseResponse, rateLimitResult);
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -166,6 +182,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    String.raw`/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)`,
   ],
 }

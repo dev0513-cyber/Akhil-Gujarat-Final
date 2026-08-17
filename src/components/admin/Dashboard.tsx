@@ -92,12 +92,12 @@ function Stat({
   label,
   value,
   lang,
-}: {
+}: Readonly<{
   icon: typeof Newspaper;
   label: string;
   value: number;
   lang: string;
-}) {
+}>) {
   return (
     <div className="bg-white border border-rule p-4">
       <Icon size={16} className="text-crimson" />
@@ -107,7 +107,7 @@ function Stat({
   );
 }
 
-function StatusPill({ status, t }: { status: string; t: (gu: string, en: string) => string }) {
+function StatusPill({ status, t }: Readonly<{ status: string; t: (gu: string, en: string) => string }>) {
   const map: Record<string, string> = {
     published: 'bg-green-100 text-green-800',
     draft: 'bg-amber-100 text-amber-800',

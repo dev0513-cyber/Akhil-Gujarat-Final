@@ -224,7 +224,7 @@ export default function Articles() {
   );
 }
 
-function Toggle({ checked, onChange, disabled, colorClass = 'bg-green-500' }: { checked: boolean, onChange: () => void, disabled: boolean, colorClass?: string }) {
+function Toggle({ checked, onChange, disabled, colorClass = 'bg-green-500' }: Readonly<{ checked: boolean, onChange: () => void, disabled: boolean, colorClass?: string }>) {
   return (
     <button
       type="button"

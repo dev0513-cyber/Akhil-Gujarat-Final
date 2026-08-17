@@ -14,7 +14,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 async function readJson<T>(res: Response): Promise<T> {
   const data = await res.json();
   if (!res.ok) {
-    throw new Error((data && data.error) || `Request failed (${res.status})`);
+    throw new Error((data?.error) || `Request failed (${res.status})`);
   }
   return data as T;
 }

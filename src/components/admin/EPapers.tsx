@@ -11,6 +11,35 @@ import { ConfirmDeleteModal } from '../ConfirmDeleteModal';
 import { SuccessModal } from '../SuccessModal';
 import { AlertModal } from '../AlertModal';
 
+async function generateThumbnail(file: File): Promise<{ thumbFile: File; thumbPreview: string }> {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const page = await pdf.getPage(1);
+  
+  const viewport = page.getViewport({ scale: 1.5 });
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas context not available');
+  
+  canvas.height = viewport.height;
+  canvas.width = viewport.width;
+  await page.render({ canvasContext: context, viewport, canvas: canvas as HTMLCanvasElement }).promise;
+  
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const thumb = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
+          resolve({ thumbFile: thumb, thumbPreview: URL.createObjectURL(blob) });
+        } else {
+          reject(new Error('Failed to create blob from canvas'));
+        }
+      },
+      'image/jpeg',
+      0.8
+    );
+  });
+}
 
 export default function AdminEPapers() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -40,8 +69,6 @@ export default function AdminEPapers() {
     }
   }, []);
 
-  // Set title directly when date is changed in the UI
-
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -58,31 +85,9 @@ export default function AdminEPapers() {
     setPdfFile(file);
     try {
       setUploading(true);
-      
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const page = await pdf.getPage(1);
-      
-      const viewport = page.getViewport({ scale: 1.5 });
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      if (!context) return;
-      
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-      await page.render({ canvasContext: context, viewport, canvas: canvas as HTMLCanvasElement }).promise;
-      
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const thumb = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
-            setThumbFile(thumb);
-            setThumbPreview(URL.createObjectURL(blob));
-          }
-        },
-        'image/jpeg',
-        0.8
-      );
+      const { thumbFile: tf, thumbPreview: tp } = await generateThumbnail(file);
+      setThumbFile(tf);
+      setThumbPreview(tp);
     } catch (err) {
       console.error(err);
       setAlertMessage(t('કવર પેજ જનરેટ કરવામાં નિષ્ફળ', 'Failed to generate cover page'));
@@ -103,7 +108,6 @@ export default function AdminEPapers() {
       if (thumbFile) {
         thumbUrl = await uploadFile(thumbFile);
       }
-
       const pdfUrl = await uploadFile(pdfFile);
       
       await saveEPaper({
@@ -127,7 +131,7 @@ export default function AdminEPapers() {
   const onDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    if (e.dataTransfer.files?.[0]) {
       const file = e.dataTransfer.files[0];
       if (file.type === 'application/pdf') {
         await handlePdfSelection(file);
@@ -135,10 +139,6 @@ export default function AdminEPapers() {
         setAlertMessage(t('ફક્ત PDF ફાઈલ અપલોડ કરો', 'Please upload a PDF file only'));
       }
     }
-  };
-
-  const remove = (p: EPaper) => {
-    setDeleteTarget(p);
   };
 
   const confirmDelete = async () => {
@@ -203,7 +203,10 @@ export default function AdminEPapers() {
           </div>
           
           <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+            {Array.from({ length: firstDay }).map((_, i) => {
+              const padDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i - firstDay + 1);
+              return <div key={`empty-${padDate.getFullYear()}-${padDate.getMonth()}-${padDate.getDate()}`} />;
+            })}
             {days.map(day => {
               const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const hasEPaper = monthEPapers.some(e => e.published_date === dateStr);
@@ -267,7 +270,7 @@ export default function AdminEPapers() {
                     <ExternalLink size={18} /> {t('ઓપન PDF', 'Open PDF')}
                   </a>
                   <button type="button"
-                    onClick={() => remove(selectedEPaper)}
+                    onClick={() => setDeleteTarget(selectedEPaper)}
                     className={`flex items-center gap-2 px-6 py-2 border border-red-500 text-red-500 rounded shadow hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
                   >
                     <Trash2 size={18} /> {t('ડિલીટ', 'Delete')}
@@ -295,22 +298,15 @@ export default function AdminEPapers() {
                   {t('PDF ફાઇલ', 'PDF File')}
                 </label>
                 
-                <div 
+                <button 
+                  type="button"
                   onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={onDrop}
-                  className={`border-2 border-dashed rounded-lg p-10 text-center transition-colors cursor-pointer
+                  className={`w-full border-2 border-dashed rounded-lg p-10 text-center transition-colors cursor-pointer
                     ${isDragging ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}
                   `}
                   onClick={() => document.getElementById('pdf-upload')?.click()}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      document.getElementById('pdf-upload')?.click();
-                    }
-                  }}
                 >
                   <input 
                     id="pdf-upload"
@@ -318,7 +314,7 @@ export default function AdminEPapers() {
                     accept="application/pdf"
                     className="hidden"
                     onChange={e => {
-                      if (e.target.files && e.target.files[0]) {
+                      if (e.target.files?.[0]) {
                         handlePdfSelection(e.target.files[0]);
                       }
                     }}
@@ -364,7 +360,7 @@ export default function AdminEPapers() {
                       </p>
                     </div>
                   )}
-                </div>
+                </button>
               </div>
 
               <button 
