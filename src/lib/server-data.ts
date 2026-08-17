@@ -1,6 +1,7 @@
 import supabase from './supabase';
 import { hydrateArticles } from '../../app/api/utils';
 import { unstable_cache } from 'next/cache';
+import { applyArticleSearchAndOrder } from './query-utils';
 
 export const getArticles = unstable_cache(
   async (params: Record<string, string | number | boolean> = {}) => {
@@ -17,13 +18,7 @@ export const getArticles = unstable_cache(
     if (params.trending) query = query.eq('is_trending', true);
     if (params.video) query = query.not('video_url', 'is', null).neq('video_url', '');
     
-    if (params.q) {
-      const term = `%${params.q}%`;
-      query = query.or(`headline.ilike.${term},description.ilike.${term},content.ilike.${term},tags.ilike.${term},seo_title.ilike.${term}`);
-    }
-    
-    query = query.order('published_at', { ascending: false, nullsFirst: false });
-    query = query.order('id', { ascending: false });
+    query = applyArticleSearchAndOrder(query, params.q as string | undefined);
 
     const take = Math.min(Number(params.limit) || 40, 100);
     query = query.limit(take);

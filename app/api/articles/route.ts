@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
 import { requireAdmin, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
 import { articleSchema, paginationSchema } from '../../../src/lib/validation';
+import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
 
 
 function buildArticleRow(body: Record<string, unknown>, isCreate: boolean) {
@@ -115,13 +116,7 @@ export async function GET(req: Request) {
     if (video === '1' || video === 'true') query = query.not('video_url', 'is', null).neq('video_url', '');
     if (related) query = query.neq('id', related);
 
-    if (q) {
-      const term = `%${q}%`;
-      query = query.or(`headline.ilike.${term},description.ilike.${term},content.ilike.${term},tags.ilike.${term},seo_title.ilike.${term}`);
-    }
-
-    query = query.order('published_at', { ascending: false, nullsFirst: false });
-    query = query.order('id', { ascending: false });
+    query = applyArticleSearchAndOrder(query, q);
 
     const offset = (page - 1) * limit;
     query = query.range(offset, offset + limit - 1);
