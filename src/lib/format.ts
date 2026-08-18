@@ -61,6 +61,22 @@ export function formatTodayMastheadShort(): string {
   });
 }
 
+export function getISTDayRange(day?: string): { day: string; from: string; to: string } {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const dayStr = day || formatter.format(new Date());
+  const start = new Date(`${dayStr}T00:00:00+05:30`);
+  return {
+    day: dayStr,
+    from: start.toISOString(),
+    to: new Date(start.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+  };
+}
+
 export function splitParagraphs(text: string): string[] {
   return text
     .split(/\n+/)
