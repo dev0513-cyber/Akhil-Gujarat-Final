@@ -48,10 +48,6 @@ export default function Articles() {
       await saveArticle({
         ...fullArticle,
         status,
-        published_at:
-          status === 'published'
-            ? fullArticle.published_at || new Date().toISOString()
-            : fullArticle.published_at,
       });
       await mutate();
       setSuccessMessage(
