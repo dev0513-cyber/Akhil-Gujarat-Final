@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Search, X, MapPin, Newspaper, Phone, Mail } from 'lucide-react';
@@ -13,6 +13,8 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
   const [cities, setCities] = useState<City[]>([]);
   const [open, setOpen] = useState(false);
   const [gujaratOpen, setGujaratOpen] = useState(false);
+  const gujaratBtnRef = useRef<HTMLDivElement | null>(null);
+  const [gujaratTop, setGujaratTop] = useState(0);
   const [q, setQ] = useState('');
   const [now, setNow] = useState<Date | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -141,9 +143,15 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
             {cats.map((c) => {
               if (c.slug === 'gujarat' && cities.length > 0) {
                 return (
-                  <div key={c.id} className="relative">
+                  <div key={c.id} className="relative" ref={gujaratBtnRef}>
                     <button type="button"
-                      onClick={() => setGujaratOpen(!gujaratOpen)}
+                      onClick={() => {
+                        if (!gujaratOpen) {
+                          const r = gujaratBtnRef.current?.getBoundingClientRect();
+                          setGujaratTop(r ? r.bottom + 4 : 56);
+                        }
+                        setGujaratOpen(!gujaratOpen);
+                      }}
                       className={`px-3 py-2.5 text-sm whitespace-nowrap border-b-2 font-gujarati flex items-center gap-1 outline-none ${gujaratOpen ? 'border-crimson text-crimson' : 'border-transparent text-ink/75 hover:text-crimson'}`}
                     >
                       {c.name_gu} <span className="text-[10px] text-ink/40">{gujaratOpen ? '▲' : '▼'}</span>
@@ -151,25 +159,14 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
                     {gujaratOpen && (
                       <>
                         <div aria-hidden="true" className="fixed inset-0 z-40 cursor-default" onClick={() => setGujaratOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setGujaratOpen(false); }} />
-                        <div className="absolute left-0 top-full bg-white border border-rule shadow-xl py-2 min-w-[180px] z-50">
-                          {cities.map(city => (
-                            <Link 
-                              key={city.id} 
-                              href={`/city/${city.slug}`} 
-                              className="block px-4 py-2 text-sm font-gujarati text-ink hover:bg-paper hover:text-crimson"
-                              onClick={() => setGujaratOpen(false)}
-                            >
-                              {city.name_gu}
-                            </Link>
-                          ))}
-                          <div className="h-px bg-rule my-1" />
-                          <Link 
-                             href="/category/gujarat"
-                             className="block px-4 py-2 text-sm font-gujarati font-bold text-crimson hover:bg-paper"
-                             onClick={() => setGujaratOpen(false)}
-                          >
-                             બધા ગુજરાત સમાચાર →
-                          </Link>
+                        <div className="absolute left-0 top-full bg-white border border-rule shadow-xl py-2 min-w-[180px] z-50 hidden md:block">
+                          <GujaratDropdownItems cities={cities} onNavigate={() => setGujaratOpen(false)} />
+                        </div>
+                        <div
+                          className="fixed inset-x-0 z-50 bg-white border border-rule shadow-xl py-2 max-h-[65vh] overflow-y-auto md:hidden"
+                          style={{ top: gujaratTop }}
+                        >
+                          <GujaratDropdownItems cities={cities} onNavigate={() => setGujaratOpen(false)} />
                         </div>
                       </>
                     )}
@@ -308,6 +305,31 @@ function MobileLink({ to, onClick, children }: Readonly<{ to: string; onClick?: 
     <Link href={to} onClick={onClick} className="block border-b border-rule py-3 text-ink hover:text-crimson transition-colors">
       {children}
     </Link>
+  );
+}
+
+function GujaratDropdownItems({ cities, onNavigate }: Readonly<{ cities: City[]; onNavigate: () => void }>) {
+  return (
+    <div>
+      {cities.map(city => (
+        <Link
+          key={city.id}
+          href={`/city/${city.slug}`}
+          className="block px-4 py-2 text-sm font-gujarati text-ink hover:bg-paper hover:text-crimson"
+          onClick={onNavigate}
+        >
+          {city.name_gu}
+        </Link>
+      ))}
+      <div className="h-px bg-rule my-1" />
+      <Link
+        href="/category/gujarat"
+        className="block px-4 py-2 text-sm font-gujarati font-bold text-crimson hover:bg-paper"
+        onClick={onNavigate}
+      >
+        બધા ગુજરાત સમાચાર →
+      </Link>
+    </div>
   );
 }
 

@@ -12,7 +12,17 @@ import { AlertModal } from '../AlertModal';
 
 async function generateThumbnail(file: File): Promise<{ thumbFile: File; thumbPreview: string }> {
   const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  if (!pdfjsLib.GlobalWorkerOptions.workerPort) {
+    try {
+      // Self-host the worker from the bundled module (same-origin, allowed by CSP)
+      pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(
+        new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url),
+        { type: 'module' }
+      );
+    } catch {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    }
+  }
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const page = await pdf.getPage(1);

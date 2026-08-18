@@ -103,7 +103,7 @@ function setSecurityHeaders(res: NextResponse, rateLimitResult?: RateLimitResult
   res.headers.set('X-Frame-Options', 'DENY');
   res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https:;");
+  res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https:; worker-src 'self' blob:;");
   
   if (rateLimitResult) {
     res.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString());

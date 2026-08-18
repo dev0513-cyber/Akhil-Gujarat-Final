@@ -83,7 +83,6 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
 
   const paragraphs = splitParagraphs(article.content);
   const tags = (article.tags || '').split(',').map((t: string) => t.trim()).filter(Boolean);
-  const pageUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`;
 
   return (
     <>
@@ -123,7 +122,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
           {article.author && <span>{article.author}</span>}
         </div>
 
-        <ShareButtons title={article.headline} url={pageUrl} />
+        <ShareButtons title={article.headline} />
 
         {article.image_url && (
           <figure className="mt-6">
@@ -178,7 +177,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         )}
 
         <div className="mt-6 border-t border-rule pt-4">
-          <ShareButtons title={article.headline} url={pageUrl} />
+<ShareButtons title={article.headline} />
         </div>
       </article>
 
