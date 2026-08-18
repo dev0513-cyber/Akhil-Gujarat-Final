@@ -119,8 +119,8 @@ function prepareArticlePayload(form: FormState, cats: Category[], id: string | u
     tags: form.tags || autoTags,
     category_id: Number(form.category_id),
     city_id: form.city_id ? Number(form.city_id) : null,
-    published_at: form.published_at || new Date().toISOString(),
   };
+  delete payload.published_at; // server controls publish time
   if (!isNew && id) payload.id = Number(id);
   return payload;
 }

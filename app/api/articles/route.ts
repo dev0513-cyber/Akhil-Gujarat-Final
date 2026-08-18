@@ -6,9 +6,23 @@ import { articleSchema, paginationSchema } from '../../../src/lib/validation';
 import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
 
 
-function buildArticleRow(body: Record<string, unknown>, isCreate: boolean) {
+function buildArticleRow(body: Record<string, unknown>, isCreate: boolean, existingStatus?: string | null) {
   const status = body.status || 'draft';
-  const publishedAt = body.published_at || (status === 'published' ? new Date().toISOString() : null);
+  const now = new Date().toISOString();
+
+  // The server is the sole authority on publish time.
+  // - create: published → now, otherwise null
+  // - update: only a transition INTO published stamps a fresh time;
+  //   plain edits and moves out of published preserve the DB value (omit the key)
+  let preservePublishTime = false;
+  let publishedAt: string | null = null;
+  if (isCreate) {
+    publishedAt = status === 'published' ? now : null;
+  } else if (status === 'published' && existingStatus !== 'published') {
+    publishedAt = now;
+  } else {
+    preservePublishTime = true;
+  }
 
   const row: Record<string, unknown> = {
     headline: body.headline,
@@ -18,7 +32,6 @@ function buildArticleRow(body: Record<string, unknown>, isCreate: boolean) {
     extra_images: body.extra_images || [],
     category_id: Number(body.category_id),
     city_id: body.city_id ? Number(body.city_id) : null,
-    published_at: publishedAt,
     tags: body.tags || '',
     source: body.source || '',
     seo_title: body.seo_title || body.headline,
@@ -30,10 +43,14 @@ function buildArticleRow(body: Record<string, unknown>, isCreate: boolean) {
     author: body.author || 'અખિલ ગુજરાત ડેસ્ક',
   };
 
+  if (!preservePublishTime) {
+    row.published_at = publishedAt;
+  }
+
   if (isCreate) {
     row.view_count = 0;
-    row.created_at = new Date().toISOString();
-    row.updated_at = new Date().toISOString();
+    row.created_at = now;
+    row.updated_at = now;
   }
 
   return row;
@@ -161,7 +178,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Validation failed', details: validation.error.issues }, { status: 400 });
     }
 
-    const row = buildArticleRow(validation.data, true);
+    const row = buildArticleRow(validation.data, true, null);
     const { data, error } = await supabase.from('articles').insert(row).select().single();
     if (error) throw error;
     
@@ -189,7 +206,13 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Validation failed', details: validation.error.issues }, { status: 400 });
     }
 
-    const row = buildArticleRow(validation.data, false);
+    const { data: existing } = await supabase
+      .from('articles')
+      .select('status')
+      .eq('id', body.id)
+      .maybeSingle();
+
+    const row = buildArticleRow(validation.data, false, existing?.status ?? null);
     row.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase.from('articles').update(row).eq('id', body.id).select().single();

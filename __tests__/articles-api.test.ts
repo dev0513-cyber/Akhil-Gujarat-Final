@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET, POST } from '../app/api/articles/route';
+import { GET, POST, PUT } from '../app/api/articles/route';
 import * as utils from '../app/api/utils';
 
 vi.mock('../app/api/utils', async (importOriginal) => {
@@ -14,7 +14,12 @@ vi.mock('../app/api/utils', async (importOriginal) => {
 
 // A builder that can chain any method and then be awaited
 const createMockBuilder = (resolvedValue: unknown) => {
-  const builder: Record<string, unknown> = {};
+  type ChainMock = ReturnType<typeof vi.fn>;
+  const builder: Record<string, ChainMock> & {
+    then: (resolve: (val: unknown) => void) => void;
+  } = {} as Record<string, ChainMock> & {
+    then: (resolve: (val: unknown) => void) => void;
+  };
   const methods = ['select', 'eq', 'neq', 'not', 'or', 'order', 'range', 'single', 'maybeSingle', 'insert', 'update', 'delete', 'in'];
   for (const method of methods) {
     builder[method] = vi.fn().mockReturnValue(builder);
@@ -117,6 +122,111 @@ describe('Articles API', () => {
       
       const body = await res.json();
       expect(body.headline).toBe('Admin Post');
+    });
+  });
+
+  describe('Server-controlled published_at', () => {
+    const validPayload = {
+      headline: 'Admin Post',
+      description: 'Test',
+      content: '<p>test</p>',
+      image_url: 'http://test.jpg',
+      slug: 'admin-post',
+      category_id: 1,
+    };
+
+    it('POST published stamps server time', async () => {
+      const req = new Request('http://localhost/api/articles', {
+        method: 'POST',
+        body: JSON.stringify({ ...validPayload, status: 'published' }),
+      });
+      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const inserted = { id: 1, ...validPayload, status: 'published' };
+      const builder = createMockBuilder({ data: inserted, error: null });
+      mockFrom.mockReturnValue(builder);
+
+      const res = await POST(req);
+      expect(res.status).toBe(201);
+
+      const insertArg = builder.insert.mock.calls[0][0] as Record<string, unknown>;
+      expect(insertArg.published_at).toBeTruthy();
+      expect(new Date(insertArg.published_at as string).toString()).not.toBe('Invalid Date');
+    });
+
+    it('POST draft leaves published_at null', async () => {
+      const req = new Request('http://localhost/api/articles', {
+        method: 'POST',
+        body: JSON.stringify({ ...validPayload, status: 'draft' }),
+      });
+      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const inserted = { id: 1, ...validPayload, status: 'draft' };
+      const builder = createMockBuilder({ data: inserted, error: null });
+      mockFrom.mockReturnValue(builder);
+
+      await POST(req);
+
+      const insertArg = builder.insert.mock.calls[0][0] as Record<string, unknown>;
+      expect(insertArg.published_at).toBeNull();
+    });
+
+    it('PUT draft→published stamps fresh server time', async () => {
+      const req = new Request('http://localhost/api/articles', {
+        method: 'PUT',
+        body: JSON.stringify({ ...validPayload, id: 7, status: 'published' }),
+      });
+      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const builder = createMockBuilder({
+        data: { id: 7, ...validPayload, status: 'published', published_at: '2026-08-18T10:00:00.000Z' },
+        error: null,
+      });
+      // pre-fetch returns existing draft row
+      builder.maybeSingle = vi.fn().mockResolvedValue({ data: { status: 'draft' }, error: null });
+      mockFrom.mockReturnValue(builder);
+
+      const res = await PUT(req);
+      expect(res.status).toBe(200);
+
+      const updateArg = builder.update.mock.calls[0][0] as Record<string, unknown>;
+      expect(updateArg.published_at).toBeTruthy();
+      expect(updateArg.published_at).not.toBe('2026-08-18T10:00:00.000Z');
+    });
+
+    it('PUT published→published preserves original publish time', async () => {
+      const req = new Request('http://localhost/api/articles', {
+        method: 'PUT',
+        body: JSON.stringify({ ...validPayload, id: 7, status: 'published' }),
+      });
+      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const builder = createMockBuilder({
+        data: { id: 7, ...validPayload, status: 'published' },
+        error: null,
+      });
+      builder.maybeSingle = vi.fn().mockResolvedValue({ data: { status: 'published' }, error: null });
+      mockFrom.mockReturnValue(builder);
+
+      await PUT(req);
+
+      const updateArg = builder.update.mock.calls[0][0] as Record<string, unknown>;
+      expect(updateArg).not.toHaveProperty('published_at');
+    });
+
+    it('PUT published→draft preserves original publish time', async () => {
+      const req = new Request('http://localhost/api/articles', {
+        method: 'PUT',
+        body: JSON.stringify({ ...validPayload, id: 7, status: 'draft' }),
+      });
+      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const builder = createMockBuilder({
+        data: { id: 7, ...validPayload, status: 'draft' },
+        error: null,
+      });
+      builder.maybeSingle = vi.fn().mockResolvedValue({ data: { status: 'published' }, error: null });
+      mockFrom.mockReturnValue(builder);
+
+      await PUT(req);
+
+      const updateArg = builder.update.mock.calls[0][0] as Record<string, unknown>;
+      expect(updateArg).not.toHaveProperty('published_at');
     });
   });
 });
