@@ -2,6 +2,7 @@ import supabase from './supabase';
 import { hydrateArticles } from '../../app/api/utils';
 import { unstable_cache } from 'next/cache';
 import { applyArticleSearchAndOrder } from './query-utils';
+import { getISTDayRange } from './format';
 
 export const getArticles = unstable_cache(
   async (params: Record<string, string | number | boolean> = {}) => {
@@ -17,6 +18,10 @@ export const getArticles = unstable_cache(
     if (params.city_id) query = query.eq('city_id', params.city_id);
     if (params.trending) query = query.eq('is_trending', true);
     if (params.video) query = query.not('video_url', 'is', null).neq('video_url', '');
+    if (params.day) {
+      const { from, to } = getISTDayRange(String(params.day));
+      query = query.gte('published_at', from).lt('published_at', to);
+    }
     
     query = applyArticleSearchAndOrder(query, params.q as string | undefined);
 
