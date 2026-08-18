@@ -16,7 +16,6 @@ describe('Zod Validation - articleSchema', () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.is_trending).toBe(false); // default applied
-      expect(result.data.view_count).toBe(0); // default applied
     }
   });
 

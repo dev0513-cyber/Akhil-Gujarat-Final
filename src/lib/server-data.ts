@@ -6,7 +6,7 @@ import { getISTDayRange } from './format';
 
 export const getArticles = unstable_cache(
   async (params: Record<string, string | number | boolean> = {}) => {
-    let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, view_count, author');
+    let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, author');
 
     if (params.status) {
       query = query.eq('status', params.status);

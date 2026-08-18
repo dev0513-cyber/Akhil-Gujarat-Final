@@ -48,7 +48,6 @@ function buildArticleRow(body: Record<string, unknown>, isCreate: boolean, exist
   }
 
   if (isCreate) {
-    row.view_count = 0;
     row.created_at = now;
     row.updated_at = now;
   }
@@ -69,12 +68,6 @@ async function fetchSingleArticle(supabase: any, id: string | null, slug: string
   if (data.status !== 'published') {
     const adminError = await requireAdmin();
     if (adminError) return adminError;
-  } else if (!req.headers.get('authorization')) {
-    await supabase
-      .from('articles')
-      .update({ view_count: (data.view_count || 0) + 1 })
-      .eq('id', data.id);
-    data.view_count = (data.view_count || 0) + 1;
   }
 
   const [hydrated] = await hydrateArticles(data);
@@ -99,7 +92,7 @@ async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
   const q = searchParams.get('q');
   const related = searchParams.get('related');
 
-  let query = supabase.from('articles').select('id, headline, description, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, view_count, author');
+  let query = supabase.from('articles').select('id, headline, description, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author');
 
   if (status === 'all') {
     const adminError = await requireAdmin();

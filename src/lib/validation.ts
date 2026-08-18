@@ -20,7 +20,6 @@ export const articleSchema = z.object({
 
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_trending: z.boolean().default(false),
-  view_count: z.number().default(0),
   author: z.string().nullable().optional(),
 });
 
@@ -47,7 +46,6 @@ export const ePaperSchema = z.object({
   title: z.string().min(1).max(255),
   pdf_url: z.string().min(1),
   thumbnail_url: z.string().nullable().optional(),
-  view_count: z.number().default(0),
 });
 
 export const staticPageSchema = z.object({

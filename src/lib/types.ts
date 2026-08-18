@@ -27,7 +27,6 @@ export type EPaper = {
   title: string;
   pdf_url: string;
   thumbnail_url: string | null;
-  view_count: number;
   created_at: string;
   updated_at: string;
 };
@@ -51,7 +50,6 @@ export type Article = {
   video_url: string | null;
   status: string;
   is_trending: boolean;
-  view_count: number;
   author: string | null;
   created_at: string;
   updated_at: string;
