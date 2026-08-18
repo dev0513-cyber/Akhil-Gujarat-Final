@@ -271,8 +271,15 @@ export default function ArticleEditor() {
           </label>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
             {/* Upload Box */}
-            <button 
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  document.getElementById('main-photo-upload')?.click();
+                }
+              }}
               onDragOver={e => { e.preventDefault(); setIsDraggingPhoto(true); }}
               onDragLeave={() => setIsDraggingPhoto(false)}
               onDrop={e => {
@@ -326,7 +333,7 @@ export default function ArticleEditor() {
                   )}
                 </div>
               )}
-            </button>
+            </div>
 
             {/* Divider */}
             <div className="hidden md:flex flex-col items-center justify-center">

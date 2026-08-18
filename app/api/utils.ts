@@ -29,6 +29,16 @@ export async function requireAdmin() {
   return null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function hasNameConflict(supabase: { from: (table: string) => any }, table: string, name_en: string, name_gu: string): Promise<boolean> {
+  const escaped = name_en.replace(/[\\%_]/g, (m) => `\\${m}`);
+  const [{ data: enCheck }, { data: guCheck }] = await Promise.all([
+    supabase.from(table).select('id').ilike('name_en', escaped).limit(1),
+    supabase.from(table).select('id').eq('name_gu', name_gu).limit(1),
+  ]);
+  return Boolean((enCheck && enCheck.length > 0) || (guCheck && guCheck.length > 0));
+}
+
 export function parseImages(value: unknown) {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -43,20 +53,32 @@ export function parseImages(value: unknown) {
   return [];
 }
 
-export async function hydrateArticles(articles: unknown) {
+type HydrateLookup = { id: number; [key: string]: unknown };
+
+export async function hydrateArticles(
+  articles: unknown,
+  options: { categories?: HydrateLookup[] | null; cities?: HydrateLookup[] | null } = {}
+) {
   let list = [];
   if (Array.isArray(articles)) {
     list = articles;
   } else if (articles) {
     list = [articles];
   }
-  const [{ data: categories }, { data: cities }] = await Promise.all([
-    supabasePublic.from('categories').select('*'),
-    supabasePublic.from('cities').select('*'),
-  ]);
 
-  const catMap = Object.fromEntries((categories || []).map((c: { id: number; [key: string]: unknown }) => [c.id, c]));
-  const cityMap = Object.fromEntries((cities || []).map((c: { id: number; [key: string]: unknown }) => [c.id, c]));
+  let categories: HydrateLookup[] | null | undefined = options.categories;
+  let cities: HydrateLookup[] | null | undefined = options.cities;
+  if (!categories || !cities) {
+    const [{ data: catData }, { data: cityData }] = await Promise.all([
+      supabasePublic.from('categories').select('*'),
+      supabasePublic.from('cities').select('*'),
+    ]);
+    categories = categories || (catData as HydrateLookup[] | null);
+    cities = cities || (cityData as HydrateLookup[] | null);
+  }
+
+  const catMap = Object.fromEntries((categories || []).map((c: HydrateLookup) => [c.id, c]));
+  const cityMap = Object.fromEntries((cities || []).map((c: HydrateLookup) => [c.id, c]));
   return list.map((a: Record<string, unknown>) => ({
     ...a,
     category: a.category_id ? catMap[a.category_id as number] || null : null,

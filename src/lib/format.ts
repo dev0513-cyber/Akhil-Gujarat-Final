@@ -52,6 +52,15 @@ export function formatTodayMasthead(): string {
   });
 }
 
+export function formatTodayMastheadShort(): string {
+  return new Date().toLocaleDateString('gu-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 export function splitParagraphs(text: string): string[] {
   return text
     .split(/\n+/)
@@ -100,7 +109,9 @@ const ERROR_MESSAGES_MAP: Record<string, [string, string]> = {
   'RECORD_EXISTS': ['આ રેકોર્ડ પહેલાથી જ અસ્તિત્વમાં છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This record already exists. Please choose a different name.'],
   'DATABASE_ERROR': ['સિસ્ટમમાં ભૂલ આવી છે. કૃપા કરીને ફરી પ્રયાસ કરો.', 'A database operation failed. Please try again.'],
   'SLUG_EXISTS_IN_CITIES': ['આ નામ પહેલેથી જ શહેરોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Cities. Please choose a different name.'],
-  'SLUG_EXISTS_IN_CATEGORIES': ['આ નામ પહેલેથી જ વિભાગોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Categories. Please choose a different name.']
+  'SLUG_EXISTS_IN_CATEGORIES': ['આ નામ પહેલેથી જ વિભાગોમાં વપરાયેલ છે. કૃપા કરીને અલગ નામ પસંદ કરો.', 'This name is already used in Categories. Please choose a different name.'],
+  'NAME_EXISTS_IN_CITIES': ['ડુપ્લિકેશન માન્ય નથી — આ નામ પહેલેથી જ શહેરોમાં વપરાયેલ છે.', 'Duplication not allowed — this name is already used in Cities.'],
+  'NAME_EXISTS_IN_CATEGORIES': ['ડુપ્લિકેશન માન્ય નથી — આ નામ પહેલેથી જ વિભાગોમાં વપરાયેલ છે.', 'Duplication not allowed — this name is already used in Categories.']
 };
 
 export function getErrorMessage(err: unknown, t: (gu: string, en: string) => string): string {

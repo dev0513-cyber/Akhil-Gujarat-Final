@@ -6,7 +6,7 @@ import { Search, X, MapPin, Newspaper, Phone, Mail } from 'lucide-react';
 import Image from 'next/image';
 import type { Category, City } from '../lib/types';
 import { fetchCategories, fetchCities, fetchSettings } from '../lib/api';
-import { formatTodayMasthead } from '../lib/format';
+import { formatTodayMasthead, formatTodayMastheadShort } from '../lib/format';
 
 export default function Layout({ children }: Readonly<{ children: ReactNode }>) {
   const [cats, setCats] = useState<Category[]>([]);
@@ -61,25 +61,32 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
       <div className="bg-ink text-white/80 text-[11px] tracking-wide">
-        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <span className="font-mono tabular-nums text-sm font-medium tracking-wider">
+        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2 md:gap-3">
+          <div className="flex items-center gap-3 md:gap-4 shrink-0">
+            <span className="font-mono tabular-nums text-[11px] md:text-sm font-medium tracking-wider whitespace-nowrap">
               {now ? now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '...'}
             </span>
-            <div className="flex items-center gap-3 border-l border-white/20 pl-4">
+            <div className="flex items-center gap-2.5 md:gap-3 border-l border-white/20 pl-3 md:pl-4">
               <a href={settings.instagram_url || '#'} target="_blank" rel="noreferrer" aria-label="Instagram" className="hover:text-white transition-colors">
-                <InstagramIcon size={18} />
+                <InstagramIcon size={16} />
               </a>
               <a href={settings.youtube_url || '#'} target="_blank" rel="noreferrer" aria-label="YouTube" className="hover:text-white transition-colors">
-                <YoutubeIcon size={18} />
+                <YoutubeIcon size={16} />
               </a>
               <a href={settings.facebook_url || '#'} target="_blank" rel="noreferrer" aria-label="Facebook" className="hover:text-white transition-colors">
-                <FacebookIcon size={18} />
+                <FacebookIcon size={16} />
               </a>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="font-gujarati text-sm font-medium">{now ? formatTodayMasthead() : '...'}</span>
+          <div className="flex items-center gap-4 shrink-0">
+            <span className="font-gujarati text-[11px] md:text-sm font-medium whitespace-nowrap">
+              {now ? (
+                <>
+                  <span className="sm:hidden">{formatTodayMastheadShort()}</span>
+                  <span className="hidden sm:inline">{formatTodayMasthead()}</span>
+                </>
+              ) : '...'}
+            </span>
           </div>
         </div>
       </div>
@@ -225,8 +232,8 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
       <main className="flex-1">{children}</main>
 
       <footer className="mt-12 bg-ink text-white">
-        <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
-          <div className="sm:col-span-2 lg:col-span-2">
+        <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+          <div className="col-span-2 lg:col-span-2">
             <div className="font-display text-[11px] tracking-[0.4em] text-gold uppercase">Akhil Gujarat</div>
             <div className="font-display text-3xl mt-2">અખિલ ગુજરાત</div>
             <p className="mt-4 text-white/65 text-sm font-gujarati max-w-md leading-relaxed">
@@ -235,18 +242,18 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
           </div>
           <div>
             <h3 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">Contact</h3>
-            <ul className="space-y-3 text-sm text-white/75 font-gujarati">
-              <li className="flex items-start gap-2">
+            <ul className="space-y-3 text-sm text-white/75 font-gujarati min-w-0">
+              <li className="flex items-start gap-2 min-w-0">
                 <MapPin size={16} className="text-crimson shrink-0 mt-0.5" />
-                <span className="font-sans">Ahmedabad, Gujarat</span>
+                <span className="font-sans min-w-0 break-words">Ahmedabad, Gujarat</span>
               </li>
-              <li className="flex items-center gap-2">
+              <li className="flex items-center gap-2 min-w-0">
                 <Phone size={16} className="text-crimson shrink-0" />
-                <span className="font-sans">+91 97232 74144</span>
+                <span className="font-sans min-w-0 break-words">+91 97232 74144</span>
               </li>
-              <li className="flex items-center gap-2">
+              <li className="flex items-center gap-2 min-w-0">
                 <Mail size={16} className="text-crimson shrink-0" />
-                <span className="font-sans">akhilgujaratdaily@gmail.com</span>
+                <span className="font-sans min-w-0 break-all">akhilgujaratdaily@gmail.com</span>
               </li>
             </ul>
           </div>

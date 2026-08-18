@@ -25,8 +25,9 @@ export const getArticles = unstable_cache(
 
     const { data, error } = await query;
     if (error) throw error;
-    
-    return hydrateArticles(data || []);
+
+    const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+    return hydrateArticles(data || [], { categories, cities });
   },
   ['articles-cache'],
   { revalidate: 60, tags: ['articles'] }

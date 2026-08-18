@@ -58,7 +58,12 @@ async function checkRateLimit(request: NextRequest, pathname: string): Promise<{
   if (process.env.NODE_ENV === 'development' || (!pathname.startsWith('/api') && !pathname.startsWith('/auth'))) {
     return {};
   }
-  
+
+  // Read-only media serving (images/PDFs) must never be blocked or counted against the quota
+  if (request.method === 'GET' && pathname.startsWith('/api/media')) {
+    return {};
+  }
+
   const ip = request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown-ip';
   const isMutation = request.method !== 'GET';
   const isUpload = pathname.startsWith('/api/upload');
@@ -85,10 +90,10 @@ async function checkRateLimit(request: NextRequest, pathname: string): Promise<{
       };
     }
     return { result: rateLimitResult };
-  } catch {
-    if (isMutation || isUpload || isAuth) {
-      return { response: NextResponse.json({ error: 'Rate limiting service unavailable' }, { status: 429 }) };
-    }
+  } catch (err) {
+    // Fail open: rate limiting is a protective layer, not a gate.
+    // If the limiter backend is down, legitimate publishing must not be blocked.
+    console.error('Rate limiter unavailable, allowing request:', err);
     return {};
   }
 }
@@ -123,35 +128,40 @@ export async function middleware(request: NextRequest) {
   // Apply Security Headers globally
   setSecurityHeaders(supabaseResponse, rateLimitResult);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          setSecurityHeaders(supabaseResponse, rateLimitResult);
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const isApiRoute = pathname.startsWith('/api')
   const isAdminRoute = pathname.startsWith('/admin')
   const isLoginRoute = pathname === '/admin/login'
+
+  // Only /admin routes need a session check here.
+  // Public pages and API routes skip the Supabase Auth round-trip entirely;
+  // API routes perform their own authentication via requireAdmin().
+  let user = null;
+  if (isAdminRoute) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+            supabaseResponse = NextResponse.next({
+              request,
+            })
+            setSecurityHeaders(supabaseResponse, rateLimitResult);
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
+        },
+      }
+    )
+    const {
+      data: { user: sessionUser },
+    } = await supabase.auth.getUser()
+    user = sessionUser
+  }
 
   // Protect admin routes: redirect unauthenticated users to login
   if (isAdminRoute && !isLoginRoute) {

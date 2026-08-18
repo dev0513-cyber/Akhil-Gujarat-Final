@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import useSWR from 'swr';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import { slugify, getErrorMessage, translateText } from '../../lib/format';
@@ -49,19 +49,40 @@ export function TaxonomyManager<T extends TaxonomyItem>({
   const [showSuccess, setShowSuccess] = useState(false);
   const { t, lang } = useAdminLang();
 
-  const handleEnglishBlur = async () => {
-    if (editing.name_en && !editing.name_gu) {
-      const gu = await translateText(editing.name_en, 'en', 'gu');
-      setEditing((p) => ({ ...p, name_gu: gu }));
-    }
-  };
+  const enInputRef = useRef<HTMLInputElement>(null);
+  const guInputRef = useRef<HTMLInputElement>(null);
 
-  const handleGujaratiBlur = async () => {
-    if (editing.name_gu && !editing.name_en) {
-      const en = await translateText(editing.name_gu, 'gu', 'en');
-      setEditing((p) => ({ ...p, name_en: en, slug: p.slug || slugify(en) }));
-    }
-  };
+  // Live sync: English → Gujarati (auto-fill while typing, no blur needed)
+  useEffect(() => {
+    const en = (editing.name_en || '').trim();
+    const gu = (editing.name_gu || '').trim();
+    if (!en || gu) return;
+
+    const t = setTimeout(async () => {
+      if (document.activeElement === guInputRef.current) return;
+      const translated = await translateText(en, 'en', 'gu');
+      if (document.activeElement === guInputRef.current) return;
+      setEditing((p) => (p.name_en?.trim() === en ? { ...p, name_gu: translated } : p));
+    }, 500);
+    return () => clearTimeout(t);
+  }, [editing.name_en, editing.name_gu]);
+
+  // Live sync: Gujarati → English
+  useEffect(() => {
+    const en = (editing.name_en || '').trim();
+    const gu = (editing.name_gu || '').trim();
+    if (!gu || en) return;
+
+    const t = setTimeout(async () => {
+      if (document.activeElement === enInputRef.current) return;
+      const translated = await translateText(gu, 'gu', 'en');
+      if (document.activeElement === enInputRef.current) return;
+      setEditing((p) =>
+        p.name_gu?.trim() === gu ? { ...p, name_en: translated, slug: p.slug || slugify(translated) } : p
+      );
+    }, 500);
+    return () => clearTimeout(t);
+  }, [editing.name_gu, editing.name_en]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -142,23 +163,35 @@ export function TaxonomyManager<T extends TaxonomyItem>({
 
       <form onSubmit={onSubmit} className="mt-5 bg-white border border-rule p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         <input
+          ref={enInputRef}
           placeholder="English Name"
           value={editing.name_en || ''}
-          onChange={(e) =>
+          onChange={(e) => {
+            const value = e.target.value;
             setEditing((p) => ({
               ...p,
-              name_en: e.target.value,
-              slug: p.id ? p.slug : slugify(e.target.value),
-            }))
-          }
-          onBlur={handleEnglishBlur}
+              name_en: value,
+              // English emptied → clear Gujarati instantly
+              name_gu: value.trim() ? p.name_gu : '',
+              slug: p.id ? p.slug : slugify(value),
+            }));
+          }}
           className="border border-rule px-3 py-2 text-sm"
         />
         <input
+          ref={guInputRef}
           placeholder={t('ગુજરાતી નામ', 'Gujarati Name')}
           value={editing.name_gu || ''}
-          onChange={(e) => setEditing((p) => ({ ...p, name_gu: e.target.value }))}
-          onBlur={handleGujaratiBlur}
+          onChange={(e) => {
+            const value = e.target.value;
+            setEditing((p) => ({
+              ...p,
+              name_gu: value,
+              // Gujarati emptied → clear English + slug instantly
+              name_en: value.trim() ? p.name_en : '',
+              slug: p.id ? p.slug : slugify(p.name_en || ''),
+            }));
+          }}
           className="border border-rule px-3 py-2 text-sm font-gujarati"
         />
         {hasDescriptionField && (

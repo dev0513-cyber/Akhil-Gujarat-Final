@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
-import { requireAdmin, handleApiError, handleAdminDelete } from '../utils';
+import { requireAdmin, handleApiError, handleAdminDelete, hasNameConflict } from '../utils';
 import { categorySchema } from '../../../src/lib/validation';
 
 export async function GET() {
@@ -33,9 +33,13 @@ export async function POST(req: Request) {
     
     const slug = String(validation.data.slug).toLowerCase().trim();
 
-    const { data: cityCheck } = await supabase.from('cities').select('id').eq('slug', slug).limit(1);
+const { data: cityCheck } = await supabase.from('cities').select('id').eq('slug', slug).limit(1);
     if (cityCheck && cityCheck.length > 0) {
       return NextResponse.json({ error: 'SLUG_EXISTS_IN_CITIES' }, { status: 400 });
+    }
+
+    if (await hasNameConflict(supabase, 'cities', validation.data.name_en, validation.data.name_gu)) {
+      return NextResponse.json({ error: 'NAME_EXISTS_IN_CITIES' }, { status: 400 });
     }
 
     const { data, error } = await supabase.from('categories').insert({
@@ -78,8 +82,12 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: 'SLUG_EXISTS_IN_CITIES' }, { status: 400 });
       }
     }
-    if (body.sort_order !== undefined) patch.sort_order = validation.data.sort_order;
+if (body.sort_order !== undefined) patch.sort_order = validation.data.sort_order;
     if (body.description !== undefined) patch.description = validation.data.description;
+
+    if (await hasNameConflict(supabase, 'cities', validation.data.name_en, validation.data.name_gu)) {
+      return NextResponse.json({ error: 'NAME_EXISTS_IN_CITIES' }, { status: 400 });
+    }
 
     const { data, error } = await supabase.from('categories').update(patch).eq('id', body.id).select().single();
     if (error) throw error;

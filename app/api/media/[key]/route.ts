@@ -39,7 +39,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     const headers = new Headers();
     if (response.ContentType) headers.set('Content-Type', response.ContentType);
     if (response.ContentLength) headers.set('Content-Length', response.ContentLength.toString());
-    headers.set('Cache-Control', 'public, max-age=31536000, immutable'); // Cache for 1 year
+    // s-maxage enables caching at the Vercel/CDN edge so B2 is fetched ~once per image,
+    // not on every request. Browser cache keeps it for a year (keys are immutable).
+    headers.set('Cache-Control', 'public, max-age=31536000, s-maxage=604800, stale-while-revalidate=86400, immutable');
 
     return new NextResponse(stream, { headers });
   } catch (error) {

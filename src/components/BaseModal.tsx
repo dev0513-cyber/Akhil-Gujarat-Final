@@ -33,7 +33,7 @@ export function BaseModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4">
       <dialog open
-        className="m-0 p-0 border-0 bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative m-0 p-0 border-0 bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         aria-modal="true"
       >
         <div className="flex justify-between items-start p-5 border-b border-rule">

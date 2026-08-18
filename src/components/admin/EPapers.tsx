@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useSWR from 'swr';
-import * as pdfjsLib from 'pdfjs-dist';
 import { ChevronLeft, ChevronRight, Upload, FileText, Trash2, Calendar as CalendarIcon, ExternalLink, ChevronDown } from 'lucide-react';
 import { fetchEPapers, saveEPaper, deleteEPaper, uploadFile } from '../../lib/api';
 import type { EPaper } from '../../lib/types';
@@ -12,6 +11,8 @@ import { SuccessModal } from '../SuccessModal';
 import { AlertModal } from '../AlertModal';
 
 async function generateThumbnail(file: File): Promise<{ thumbFile: File; thumbPreview: string }> {
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const page = await pdf.getPage(1);
@@ -62,12 +63,6 @@ export default function AdminEPapers() {
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const { t, lang } = useAdminLang();
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-    }
-  }, []);
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
@@ -298,8 +293,15 @@ export default function AdminEPapers() {
                   {t('PDF ફાઇલ', 'PDF File')}
                 </label>
                 
-                <button 
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      document.getElementById('pdf-upload')?.click();
+                    }
+                  }}
                   onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={onDrop}
@@ -360,7 +362,7 @@ export default function AdminEPapers() {
                       </p>
                     </div>
                   )}
-                </button>
+                </div>
               </div>
 
               <button 
