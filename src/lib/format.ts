@@ -94,12 +94,6 @@ export function slugify(value: string): string {
     .replace(/-$/, '');
 }
 
-export function readingTime(text: string): string {
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  const mins = Math.max(1, Math.round(words / 180));
-  return `${mins} મિનિટ વાંચન`;
-}
-
 export async function translateText(text: string, fromLang: 'en' | 'gu', toLang: 'en' | 'gu'): Promise<string> {
   if (!text) return '';
   try {

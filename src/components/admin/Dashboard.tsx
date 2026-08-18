@@ -2,7 +2,7 @@
 
 import useSWR from 'swr';
 import Link from 'next/link';
-import { FileText, Newspaper, TrendingUp, Video, Plus } from 'lucide-react';
+import { FileText, Newspaper, Video, Plus } from 'lucide-react';
 
 import { fetchArticles } from '../../lib/api';
 import { formatDateTimeGu, getErrorMessage } from '../../lib/format';
@@ -21,7 +21,6 @@ export default function Dashboard() {
   const drafts = articles.filter((a) => a.status === 'draft');
   const archived = articles.filter((a) => a.status === 'archived');
   const videos = articles.filter((a) => a.video_url);
-  const views = articles.reduce((s, a) => s + (a.view_count || 0), 0);
 
   return (
     <div>
@@ -31,11 +30,10 @@ export default function Dashboard() {
       </p>
       {loading && <p className={`mt-8 text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
 
-      <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="mt-6 grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Stat icon={Newspaper} label={t('પ્રકાશિત', 'Published')} value={published.length} lang={lang} />
         <Stat icon={FileText} label={t('ડ્રાફ્ટ', 'Draft')} value={drafts.length} lang={lang} />
         <Stat icon={Video} label={t('વિડિયો', 'Videos')} value={videos.length} lang={lang} />
-        <Stat icon={TrendingUp} label={t('કુલ વાંચન', 'Total Views')} value={views} lang={lang} />
       </div>
 
       <div className="mt-8 flex gap-3">

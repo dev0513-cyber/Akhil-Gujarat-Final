@@ -2,9 +2,9 @@ import supabase from '../../../../src/lib/supabase';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Eye, MapPin, Tag } from 'lucide-react';
+import { Clock, MapPin, Tag } from 'lucide-react';
 import { getArticles } from '../../../../src/lib/server-data';
-import { formatDateTimeGu, readingTime, splitParagraphs } from '../../../../src/lib/format';
+import { formatDateTimeGu, splitParagraphs } from '../../../../src/lib/format';
 import NewsCard from '../../../../src/components/NewsCard';
 import ShareButtons from '../../../../src/components/ShareButtons';
 import VideoEmbed from '../../../../src/components/VideoEmbed';
@@ -114,10 +114,6 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/50">
           <span className="inline-flex items-center gap-1">
             <Clock size={12} /> {formatDateTimeGu(article.published_at)}
-          </span>
-          <span>{readingTime(article.content)}</span>
-          <span className="inline-flex items-center gap-1">
-            <Eye size={12} /> {article.view_count || 0} વાંચન
           </span>
           {article.author && <span>{article.author}</span>}
         </div>
