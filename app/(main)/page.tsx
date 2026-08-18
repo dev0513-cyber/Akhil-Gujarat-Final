@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { getArticles, getCities } from '../../src/lib/server-data';
+import { getISTDayRange } from '../../src/lib/format';
 import NewsCard from '../../src/components/NewsCard';
 import BreakingTicker from '../../src/components/BreakingTicker';
 import type { Article } from '../../src/lib/types';
 
 export default async function Home() {
-  const [latest, trending, cities] = await Promise.all([
+  const [latest, trending, cities, todayNews] = await Promise.all([
     getArticles({ limit: 80 }),
     getArticles({ trending: 1, limit: 8 }),
     getCities(),
+    getArticles({ day: getISTDayRange().day, limit: 100 }),
   ]);
 
   const byCat = (slug: string) => latest.filter((a: Article) => a.category?.slug === slug);
@@ -19,7 +21,6 @@ export default async function Home() {
   
   const hero = trending.length > 0 ? trending[0] : latest[0];
   const side = trending.length > 0 ? trending.slice(1, 5) : latest.slice(1, 5);
-  const restLatest = latest.filter((a: Article) => a.id !== hero?.id).slice(0, 8);
   const cityNews = latest.filter((a: Article) => a.city_id).slice(0, 8);
 
   return (
@@ -45,14 +46,16 @@ export default async function Home() {
               </aside>
             </section>
 
-            <section className="mt-10">
-              <SectionHead title="તાજા સમાચાર" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {restLatest.map((a: Article) => (
-                  <NewsCard key={a.id} article={a} variant="standard" />
-                ))}
-              </div>
-            </section>
+            {todayNews.length > 0 && (
+              <section className="mt-10">
+                <SectionHead title="તાજા સમાચાર" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {todayNews.map((a: Article) => (
+                    <NewsCard key={a.id} article={a} variant="standard" />
+                  ))}
+                </div>
+              </section>
+            )}
 
             <HighlightBand title="ગુજરાત હાઇલાઇટ્સ" to="/category/gujarat" items={gujarat} />
             <HighlightBand title="ભારત હાઇલાઇટ્સ" to="/category/india" items={india} />
