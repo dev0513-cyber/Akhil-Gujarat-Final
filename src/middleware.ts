@@ -153,20 +153,20 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = pathname.startsWith('/admin')
   const isLoginRoute = pathname === '/admin/login'
 
-  if (user && (!isAdminRoute || isLoginRoute) && !isApiRoute) {
-    request.cookies.getAll().forEach(cookie => {
-      if (cookie.name.startsWith('sb-')) {
-        supabaseResponse.cookies.delete(cookie.name)
-      }
-    })
-  }
-
+  // Protect admin routes: redirect unauthenticated users to login
   if (isAdminRoute && !isLoginRoute) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
       return NextResponse.redirect(url)
     }
+  }
+
+  // If already logged in and visiting /admin/login, redirect to dashboard
+  if (isLoginRoute && user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/admin'
+    return NextResponse.redirect(url)
   }
 
   if (isAdminRoute) {
