@@ -67,3 +67,13 @@ export type StaticPage = {
   seo_description: string | null;
   updated_at: string;
 };
+
+export type Ad = {
+  id: string;
+  title: string;
+  image_url: string;
+  link_url: string;
+  slot: string;
+  is_active: boolean;
+  created_at: string;
+};
