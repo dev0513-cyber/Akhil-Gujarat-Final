@@ -1,5 +1,5 @@
 import { createClient } from '../utils/supabase/client';
-import type { Article, Category, City, StaticPage, SiteSetting, EPaper } from './types';
+import type { Article, Category, City, StaticPage, SiteSetting, EPaper, Ad } from './types';
 
 async function authHeaders(): Promise<Record<string, string>> {
   const supabase = createClient();
@@ -181,6 +181,31 @@ export async function saveEPaper(payload: Partial<EPaper>): Promise<EPaper> {
 export async function deleteEPaper(id: number): Promise<void> {
   const headers = await authHeaders();
   const res = await fetch('/api/epapers', {
+    method: 'DELETE',
+    headers,
+    body: JSON.stringify({ id }),
+  });
+  await readJson(res);
+}
+
+export async function fetchAds(): Promise<Ad[]> {
+  const res = await fetch('/api/ads');
+  return readJson<Ad[]>(res);
+}
+
+export async function saveAd(payload: Partial<Ad>): Promise<Ad> {
+  const headers = await authHeaders();
+  const res = await fetch('/api/ads', {
+    method: payload.id ? 'PUT' : 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  return readJson<Ad>(res);
+}
+
+export async function deleteAd(id: string): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch('/api/ads', {
     method: 'DELETE',
     headers,
     body: JSON.stringify({ id }),

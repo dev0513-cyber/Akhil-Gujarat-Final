@@ -11,6 +11,7 @@ import {
   Settings as SettingsIcon,
   Languages,
   Globe,
+  Megaphone,
 } from "lucide-react";
 
 import { AdminLangProvider, useAdminLang } from "../contexts/AdminLangContext";
@@ -34,6 +35,12 @@ const links = [
     labelGu: "ઈ-પેપર",
     labelEn: "E-Papers",
     icon: FileText,
+  },
+  {
+    to: "/admin/ads",
+    labelGu: "જાહેરાત",
+    labelEn: "Ads",
+    icon: Megaphone,
   },
   {
     to: "/admin/categories",
