@@ -3,6 +3,7 @@ import { hydrateArticles } from '../../app/api/utils';
 import { unstable_cache } from 'next/cache';
 import { applyArticleSearchAndOrder } from './query-utils';
 import { getISTDayRange } from './format';
+import type { Ad } from './types';
 
 export const getArticles = unstable_cache(
   async (params: Record<string, string | number | boolean> = {}) => {
@@ -67,3 +68,15 @@ export const getPages = unstable_cache(
   ['pages-cache'],
   { revalidate: 3600, tags: ['pages'] }
 );
+
+export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
+  const { data, error } = await supabase
+    .from('ads')
+    .select('*')
+    .eq('slot', slot)
+    .eq('is_active', true)
+    .limit(20);
+  if (error) throw error;
+  if (!data || data.length === 0) return null;
+  return data[Math.floor(Math.random() * data.length)] as Ad;
+};
