@@ -10,6 +10,7 @@ export default function ShareButtons({
   url?: string;
   compact?: boolean; }>) {
   const [copied, setCopied] = useState(false);
+  const [igCopied, setIgCopied] = useState(false);
   const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedText = encodeURIComponent(title);
@@ -21,6 +22,24 @@ export default function ShareButtons({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
+    }
+  };
+
+  const shareInstagram = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title, url: shareUrl });
+      } catch {
+        // user cancelled — ignore
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIgCopied(true);
+      setTimeout(() => setIgCopied(false), 2000);
+    } catch {
+      setIgCopied(false);
     }
   };
 
@@ -50,6 +69,10 @@ export default function ShareButtons({
         <FacebookIcon />
         Facebook
       </a>
+      <button type="button" className={btn} onClick={shareInstagram}>
+        {igCopied ? <Check size={13} /> : <InstagramIcon />}
+        {igCopied ? 'કોપી થયું — Instagram માં પેસ્ટ કરો' : 'Instagram'}
+      </button>
       <button type="button" className={btn} onClick={copy}>
         {copied ? <Check size={13} /> : <Link2 size={13} />}
         {copied ? 'કોપી થયું' : 'લિંક કોપી'}
@@ -70,6 +93,16 @@ function FacebookIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <path d="M22 12.07C22 6.5 17.52 2 12 2S2 6.5 2 12.07c0 5.02 3.66 9.18 8.44 9.93v-7.02H7.9v-2.91h2.54V9.84c0-2.51 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.91h-2.34V22c4.78-.75 8.44-4.91 8.44-9.93Z" />
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
     </svg>
   );
 }
