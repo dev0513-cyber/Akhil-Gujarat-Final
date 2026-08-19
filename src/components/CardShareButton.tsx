@@ -4,11 +4,14 @@ import { Check, Share2 } from 'lucide-react';
 
 export default function CardShareButton({
   title,
+  slug,
   light = false,
 }: Readonly<{ title: string;
+  slug: string;
   light?: boolean; }>) {
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== 'undefined' ? window.location.href : '';
+  const url =
+    typeof window !== 'undefined' ? `${window.location.origin}/news/${slug}` : '';
 
   const share = async () => {
     if (typeof navigator !== 'undefined' && navigator.share) {

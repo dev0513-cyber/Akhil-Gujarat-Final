@@ -23,6 +23,7 @@ export default function AdminAds() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Ad | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -90,6 +91,7 @@ export default function AdminAds() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    setDeleting(true);
     try {
       await deleteAd(deleteTarget.id);
       await mutate();
@@ -98,6 +100,8 @@ export default function AdminAds() {
       console.error(err);
       setAlertMessage(t('કાઢવામાં નિષ્ફળ', 'Failed to delete'));
       setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -295,6 +299,7 @@ export default function AdminAds() {
         )}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+        isDeleting={deleting}
       />
       <SuccessModal
         isOpen={showSuccess}

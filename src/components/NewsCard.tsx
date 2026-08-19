@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import Image from 'next/image';
 import { Clock, Play } from 'lucide-react';
 import type { Article } from '../lib/types';
@@ -46,7 +46,7 @@ export default function NewsCard({
               )}
               {article.is_trending && (
                 <span className="bg-gold text-ink text-[11px] tracking-wider uppercase px-2 py-0.5">
-                  àªŸà«‹àªª
+                  ટોપ
                 </span>
               )}
             </div>
@@ -61,7 +61,7 @@ export default function NewsCard({
             </p>
           </div>
         </Link>
-        <CardShareButton title={article.headline} light />
+        <CardShareButton title={article.headline} slug={article.slug} light />
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function NewsCard({
             <p className="mt-2 text-sm text-ink/65 line-clamp-2 font-gujarati">{article.description}</p>
           </div>
         </Link>
-        <CardShareButton title={article.headline} />
+        <CardShareButton title={article.headline} slug={article.slug} />
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function NewsCard({
             </h3>
           </div>
         </Link>
-        <CardShareButton title={article.headline} />
+        <CardShareButton title={article.headline} slug={article.slug} />
       </div>
     );
   }
@@ -149,7 +149,7 @@ export default function NewsCard({
         </h3>
         <p className="mt-1.5 text-sm text-ink/60 line-clamp-2 font-gujarati">{article.description}</p>
       </Link>
-      <CardShareButton title={article.headline} />
+      <CardShareButton title={article.headline} slug={article.slug} />
     </div>
   );
 }
@@ -162,11 +162,11 @@ function Meta({ article }: Readonly<{ article: Article }>) {
       )}
       {article.city && (
         <>
-          <span className="text-rule">â€¢</span>
+          <span className="text-rule">•</span>
           <span className="text-ink font-semibold tracking-wide">{article.city.name_gu}</span>
         </>
       )}
-      <span className="text-rule">â€¢</span>
+      <span className="text-rule">•</span>
       <span>{formatDateGu(article.published_at)}</span>
     </div>
   );
