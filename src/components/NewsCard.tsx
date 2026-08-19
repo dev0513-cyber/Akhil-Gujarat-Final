@@ -61,7 +61,7 @@ export default function NewsCard({
             </p>
           </div>
         </Link>
-        <CardShareButton title={article.headline} slug={article.slug} light className="absolute top-4 right-4 z-10" />
+        <CardShareButton title={article.headline} slug={article.slug} light className="absolute bottom-4 right-4 z-10" />
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function NewsCard({
             <p className="mt-2 text-sm text-ink/65 line-clamp-2 font-gujarati">{article.description}</p>
           </div>
         </Link>
-        <CardShareButton title={article.headline} slug={article.slug} className="absolute top-2 right-2 z-10" />
+        <CardShareButton title={article.headline} slug={article.slug} className="absolute bottom-2 right-2 z-10" />
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function NewsCard({
             </h3>
           </div>
         </Link>
-        <CardShareButton title={article.headline} slug={article.slug} className="self-center mr-1" />
+        <CardShareButton title={article.headline} slug={article.slug} className="self-end mr-1" />
       </div>
     );
   }
