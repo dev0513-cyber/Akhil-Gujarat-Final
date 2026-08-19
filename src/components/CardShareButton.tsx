@@ -62,7 +62,7 @@ export default function CardShareButton({
         <Share2 size={14} />
       </button>
       {open && (
-        <div className="absolute right-0 top-10 z-30 bg-white border border-rule shadow-lg p-3 rounded-md w-max max-w-[240px]">
+        <div className="absolute right-0 bottom-10 z-30 bg-white border border-rule shadow-lg p-3 rounded-md w-max max-w-[240px]">
           <ShareButtons title={title} url={shareUrl} compact />
         </div>
       )}

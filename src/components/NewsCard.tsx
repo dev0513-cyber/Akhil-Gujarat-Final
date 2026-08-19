@@ -149,7 +149,7 @@ export default function NewsCard({
         </h3>
         <p className="mt-1.5 text-sm text-ink/60 line-clamp-2 font-gujarati">{article.description}</p>
       </Link>
-      <CardShareButton title={article.headline} slug={article.slug} className="absolute top-2 right-2 z-10" />
+      <CardShareButton title={article.headline} slug={article.slug} className="absolute bottom-2 right-2 z-10" />
     </div>
   );
 }
