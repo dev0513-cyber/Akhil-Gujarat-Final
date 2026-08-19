@@ -89,8 +89,8 @@ export default function NewsCard({
 
   if (variant === 'row') {
     return (
-      <div className="relative">
-        <Link href={href} className="group flex gap-3 py-3 border-b border-rule/60 last:border-0">
+      <div className="relative border-b border-rule/60 last:border-0">
+        <Link href={href} className="group flex gap-3 py-3">
           <div className="relative w-28 h-20 shrink-0 overflow-hidden bg-paper-dark">
             <Image src={img} alt="" fill sizes="112px" className="object-cover group-hover:scale-105 transition-transform duration-500" />
             {hasVideo && <PlayBadge small />}
