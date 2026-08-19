@@ -1,5 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
+import { AD_SLOT_KEYS } from './ads';
 
 export const articleSchema = z.object({
   id: z.number().optional(),
@@ -61,4 +62,13 @@ export const staticPageSchema = z.object({
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const adSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1).max(255),
+  image_url: z.string().min(1),
+  link_url: z.string().min(1),
+  slot: z.enum(AD_SLOT_KEYS),
+  is_active: z.boolean().default(true),
 });
