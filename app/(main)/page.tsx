@@ -4,6 +4,7 @@ import { getArticles, getCities } from '../../src/lib/server-data';
 import { getISTDayRange } from '../../src/lib/format';
 import NewsCard from '../../src/components/NewsCard';
 import BreakingTicker from '../../src/components/BreakingTicker';
+import AdBanner from '../../src/components/AdBanner';
 import type { Article } from '../../src/lib/types';
 
 export default async function Home() {
@@ -46,6 +47,8 @@ export default async function Home() {
               </aside>
             </section>
 
+            <AdBanner slot="homepage_after_hero" className="mt-10" />
+
             {todayNews.length > 0 && (
               <section className="mt-10">
                 <SectionHead title="તાજા સમાચાર" />
@@ -56,6 +59,8 @@ export default async function Home() {
                 </div>
               </section>
             )}
+
+            <AdBanner slot="homepage_between" className="mt-10" />
 
             <HighlightBand title="ગુજરાત હાઇલાઇટ્સ" to="/category/gujarat" items={gujarat} />
             <HighlightBand title="ભારત હાઇલાઇટ્સ" to="/category/india" items={india} />

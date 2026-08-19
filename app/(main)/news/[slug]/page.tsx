@@ -7,6 +7,7 @@ import { getArticles } from '../../../../src/lib/server-data';
 import { formatDateTimeGu, splitParagraphs } from '../../../../src/lib/format';
 import NewsCard from '../../../../src/components/NewsCard';
 import ShareButtons from '../../../../src/components/ShareButtons';
+import AdBanner from '../../../../src/components/AdBanner';
 import VideoEmbed from '../../../../src/components/VideoEmbed';
 import type { Article } from '../../../../src/lib/types';
 import { ErrorBanner } from '../../../../src/components/Skeleton';
@@ -118,6 +119,8 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
           {article.author && <span>{article.author}</span>}
         </div>
 
+        <AdBanner slot="article_top" className="mt-6" />
+
         <ShareButtons title={article.headline} />
 
         {article.image_url && (
@@ -133,7 +136,10 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
 
         <div className="mt-6 space-y-4 font-gujarati text-[17px] leading-[1.85] text-ink/90">
           {paragraphs.map((p: string, i: number) => (
-            <p key={p.slice(0, 30).replace(/\s+/g, '-') + '-' + i}>{p}</p>
+            <div key={p.slice(0, 30).replace(/\s+/g, '-') + '-' + i}>
+              <p>{p}</p>
+              {i === 0 && <AdBanner slot="article_middle" />}
+            </div>
           ))}
         </div>
 
@@ -175,6 +181,8 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         <div className="mt-6 border-t border-rule pt-4">
 <ShareButtons title={article.headline} />
         </div>
+
+        <AdBanner slot="article_bottom" className="mt-8" />
       </article>
 
       {related.length > 0 && (
