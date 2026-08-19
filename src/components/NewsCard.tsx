@@ -32,7 +32,7 @@ export default function NewsCard({
             className="object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 text-white">
+          <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 pr-14 md:pr-16 text-white">
             <div className="flex items-center gap-2 mb-3">
               {article.category && (
                 <span className="bg-crimson text-white text-[11px] tracking-wider uppercase px-2 py-0.5">
@@ -61,7 +61,7 @@ export default function NewsCard({
             </p>
           </div>
         </Link>
-        <CardShareButton title={article.headline} slug={article.slug} light className="absolute bottom-4 right-4 z-10" />
+        <CardShareButton title={article.headline} slug={article.slug} light className="absolute bottom-2 right-2 z-10" />
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function NewsCard({
             </h3>
           </div>
         </Link>
-        <CardShareButton title={article.headline} slug={article.slug} className="self-end mr-1" />
+        <CardShareButton title={article.headline} slug={article.slug} className="self-end mr-2" />
       </div>
     );
   }
@@ -137,8 +137,8 @@ export default function NewsCard({
   }
 
   return (
-    <div className="relative">
-      <Link href={href} className="group flex flex-col">
+    <div className="relative h-full">
+      <Link href={href} className="group flex flex-col h-full">
         <div className="relative aspect-[16/10] overflow-hidden bg-paper-dark">
           <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
           {hasVideo && <PlayBadge />}
