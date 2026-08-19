@@ -33,7 +33,7 @@ export default function CardShareButton({
       type="button"
       aria-label={copied ? 'લિંક કોપી થઈ' : 'શેર કરો'}
       onClick={share}
-      className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-colors ${
+      className={`absolute bottom-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-colors ${
         light
           ? 'bg-white/90 text-ink hover:bg-white'
           : 'bg-white border border-rule text-ink hover:bg-ink/5'
