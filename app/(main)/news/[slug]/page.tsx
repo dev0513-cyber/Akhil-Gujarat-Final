@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Clock, MapPin, Tag } from 'lucide-react';
-import { getArticles } from '../../../../src/lib/server-data';
+import { getArticles, getAdsForSlot } from '../../../../src/lib/server-data';
 import { formatDateTimeGu, splitParagraphs } from '../../../../src/lib/format';
 import NewsCard from '../../../../src/components/NewsCard';
 import ShareButtons from '../../../../src/components/ShareButtons';
@@ -12,6 +12,7 @@ import VideoEmbed from '../../../../src/components/VideoEmbed';
 import type { Article } from '../../../../src/lib/types';
 import { ErrorBanner } from '../../../../src/components/Skeleton';
 import { hydrateArticles } from '../../../api/utils';
+import type { ReactNode } from 'react';
 
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
@@ -64,6 +65,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
   const [article] = await hydrateArticles(data);
   const rawRelated = await getArticles({ category_id: article.category_id, limit: 5 });
   const related = rawRelated.filter((a: Article) => a.id !== article.id).slice(0, 4);
+  const sidebarAd = await getAdsForSlot('article_sidebar');
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -85,6 +87,8 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
   const paragraphs = splitParagraphs(article.content);
   const tags = (article.tags || '').split(',').map((t: string) => t.trim()).filter(Boolean);
 
+  let articleJsx: ReactNode;
+
   return (
     <>
       <script
@@ -92,6 +96,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {articleJsx = (
       <article className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {article.category && (
@@ -184,16 +189,41 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
 
         <AdBanner slot="article_bottom" className="mt-8" />
       </article>
+      )}
 
-      {related.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 pb-12">
-          <h2 className="font-display text-2xl border-b-2 border-ink pb-1.5 mb-5">સંબંધિત સમાચાર</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {related.map((a: Article) => (
-              <NewsCard key={a.id} article={a} variant="standard" />
-            ))}
+      {sidebarAd ? (
+        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-8">
+          <div className="min-w-0">
+            {articleJsx}
+            {related.length > 0 && (
+              <section className="mt-8">
+                <h2 className="font-display text-2xl border-b-2 border-ink pb-1.5 mb-5">સંબંધિત સમાચાર</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {related.map((a: Article) => (
+                    <NewsCard key={a.id} article={a} variant="standard" />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
-        </section>
+          <aside>
+            <AdBanner slot="article_sidebar" />
+          </aside>
+        </div>
+      ) : (
+        <>
+          {articleJsx}
+          {related.length > 0 && (
+            <section className="max-w-6xl mx-auto px-4 pb-12">
+              <h2 className="font-display text-2xl border-b-2 border-ink pb-1.5 mb-5">સંબંધિત સમાચાર</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {related.map((a: Article) => (
+                  <NewsCard key={a.id} article={a} variant="standard" />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </>
   );
