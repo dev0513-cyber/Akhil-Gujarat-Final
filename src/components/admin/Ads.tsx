@@ -46,7 +46,7 @@ export default function AdminAds() {
   };
 
   const startEdit = (ad: Ad) => {
-    setForm({ title: ad.title, image_url: ad.image_url, link_url: ad.link_url, slot: ad.slot, frame: ad.frame, is_active: ad.is_active });
+    setForm({ title: ad.title, image_url: ad.image_url, link_url: ad.link_url, slot: ad.slot, frame: ad.frame ?? 'banner', is_active: ad.is_active });
     setEditingId(ad.id);
     setImageFile(null);
     setImagePreview(ad.image_url);
@@ -156,9 +156,13 @@ export default function AdminAds() {
                     {getAdFrame(ad.frame) ? (gu ? getAdFrame(ad.frame).labelGu : getAdFrame(ad.frame).labelEn) : '—'}
                   </td>
                   <td className="px-4 py-2 text-ink/60 max-w-[180px] truncate">
-                    <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="hover:text-crimson">
-                      {ad.link_url || '—'}
-                    </a>
+                    {ad.link_url ? (
+                      <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="hover:text-crimson">
+                        {ad.link_url}
+                      </a>
+                    ) : (
+                      <span>—</span>
+                    )}
                   </td>
                   <td className="px-4 py-2">
                     <button
