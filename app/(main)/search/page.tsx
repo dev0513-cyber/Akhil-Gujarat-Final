@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { Search as SearchIcon } from 'lucide-react';
 import { getArticles } from '../../../src/lib/server-data';
 import NewsCard from '../../../src/components/NewsCard';
+import AdBanner from '../../../src/components/AdBanner';
 import type { Article } from '../../../src/lib/types';
 
 export async function generateMetadata({ searchParams }: Readonly<{ searchParams: Promise<{ q?: string }> }>): Promise<Metadata> {
@@ -35,6 +36,8 @@ export default async function SearchPage({ searchParams }: Readonly<{ searchPara
 
       {term && <p className="mt-5 text-sm text-ink/55 font-gujarati">“{term}” માટે પરિણામો</p>}
       
+      <AdBanner slot="search_top" className="mb-6" />
+
       {term && items.length === 0 ? (
         <p className="py-12 font-gujarati text-ink/50">કોઈ સમાચાર મળ્યા નહીં. અન્ય શબ્દ અજમાવો.</p>
       ) : (

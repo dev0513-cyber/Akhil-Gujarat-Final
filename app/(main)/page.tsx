@@ -44,6 +44,7 @@ export default async function Home() {
                     ))}
                   </div>
                 </div>
+                <AdBanner slot="homepage_trending_sidebar" className="mt-4" />
               </aside>
             </section>
 
@@ -63,6 +64,7 @@ export default async function Home() {
             <AdBanner slot="homepage_between" className="mt-10" />
 
             <HighlightBand title="ગુજરાત હાઇલાઇટ્સ" to="/category/gujarat" items={gujarat} />
+            <AdBanner slot="homepage_between_categories" className="mt-10" />
             <HighlightBand title="ભારત હાઇલાઇટ્સ" to="/category/india" items={india} />
             <HighlightBand title="આંતરરાષ્ટ્રીય હાઇલાઇટ્સ" to="/category/international" items={world} />
 
@@ -87,6 +89,7 @@ export default async function Home() {
               </div>
             </section>
 
+            <AdBanner slot="homepage_after_city" className="mt-10" />
 
           </>
         ) : (
