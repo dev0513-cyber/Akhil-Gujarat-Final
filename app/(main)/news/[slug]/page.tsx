@@ -87,17 +87,8 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
   const paragraphs = splitParagraphs(article.content);
   const tags = (article.tags || '').split(',').map((t: string) => t.trim()).filter(Boolean);
 
-  let articleJsx: ReactNode;
-
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
-      {articleJsx = (
-      <article className="max-w-3xl mx-auto px-4 py-8">
+  const articleJsx: ReactNode = (
+    <article className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {article.category && (
             <Link
@@ -188,8 +179,15 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         </div>
 
         <AdBanner slot="article_bottom" className="mt-8" />
-      </article>
-      )}
+    </article>
+  );
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {sidebarAd ? (
         <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-8">
