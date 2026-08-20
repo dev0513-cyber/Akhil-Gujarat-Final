@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Plus, Pencil, Trash2, Upload, Image as ImageIcon, Link2 } from 'lucide-react';
+import { Plus, Upload, Image as ImageIcon, Link2 } from 'lucide-react';
 import { fetchAds, saveAd, deleteAd, uploadFile } from '../../lib/api';
 import type { Ad } from '../../lib/types';
-import { AD_SLOTS } from '../../lib/ads';
+import { AD_SLOTS, AD_FRAMES, getAdFrame } from '../../lib/ads';
 import { useAdminLang } from '../../contexts/AdminLangContext';
 import { ConfirmDeleteModal } from '../ConfirmDeleteModal';
 import { SuccessModal } from '../SuccessModal';
 import { AlertModal } from '../AlertModal';
 
-const emptyForm = { title: '', image_url: '', link_url: '', slot: AD_SLOTS[0].key, is_active: true };
+const emptyForm = { title: '', image_url: '', link_url: '', slot: AD_SLOTS[0].key, frame: 'banner', is_active: true };
 
-type AdForm = { title: string; image_url: string; link_url: string; slot: string; is_active: boolean };
+type AdForm = { title: string; image_url: string; link_url: string; slot: string; frame: string; is_active: boolean };
 
 export default function AdminAds() {
   const { t, lang } = useAdminLang();
@@ -24,6 +24,7 @@ export default function AdminAds() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Ad | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -45,7 +46,7 @@ export default function AdminAds() {
   };
 
   const startEdit = (ad: Ad) => {
-    setForm({ title: ad.title, image_url: ad.image_url, link_url: ad.link_url, slot: ad.slot, is_active: ad.is_active });
+    setForm({ title: ad.title, image_url: ad.image_url, link_url: ad.link_url, slot: ad.slot, frame: ad.frame, is_active: ad.is_active });
     setEditingId(ad.id);
     setImageFile(null);
     setImagePreview(ad.image_url);
@@ -59,15 +60,15 @@ export default function AdminAds() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.link_url) {
-      setAlertMessage(t('શીર્ષક અને લિંક URL જરૂરી છે', 'Title and link URL are required'));
+    if (!form.title) {
+      setAlertMessage(t('શીર્ષક જરૂરી છે', 'Title is required'));
       return;
     }
     setUploading(true);
     try {
       let imageUrl = form.image_url;
       if (imageFile) imageUrl = await uploadFile(imageFile);
-      await saveAd({ id: editingId || undefined, title: form.title, image_url: imageUrl, link_url: form.link_url, slot: form.slot, is_active: form.is_active });
+      await saveAd({ id: editingId || undefined, title: form.title, image_url: imageUrl, link_url: form.link_url, slot: form.slot, frame: form.frame, is_active: form.is_active });
       await mutate();
       setShowForm(false);
       setShowSuccess(true);
@@ -92,6 +93,7 @@ export default function AdminAds() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
+    setBusyId(deleteTarget.id);
     try {
       await deleteAd(deleteTarget.id);
       await mutate();
@@ -102,6 +104,7 @@ export default function AdminAds() {
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
+      setBusyId(null);
     }
   };
 
@@ -130,6 +133,7 @@ export default function AdminAds() {
                 <th className="px-4 py-3">{t('ફોટો', 'Image')}</th>
                 <th className="px-4 py-3">{t('શીર્ષક', 'Title')}</th>
                 <th className="px-4 py-3">{t('સ્લોટ', 'Slot')}</th>
+                <th className="px-4 py-3">{t('ફ્રેમ', 'Frame')}</th>
                 <th className="px-4 py-3">{t('લિંક', 'Link')}</th>
                 <th className="px-4 py-3">{t('સક્રિય', 'Active')}</th>
                 <th className="px-4 py-3"></th>
@@ -148,9 +152,12 @@ export default function AdminAds() {
                   </td>
                   <td className="px-4 py-2 font-semibold">{ad.title}</td>
                   <td className="px-4 py-2 text-ink/60">{slotLabel(ad.slot)}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">
+                    {getAdFrame(ad.frame) ? (gu ? getAdFrame(ad.frame).labelGu : getAdFrame(ad.frame).labelEn) : '—'}
+                  </td>
                   <td className="px-4 py-2 text-ink/60 max-w-[180px] truncate">
                     <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="hover:text-crimson">
-                      {ad.link_url}
+                      {ad.link_url || '—'}
                     </a>
                   </td>
                   <td className="px-4 py-2">
@@ -165,12 +172,17 @@ export default function AdminAds() {
                     </button>
                   </td>
                   <td className="px-4 py-2">
-                    <div className="flex gap-2 justify-end">
-                      <button type="button" onClick={() => startEdit(ad)} className="p-1.5 text-ink/50 hover:text-crimson" aria-label={t('સંપાદિત કરો', 'Edit')}>
-                        <Pencil size={16} />
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <button type="button" onClick={() => startEdit(ad)} className="px-3 py-1 bg-ink text-white text-xs rounded hover:bg-ink/80 transition-colors shadow-sm font-semibold tracking-wide">
+                        {t('સંપાદન', 'Edit')}
                       </button>
-                      <button type="button" onClick={() => setDeleteTarget(ad)} className="p-1.5 text-ink/50 hover:text-red-500" aria-label={t('કાઢી નાખો', 'Delete')}>
-                        <Trash2 size={16} />
+                      <button
+                        type="button"
+                        disabled={busyId === ad.id}
+                        onClick={() => setDeleteTarget(ad)}
+                        className="px-3 py-1 bg-red-50 text-crimson border border-red-200 text-xs rounded hover:bg-red-100 transition-colors disabled:opacity-40 shadow-sm font-semibold tracking-wide"
+                      >
+                        {t('ડિલીટ', 'Delete')}
                       </button>
                     </div>
                   </td>
@@ -239,7 +251,7 @@ export default function AdminAds() {
                   value={form.link_url}
                   onChange={(e) => setForm({ ...form, link_url: e.target.value })}
                   className={`${inputCls} pl-8`}
-                  placeholder="https://example.com"
+                  placeholder={t('વૈકલ્પિક (ખાલી = નો ક્લિક)', 'Optional (blank = no click)')}
                 />
               </div>
             </label>
@@ -254,6 +266,21 @@ export default function AdminAds() {
                 {AD_SLOTS.map((s) => (
                   <option key={s.key} value={s.key}>
                     {gu ? s.labelGu : s.labelEn}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block mb-5">
+              <span className="text-sm font-bold text-ink">{t('ફ્રેમ', 'Frame')}</span>
+              <select
+                value={form.frame}
+                onChange={(e) => setForm({ ...form, frame: e.target.value })}
+                className={inputCls}
+              >
+                {AD_FRAMES.map((f) => (
+                  <option key={f.key} value={f.key}>
+                    {gu ? f.labelGu : f.labelEn}
                   </option>
                 ))}
               </select>
