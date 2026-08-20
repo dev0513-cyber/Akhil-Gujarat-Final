@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { handleApiError, requireAdmin } from '../utils';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import sharp from 'sharp';
 
 
 const B2_ENDPOINT = process.env.B2_ENDPOINT || '';
@@ -55,16 +56,37 @@ export async function POST(req: Request) {
     const safe = String(file.name).replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `${Date.now()}-${safe}`;
 
-    // Convert File to Buffer
+// Convert File to Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to R2
+    let body = buffer;
+    let contentType = file.type;
+
+    // Optimize images (except GIF, which may be animated) to WebP, max 1600px wide.
+    // Keeps stored files small so the /api/media proxy streams quickly on first fetch.
+    if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp') {
+      try {
+        const optimized = await sharp(buffer)
+          .rotate()
+          .resize({ width: 1600, withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toBuffer();
+        if (optimized.length < buffer.length) {
+          body = optimized;
+          contentType = 'image/webp';
+        }
+      } catch {
+        // Fall back to the original bytes if optimization fails
+      }
+    }
+
+    // Upload to Backblaze B2
     const command = new PutObjectCommand({
       Bucket: B2_BUCKET_NAME,
       Key: path,
-      Body: buffer,
-      ContentType: file.type,
+      Body: body,
+      ContentType: contentType,
     });
 
     await s3.send(command);
