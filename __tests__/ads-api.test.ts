@@ -67,4 +67,19 @@ describe('Ads API', () => {
     const body = await res.json();
     expect(body.is_active).toBe(false);
   });
+
+  it('POST rejects invalid frame', async () => {
+    vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+    const res = await POST(new Request('http://localhost/api/ads', { method: 'POST', body: JSON.stringify({ ...validAd, frame: 'bogus' }) }));
+    expect(res.status).toBe(400);
+  });
+
+  it('POST accepts blank link_url', async () => {
+    vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+    const builder = createMockBuilder({ data: { id: 'def', ...validAd, link_url: '' }, error: null });
+    builder.single = vi.fn().mockResolvedValue({ data: { id: 'def', ...validAd, link_url: '' }, error: null });
+    mockFrom.mockReturnValue(builder);
+    const res = await POST(new Request('http://localhost/api/ads', { method: 'POST', body: JSON.stringify({ ...validAd, link_url: '' }) }));
+    expect(res.status).toBe(201);
+  });
 });

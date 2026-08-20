@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { AD_SLOT_KEYS } from './ads';
+import { AD_SLOT_KEYS, AD_FRAME_KEYS } from './ads';
 
 export const articleSchema = z.object({
   id: z.number().optional(),
@@ -68,7 +68,8 @@ export const adSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1).max(255),
   image_url: z.string().min(1),
-  link_url: z.string().min(1),
+  link_url: z.string().max(2000).default(''),
   slot: z.enum(AD_SLOT_KEYS),
+  frame: z.enum(AD_FRAME_KEYS).default('banner'),
   is_active: z.boolean().default(true),
 });

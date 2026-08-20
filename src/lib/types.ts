@@ -74,6 +74,7 @@ export type Ad = {
   image_url: string;
   link_url: string;
   slot: string;
+  frame: string;
   is_active: boolean;
   created_at: string;
 };
