@@ -22,6 +22,7 @@ export default function Articles() {
   const [alertMessage, setAlertMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [dismissedError, setDismissedError] = useState(false);
   const { t, lang } = useAdminLang();
 
   const FILTERS = [
@@ -40,6 +41,11 @@ export default function Articles() {
       return true;
     });
   }, [items, filter, q]);
+
+  // Reset dismissedError when SWR error changes
+  useMemo(() => {
+    if (error) setDismissedError(false);
+  }, [error]);
 
   const setStatus = async (article: Article, status: string) => {
     setBusyId(article.id);
@@ -202,11 +208,11 @@ export default function Articles() {
       />
 
       <AlertModal
-        isOpen={!!alertMessage || !!error}
+        isOpen={!!alertMessage || (!!error && !dismissedError)}
         message={alertMessage || (error ? getErrorMessage(error, t) : '')}
         onConfirm={() => {
           setAlertMessage('');
-          if (error) mutate(); // Optional: retry on confirm if it was a load error
+          if (error) setDismissedError(true);
         }}
       />
 

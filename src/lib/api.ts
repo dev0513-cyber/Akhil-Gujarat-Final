@@ -27,8 +27,12 @@ export async function fetchArticles(
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== '') qs.set(k, String(v));
   });
-  const headers = params.status === 'all' ? await authHeaders() : undefined;
-  const res = await fetch(`/api/articles?${qs.toString()}`, headers ? { headers } : undefined);
+  if (params.status === 'all') {
+    const headers = await authHeaders();
+    const res = await adminFetch(`/api/articles?${qs.toString()}`, { headers });
+    return readJson<Article[]>(res);
+  }
+  const res = await fetch(`/api/articles?${qs.toString()}`);
   return readJson<Article[]>(res);
 }
 
@@ -36,7 +40,8 @@ export async function fetchArticle(slugOrId: { slug?: string; id?: number | stri
   const qs = new URLSearchParams();
   if (slugOrId.id) qs.set('id', String(slugOrId.id));
   if (slugOrId.slug) qs.set('slug', slugOrId.slug);
-  const res = await fetch(`/api/articles?${qs.toString()}`, { headers: await authHeaders() });
+  const headers = await authHeaders();
+  const res = await adminFetch(`/api/articles?${qs.toString()}`, { headers });
   return readJson<Article>(res);
 }
 

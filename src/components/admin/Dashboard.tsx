@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from 'react';
+
 import useSWR from 'swr';
 import Link from 'next/link';
 import { FileText, Newspaper, Video, Plus } from 'lucide-react';
@@ -12,6 +14,8 @@ import { AlertModal } from '../AlertModal';
 
 export default function Dashboard() {
   const { t, lang } = useAdminLang();
+  const [dismissedError, setDismissedError] = useState(false);
+  
   const { data: articles = [], error, isLoading: loading } = useSWR(
     ['articles', 'all', 100],
     ([, status, limit]) => fetchArticles({ status, limit: Number(limit) })
@@ -21,6 +25,10 @@ export default function Dashboard() {
   const drafts = articles.filter((a) => a.status === 'draft');
   const archived = articles.filter((a) => a.status === 'archived');
   const videos = articles.filter((a) => a.video_url);
+
+  useEffect(() => {
+    if (error) setDismissedError(false);
+  }, [error]);
 
   return (
     <div>
@@ -77,9 +85,9 @@ export default function Dashboard() {
       </div>
       <p className="mt-3 text-xs text-ink/40">{archived.length} {t('આર્કાઇવ્ડ આઇટમ', 'Archived Items')}</p>
       <AlertModal
-        isOpen={!!error}
+        isOpen={!!error && !dismissedError}
         message={error ? getErrorMessage(error, t) : ''}
-        onConfirm={() => {}}
+        onConfirm={() => setDismissedError(true)}
       />
     </div>
   );
