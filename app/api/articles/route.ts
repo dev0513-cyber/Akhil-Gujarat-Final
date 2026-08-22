@@ -57,7 +57,7 @@ function buildArticleRow(body: Record<string, unknown>, isCreate: boolean, exist
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchSingleArticle(supabase: any, id: string | null, slug: string | null, req: Request) {
-  let query = supabase.from('articles').select('*');
+  let query = supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description');
   if (id) query = query.eq('id', id);
   else query = query.eq('slug', slug);
   

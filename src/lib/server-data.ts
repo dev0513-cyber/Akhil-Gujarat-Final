@@ -92,7 +92,7 @@ export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
 
 export const getArticleBySlug = unstable_cache(
   async (slug: string) => {
-    const { data, error } = await supabase.from('articles').select('*').eq('slug', slug).maybeSingle();
+    const { data, error } = await supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description').eq('slug', slug).maybeSingle();
     if (error) throw error;
     return data;
   },
