@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { handleApiError, requireAdmin } from '../utils';
+import { handleApiError, requireAdminMutation } from '../utils';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 
@@ -22,7 +22,7 @@ const s3 = new S3Client({
 
 export async function POST(req: Request) {
   try {
-    const adminError = await requireAdmin();
+const adminError = await requireAdminMutation(req);
     if (adminError) return adminError;
 
     const contentLength = req.headers.get('content-length');

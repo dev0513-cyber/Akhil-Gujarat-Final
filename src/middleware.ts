@@ -161,6 +161,19 @@ export async function middleware(request: NextRequest) {
       data: { user: sessionUser },
     } = await supabase.auth.getUser()
     user = sessionUser
+
+    // Enforce strict 24-hour session limit
+    if (user) {
+      const lastSignIn = new Date(user.last_sign_in_at || user.created_at).getTime()
+      const now = Date.now()
+      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000
+      
+      if (now - lastSignIn > TWENTY_FOUR_HOURS) {
+        await supabase.auth.signOut()
+        user = null
+        request.headers.set('x-session-expired', 'true') // Signal for the redirect block below
+      }
+    }
   }
 
   // Protect admin routes: redirect unauthenticated users to login
@@ -168,7 +181,17 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
-      return NextResponse.redirect(url)
+      if (request.headers.get('x-session-expired') === 'true') {
+        url.searchParams.set('error', 'SessionExpired')
+      }
+      const redirectResponse = NextResponse.redirect(url)
+      
+      // Copy over the cleared cookies from supabaseResponse
+      supabaseResponse.cookies.getAll().forEach(cookie => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+      })
+      
+      return redirectResponse
     }
   }
 

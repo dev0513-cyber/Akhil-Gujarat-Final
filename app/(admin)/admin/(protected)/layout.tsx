@@ -1,4 +1,5 @@
 import AdminLayout from '@/components/AdminLayout';
+import SessionWarning from '@/components/admin/SessionWarning';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 
@@ -10,5 +11,12 @@ export default async function Layout({children}: Readonly<{ children: React.Reac
     redirect('/admin/login');
   }
 
-  return <AdminLayout email={user.email}>{children}</AdminLayout>; 
+  const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : Date.now();
+
+  return (
+    <AdminLayout email={user.email}>
+      <SessionWarning lastSignIn={lastSignIn} />
+      {children}
+    </AdminLayout>
+  ); 
 }

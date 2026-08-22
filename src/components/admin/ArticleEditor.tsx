@@ -137,6 +137,7 @@ export default function ArticleEditor() {
   const [articleError, setArticleError] = useState<unknown>(null);
   const [catsError, setCatsError] = useState<unknown>(null);
   const [citiesError, setCitiesError] = useState<unknown>(null);
+  const [isDraftRestored, setIsDraftRestored] = useState(false);
 
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -150,13 +151,48 @@ export default function ArticleEditor() {
   useEffect(() => {
     fetchCategories().then(setCats).catch(setCatsError);
     fetchCities().then(setCities).catch(setCitiesError);
+
+    const draftKey = `article_draft_${id || 'new'}`;
+    const localDraft = localStorage.getItem(draftKey);
+
     if (!isNew && id) {
       fetchArticle({ id })
-        .then((a) => setForm(fromArticle(a)))
+        .then((a) => {
+          const apiForm = fromArticle(a);
+          if (localDraft) {
+            try {
+              const parsed = JSON.parse(localDraft);
+              setForm(parsed);
+              setIsDraftRestored(true);
+            } catch {
+              setForm(apiForm);
+            }
+          } else {
+            setForm(apiForm);
+          }
+        })
         .catch(setArticleError)
         .finally(() => setLoading(false));
+    } else {
+      if (localDraft) {
+        try {
+          const parsed = JSON.parse(localDraft);
+          setForm(parsed);
+          setIsDraftRestored(true);
+        } catch {}
+      }
+      setLoading(false);
     }
   }, [id, isNew]);
+
+  useEffect(() => {
+    if (!loading) {
+      // Don't save the empty initial state
+      if (JSON.stringify(form) !== JSON.stringify(empty)) {
+        localStorage.setItem(`article_draft_${id || 'new'}`, JSON.stringify(form));
+      }
+    }
+  }, [form, loading, id]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => updateFormState(prev, key, value, isNew));
@@ -195,6 +231,7 @@ export default function ArticleEditor() {
     try {
       const payload = prepareArticlePayload(form, cats, id, isNew, status);
       await saveArticle(payload);
+      localStorage.removeItem(`article_draft_${id || 'new'}`);
       setShowSuccess(true);
     } catch (err) {
       setError(getErrorMessage(err, t));
@@ -213,6 +250,7 @@ export default function ArticleEditor() {
     setBusy(true);
     try {
       await deleteArticle(Number(id));
+      localStorage.removeItem(`article_draft_${id || 'new'}`);
       router.push('/admin/articles');
     } catch (err) {
       setError(getErrorMessage(err, t));
@@ -230,7 +268,21 @@ export default function ArticleEditor() {
     <form onSubmit={onSubmit} className="max-w-4xl">
       <SuccessModal isOpen={showSuccess} title={t('સફળતા', 'Success')} message={t('સમાચાર સેવ થઈ ગયા', 'Article saved successfully')} onConfirm={() => router.push('/admin/articles')} />
       <AlertModal isOpen={!!error} message={error} onConfirm={() => setError('')} />
-      <h1 className="font-display text-3xl">{isNew ? t('નવી રિપોર્ટ', 'New Report') : t('સમાચાર સંપાદન', 'Edit News')}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-3xl">{isNew ? t('નવી રિપોર્ટ', 'New Report') : t('સમાચાર સંપાદન', 'Edit News')}</h1>
+        {isDraftRestored && (
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem(`article_draft_${id || 'new'}`);
+              window.location.reload();
+            }}
+            className={`text-xs bg-red-100 text-crimson px-3 py-1.5 rounded font-bold hover:bg-red-200 transition-colors shadow-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}
+          >
+            {t('ડ્રાફ્ટ કાઢી નાખો', 'Discard Unsaved Draft')}
+          </button>
+        )}
+      </div>
       <p className={`text-sm text-ink/50 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
         {t('ગુજરાતી શીર્ષક, વર્ણન, ફોટો, અને પ્રકાશન સ્થિતિ.', 'Gujarati headline, description, photo, and publishing status.')}
       </p>

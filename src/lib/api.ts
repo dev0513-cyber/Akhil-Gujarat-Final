@@ -1,5 +1,6 @@
 import { createClient } from '../utils/supabase/client';
 import type { Article, Category, City, StaticPage, SiteSetting, EPaper, Ad } from './types';
+import { adminFetch } from './api-client';
 
 async function authHeaders(): Promise<Record<string, string>> {
   const supabase = createClient();
@@ -40,21 +41,16 @@ export async function fetchArticle(slugOrId: { slug?: string; id?: number | stri
 }
 
 export async function saveArticle(payload: Partial<Article> & Record<string, unknown>): Promise<Article> {
-  const headers = await authHeaders();
-  const isUpdate = Boolean(payload.id);
-  const res = await fetch('/api/articles', {
-    method: isUpdate ? 'PUT' : 'POST',
-    headers,
+  const res = await adminFetch('/api/articles', {
+    method: payload.id ? 'PUT' : 'POST',
     body: JSON.stringify(payload),
   });
   return readJson<Article>(res);
 }
 
 export async function deleteArticle(id: number): Promise<void> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/articles', {
+  const res = await adminFetch('/api/articles', {
     method: 'DELETE',
-    headers,
     body: JSON.stringify({ id }),
   });
   await readJson(res);
@@ -66,20 +62,16 @@ export async function fetchCategories(): Promise<Category[]> {
 }
 
 export async function saveCategory(payload: Partial<Category>): Promise<Category> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/categories', {
+  const res = await adminFetch('/api/categories', {
     method: payload.id ? 'PUT' : 'POST',
-    headers,
     body: JSON.stringify(payload),
   });
   return readJson<Category>(res);
 }
 
 export async function deleteCategory(id: number): Promise<void> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/categories', {
+  const res = await adminFetch('/api/categories', {
     method: 'DELETE',
-    headers,
     body: JSON.stringify({ id }),
   });
   await readJson(res);
@@ -91,20 +83,16 @@ export async function fetchCities(): Promise<City[]> {
 }
 
 export async function saveCity(payload: Partial<City>): Promise<City> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/cities', {
+  const res = await adminFetch('/api/cities', {
     method: payload.id ? 'PUT' : 'POST',
-    headers,
     body: JSON.stringify(payload),
   });
   return readJson<City>(res);
 }
 
 export async function deleteCity(id: number): Promise<void> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/cities', {
+  const res = await adminFetch('/api/cities', {
     method: 'DELETE',
-    headers,
     body: JSON.stringify({ id }),
   });
   await readJson(res);
@@ -116,26 +104,26 @@ export async function fetchPages(): Promise<StaticPage[]> {
 }
 
 export async function savePage(payload: Partial<StaticPage>): Promise<StaticPage> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/pages', {
+  const res = await adminFetch('/api/pages', {
     method: 'PUT',
-    headers,
     body: JSON.stringify(payload),
   });
   return readJson<StaticPage>(res);
 }
 
 export async function uploadFile(file: File): Promise<string> {
-  const headers = await authHeaders();
-  delete headers['Content-Type']; // Browser handles the boundary automatically for FormData
-
+  const token = await (await import('./api-client')).getCsrfToken();
+  
   const formData = new FormData();
   formData.append('file', file);
 
   const res = await fetch('/api/upload', {
     method: 'POST',
-    headers,
+    headers: {
+      'x-csrf-token': token,
+    },
     body: formData,
+    credentials: 'include',
   });
   
   const data = await readJson<{ url: string }>(res);
@@ -148,10 +136,8 @@ export async function fetchSettings(): Promise<SiteSetting[]> {
 }
 
 export async function saveSettings(payload: Record<string, string>): Promise<SiteSetting[]> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/settings', {
+  const res = await adminFetch('/api/settings', {
     method: 'PUT',
-    headers,
     body: JSON.stringify(payload),
   });
   return readJson<SiteSetting[]>(res);
@@ -169,20 +155,16 @@ export async function fetchEPapers(params: { month?: number; year?: number; date
 }
 
 export async function saveEPaper(payload: Partial<EPaper>): Promise<EPaper> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/epapers', {
+  const res = await adminFetch('/api/epapers', {
     method: payload.id ? 'PUT' : 'POST',
-    headers,
     body: JSON.stringify(payload),
   });
   return readJson<EPaper>(res);
 }
 
 export async function deleteEPaper(id: number): Promise<void> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/epapers', {
+  const res = await adminFetch('/api/epapers', {
     method: 'DELETE',
-    headers,
     body: JSON.stringify({ id }),
   });
   await readJson(res);
@@ -194,20 +176,16 @@ export async function fetchAds(): Promise<Ad[]> {
 }
 
 export async function saveAd(payload: Partial<Ad>): Promise<Ad> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/ads', {
+  const res = await adminFetch('/api/ads', {
     method: payload.id ? 'PUT' : 'POST',
-    headers,
     body: JSON.stringify(payload),
   });
   return readJson<Ad>(res);
 }
 
 export async function deleteAd(id: string): Promise<void> {
-  const headers = await authHeaders();
-  const res = await fetch('/api/ads', {
+  const res = await adminFetch('/api/ads', {
     method: 'DELETE',
-    headers,
     body: JSON.stringify({ id }),
   });
   await readJson(res);

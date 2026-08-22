@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
-import { requireAdmin, handleApiError, handleAdminDelete } from '../utils';
+import { requireAdminMutation, handleApiError, handleAdminDelete } from '../utils';
 import { staticPageSchema } from '../../../src/lib/validation';
 
 export async function GET(req: Request) {
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   const supabase = await createClient();
   try {
-    const adminError = await requireAdmin();
+const adminError = await requireAdminMutation(req);
     if (adminError) return adminError;
 
     const body = await req.json();

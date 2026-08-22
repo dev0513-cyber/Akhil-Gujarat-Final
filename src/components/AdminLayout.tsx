@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -16,6 +17,31 @@ import {
 
 import { AdminLangProvider, useAdminLang } from "../contexts/AdminLangContext";
 import { logoutAction } from "../../app/actions/auth";
+
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+
+function IdleTimeout() {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      logoutAction();
+    }, IDLE_TIMEOUT_MS);
+  }, []);
+
+  useEffect(() => {
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
+    resetTimer();
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [resetTimer]);
+
+  return null;
+}
 
 const links = [
   {
@@ -146,6 +172,7 @@ export default function AdminLayout({
 }>) {
   return (
     <AdminLangProvider>
+      <IdleTimeout />
       <AdminSidebar email={email}>{children}</AdminSidebar>
     </AdminLangProvider>
   );

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
-import { requireAdmin, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
+import { requireAdminMutation, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
 import { articleSchema, paginationSchema } from '../../../src/lib/validation';
 import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
 
@@ -66,7 +66,7 @@ async function fetchSingleArticle(supabase: any, id: string | null, slug: string
   if (!data) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
 
   if (data.status !== 'published') {
-    const adminError = await requireAdmin();
+const adminError = await requireAdminMutation(req);
     if (adminError) return adminError;
   }
 
@@ -83,7 +83,7 @@ function applyBooleanFilters(query: any, trending: string | null, video: string 
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
+async function buildListQuery(supabase: any, searchParams: URLSearchParams, req: Request) {
   const status = searchParams.get('status');
   const category = searchParams.get('category');
   const city = searchParams.get('city');
@@ -95,7 +95,7 @@ async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
   let query = supabase.from('articles').select('id, headline, description, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author');
 
   if (status === 'all') {
-    const adminError = await requireAdmin();
+    const adminError = await requireAdminMutation(req);
     if (adminError) return { error: adminError };
   } else if (status) {
     query = query.eq('status', status);
@@ -142,7 +142,7 @@ export async function GET(req: Request) {
     const page = pag.success ? pag.data.page : 1;
     const limit = pag.success ? pag.data.limit : 20;
 
-    const { query, empty, error: filterErr } = await buildListQuery(supabase, searchParams);
+    const { query, empty, error: filterErr } = await buildListQuery(supabase, searchParams, req);
     if (filterErr) return filterErr;
     if (empty) return NextResponse.json([]);
 
@@ -161,7 +161,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const supabase = await createClient();
   try {
-    const adminError = await requireAdmin();
+const adminError = await requireAdminMutation(req);
     if (adminError) return adminError;
 
     const body = await req.json();
@@ -186,7 +186,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const supabase = await createClient();
   try {
-    const adminError = await requireAdmin();
+const adminError = await requireAdminMutation(req);
     if (adminError) return adminError;
 
     const body = await req.json();

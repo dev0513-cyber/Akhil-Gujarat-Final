@@ -1,6 +1,6 @@
 "use client";
 import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { loginAction, verifyMfaAction } from '../../../app/actions/auth';
 import Seo from '../SEO';
@@ -8,13 +8,18 @@ import { Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export default function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [requiresMfa, setRequiresMfa] = useState(false);
   const [factorId, setFactorId] = useState('');
   const [challengeId, setChallengeId] = useState('');
   const [otp, setOtp] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    searchParams?.get('error') === 'SessionExpired'
+      ? 'Your session has expired after 24 hours. Please log in again.'
+      : ''
+  );
   const [busy, setBusy] = useState(false);
 
 

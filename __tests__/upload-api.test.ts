@@ -6,7 +6,8 @@ vi.mock('../app/api/utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../app/api/utils')>();
   return {
     ...actual,
-    requireAdmin: vi.fn(),
+    requireAdminMutation: vi.fn(),
+    validateCsrfToken: vi.fn(),
   };
 });
 
@@ -19,14 +20,26 @@ vi.mock('@aws-sdk/client-s3', () => {
   };
 });
 
+function makeReq(formData: FormData) {
+  return new Request('http://localhost/api/upload', {
+    method: 'POST',
+    body: formData,
+    headers: { 'x-csrf-token': 'test-csrf-token' },
+  });
+}
+
 describe('Upload API Security', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('rejects unauthorized upload', async () => {
-    const req = new Request('http://localhost/api/upload', { method: 'POST' });
-    vi.mocked(utils.requireAdmin).mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never);
+    const formData = new FormData();
+    const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
+    formData.append('file', file);
+    const req = makeReq(formData);
+    vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never);
+    vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
 
     const res = await POST(req);
     expect(res.status).toBe(401);
@@ -37,12 +50,10 @@ describe('Upload API Security', () => {
     const file = new File(['dummy content'], 'virus.exe', { type: 'application/x-msdownload' });
     formData.append('file', file);
     
-    const req = new Request('http://localhost/api/upload', {
-      method: 'POST',
-      body: formData
-    });
+    const req = makeReq(formData);
     
-    vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+    vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+    vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
 
     const res = await POST(req);
     expect(res.status).toBe(415);
@@ -58,12 +69,10 @@ describe('Upload API Security', () => {
     const file = new File([largeContent], 'huge.jpg', { type: 'image/jpeg' });
     formData.append('file', file);
     
-    const req = new Request('http://localhost/api/upload', {
-      method: 'POST',
-      body: formData
-    });
+    const req = makeReq(formData);
     
-    vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+    vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+    vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
 
     const res = await POST(req);
     expect(res.status).toBe(413);
@@ -77,13 +86,11 @@ describe('Upload API Security', () => {
     const file = new File(['tiny'], 'test.jpg', { type: 'image/jpeg' });
     formData.append('file', file);
     
-    const req = new Request('http://localhost/api/upload', {
-      method: 'POST',
-      body: formData
-    });
+    const req = makeReq(formData);
     
-    vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
-    
+    vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+    vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
+
     const res = await POST(req);
     expect(res.status).toBe(201);
     

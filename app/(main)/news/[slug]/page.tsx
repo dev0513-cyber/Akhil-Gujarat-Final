@@ -1,9 +1,9 @@
-import supabase from '../../../../src/lib/supabase';
+
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Clock, MapPin, Tag } from 'lucide-react';
-import { getArticles, getAdsForSlot } from '../../../../src/lib/server-data';
+import { getArticles, getAdsForSlot, getArticleBySlug, getCategories, getCities } from '../../../../src/lib/server-data';
 import { formatDateTimeGu, splitParagraphs } from '../../../../src/lib/format';
 import NewsCard from '../../../../src/components/NewsCard';
 import ShareButtons from '../../../../src/components/ShareButtons';
@@ -16,7 +16,7 @@ import type { ReactNode } from 'react';
 
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await supabase.from('articles').select('*').eq('slug', slug).maybeSingle();
+  const data = await getArticleBySlug(slug);
   if (!data) return { title: 'Not Found' };
 
   const title = data.seo_title || data.headline;
@@ -52,9 +52,9 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
 
 export default async function NewsPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
-  const { data, error } = await supabase.from('articles').select('*').eq('slug', slug).maybeSingle();
+  const data = await getArticleBySlug(slug);
   
-  if (error || !data) {
+  if (!data) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
         <ErrorBanner message="આ સમાચાર ઉપલબ્ધ નથી." />
@@ -62,7 +62,8 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
     );
   }
 
-  const [article] = await hydrateArticles(data);
+  const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+  const [article] = await hydrateArticles(data, { categories, cities });
   const rawRelated = await getArticles({ category_id: article.category_id, limit: 5 });
   const related = rawRelated.filter((a: Article) => a.id !== article.id).slice(0, 4);
   const sidebarAd = await getAdsForSlot('article_sidebar');

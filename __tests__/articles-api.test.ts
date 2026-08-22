@@ -6,8 +6,8 @@ vi.mock('../app/api/utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../app/api/utils')>();
   return {
     ...actual,
-    requireAdmin: vi.fn(),
-    // Mock hydrateArticles so it doesn't run complex queries
+    requireAdminMutation: vi.fn(),
+    validateCsrfToken: vi.fn(),
     hydrateArticles: vi.fn(async (articles) => Array.isArray(articles) ? articles : [articles]),
   };
 });
@@ -73,10 +73,19 @@ describe('Articles API', () => {
   });
 
   describe('POST (Article Mutations)', () => {
+    function makeReq(body: Record<string, unknown>) {
+      return new Request('http://localhost/api/articles', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'x-csrf-token': 'test-csrf-token' },
+      });
+    }
+
     it('rejects unauthorized mutation', async () => {
-      const req = new Request('http://localhost/api/articles', { method: 'POST' });
+      const req = makeReq({ headline: 'Test' });
       
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never);
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
 
       const res = await POST(req);
       expect(res.status).toBe(401);
@@ -86,12 +95,10 @@ describe('Articles API', () => {
     });
 
     it('rejects request with missing required fields', async () => {
-      const req = new Request('http://localhost/api/articles', {
-        method: 'POST',
-        body: JSON.stringify({ headline: 'Missing other fields' })
-      });
+      const req = makeReq({ headline: 'Missing other fields' });
       
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
 
       const res = await POST(req);
       expect(res.status).toBe(400);
@@ -106,12 +113,10 @@ describe('Articles API', () => {
         slug: 'admin-post',
         category_id: 1,
       };
-      const req = new Request('http://localhost/api/articles', {
-        method: 'POST',
-        body: JSON.stringify(validPayload)
-      });
+      const req = makeReq(validPayload);
       
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
 
       const builder = createMockBuilder({ data: { id: 10, ...validPayload }, error: null });
       builder.single = vi.fn().mockResolvedValue({ data: { id: 10, ...validPayload }, error: null });
@@ -135,12 +140,18 @@ describe('Articles API', () => {
       category_id: 1,
     };
 
-    it('POST published stamps server time', async () => {
-      const req = new Request('http://localhost/api/articles', {
-        method: 'POST',
-        body: JSON.stringify({ ...validPayload, status: 'published' }),
+    function makeReq(method: 'POST' | 'PUT', body: Record<string, unknown>) {
+      return new Request('http://localhost/api/articles', {
+        method,
+        body: JSON.stringify(body),
+        headers: { 'x-csrf-token': 'test-csrf-token' },
       });
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+    }
+
+    it('POST published stamps server time', async () => {
+      const req = makeReq('POST', { ...validPayload, status: 'published' });
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
       const inserted = { id: 1, ...validPayload, status: 'published' };
       const builder = createMockBuilder({ data: inserted, error: null });
       mockFrom.mockReturnValue(builder);
@@ -154,11 +165,9 @@ describe('Articles API', () => {
     });
 
     it('POST draft leaves published_at null', async () => {
-      const req = new Request('http://localhost/api/articles', {
-        method: 'POST',
-        body: JSON.stringify({ ...validPayload, status: 'draft' }),
-      });
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const req = makeReq('POST', { ...validPayload, status: 'draft' });
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
       const inserted = { id: 1, ...validPayload, status: 'draft' };
       const builder = createMockBuilder({ data: inserted, error: null });
       mockFrom.mockReturnValue(builder);
@@ -170,11 +179,9 @@ describe('Articles API', () => {
     });
 
     it('PUT draft→published stamps fresh server time', async () => {
-      const req = new Request('http://localhost/api/articles', {
-        method: 'PUT',
-        body: JSON.stringify({ ...validPayload, id: 7, status: 'published' }),
-      });
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const req = makeReq('PUT', { ...validPayload, id: 7, status: 'published' });
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
       const builder = createMockBuilder({
         data: { id: 7, ...validPayload, status: 'published', published_at: '2026-08-18T10:00:00.000Z' },
         error: null,
@@ -192,11 +199,9 @@ describe('Articles API', () => {
     });
 
     it('PUT published→published preserves original publish time', async () => {
-      const req = new Request('http://localhost/api/articles', {
-        method: 'PUT',
-        body: JSON.stringify({ ...validPayload, id: 7, status: 'published' }),
-      });
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const req = makeReq('PUT', { ...validPayload, id: 7, status: 'published' });
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
       const builder = createMockBuilder({
         data: { id: 7, ...validPayload, status: 'published' },
         error: null,
@@ -211,11 +216,9 @@ describe('Articles API', () => {
     });
 
     it('PUT published→draft preserves original publish time', async () => {
-      const req = new Request('http://localhost/api/articles', {
-        method: 'PUT',
-        body: JSON.stringify({ ...validPayload, id: 7, status: 'draft' }),
-      });
-      vi.mocked(utils.requireAdmin).mockResolvedValueOnce(null);
+      const req = makeReq('PUT', { ...validPayload, id: 7, status: 'draft' });
+      vi.mocked(utils.requireAdminMutation).mockResolvedValueOnce(null);
+      vi.mocked(utils.validateCsrfToken).mockResolvedValueOnce(true);
       const builder = createMockBuilder({
         data: { id: 7, ...validPayload, status: 'draft' },
         error: null,

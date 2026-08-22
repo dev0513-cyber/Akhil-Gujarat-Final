@@ -69,14 +69,33 @@ export const getPages = unstable_cache(
   { revalidate: 3600, tags: ['pages'] }
 );
 
+export const getActiveAdsForSlot = unstable_cache(
+  async (slot: string) => {
+    const { data, error } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('slot', slot)
+      .eq('is_active', true)
+      .limit(20);
+    if (error) throw error;
+    return data || [];
+  },
+  ['ads-by-slot'],
+  { revalidate: 300, tags: ['ads'] }
+);
+
 export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
-  const { data, error } = await supabase
-    .from('ads')
-    .select('*')
-    .eq('slot', slot)
-    .eq('is_active', true)
-    .limit(20);
-  if (error) throw error;
+  const data = await getActiveAdsForSlot(slot);
   if (!data || data.length === 0) return null;
   return data[Math.floor(Math.random() * data.length)] as Ad;
 };
+
+export const getArticleBySlug = unstable_cache(
+  async (slug: string) => {
+    const { data, error } = await supabase.from('articles').select('*').eq('slug', slug).maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+  ['article-by-slug'],
+  { revalidate: 60, tags: ['articles'] }
+);
