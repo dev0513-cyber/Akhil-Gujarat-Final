@@ -14,6 +14,7 @@ import { ErrorBanner } from '../../../../src/components/Skeleton';
 import { hydrateArticles } from '../../../api/utils';
 import type { ReactNode } from 'react';
 
+export const revalidate = 60;
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
   const data = await getArticleBySlug(slug);

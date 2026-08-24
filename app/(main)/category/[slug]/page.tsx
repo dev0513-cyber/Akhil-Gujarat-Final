@@ -5,6 +5,7 @@ import { getArticles, getCities } from '../../../../src/lib/server-data';
 import { ErrorBanner } from '../../../../src/components/Skeleton';
 import { FilteredArticleView } from '../../../../src/components/FilteredArticleView';
 
+export const revalidate = 60;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const { data } = await supabase.from('categories').select('*').eq('slug', slug).maybeSingle();
