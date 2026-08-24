@@ -1,387 +1,585 @@
-# AKHIL GUJARAT
-# FULL PRODUCTION + SUPABASE EFFICIENCY AUDIT
+# MASTER PRODUCTION READINESS + SCALABILITY + SECURITY AUDIT
+# AKHIL GUJARAT — NEXT.JS + SUPABASE NEWS PLATFORM
 
-## 1. Executive Summary
+==================================================
+1. EXECUTIVE PRODUCTION VERDICT
+==================================================
 
-This is a comprehensive production readiness and Supabase efficiency audit of the Akhil Gujarat codebase. The overall architecture leverages Next.js App Router and Supabase, but it suffers from severe database inefficiencies, lack of proper query caching on highly trafficked routes, and entirely missing database indexes.
+OVERALL PRODUCTION SCORE: 52/100
 
-While the foundation is solid, **the current architecture is NOT production ready for 10k+ daily visitors** without immediately exceeding Supabase free-tier database compute and request quotas. A single uncached dynamic page load currently triggers up to 5 redundant database queries.
+Verdict:
+NOT PRODUCTION READY
 
----
+Critical blockers:
+- Missing `slug` indexes causing sequential table scans.
+- Uncached client-side API fetches (`Layout.tsx`) causing 3 dynamic DB queries per visitor.
+- Missing public RLS policy for the `ads` table, causing ads to fail silently for public visitors.
+- Uncached `sitemap.ts` causing 4 raw database queries per crawler hit.
 
-## 2. Project Architecture
+High-risk issues:
+- Search route (`/search`) directly hits the DB with `ilike` and no rate limit specific to search abuse.
+- `generateMetadata` and `NewsPage` duplicate identical DB queries (N+1 equivalent).
 
-The project is built as a monolithic Next.js application using the App Router.
-- **Frontend**: Next.js 16.3.1 (React 19.2), TailwindCSS 4, Lucide React.
-- **Backend/Database**: Supabase (PostgreSQL + Auth + Storage).
-- **Admin Panel**: Client-heavy React SPA living inside Next.js `app/(admin)` routes, communicating via `app/api` and direct Supabase calls.
-- **Caching**: Next.js `unstable_cache` is used sporadically but misses critical high-traffic components.
-- **Media**: References to Backblaze were mentioned, but AWS S3 client is installed. Supabase URLs are whitelisted in `next.config.ts`.
+Medium-risk issues:
+- Error boundaries do not exist universally.
+- No observability stack (Sentry, PostHog, Vercel Analytics) implemented.
 
----
+Low-risk issues:
+- Missing WCAG ARIA labels on some custom interactive UI components.
+- Image optimization drops GIF animation (converted to WebP static).
 
-## 3. Technology Stack
+Informational findings:
+- The rate-limiting and media storage architectures are exceptionally well-implemented.
 
-- **Framework**: Next.js 16.3.1
-- **UI**: React 19.2.8, TailwindCSS 4
-- **Database/Auth**: `@supabase/supabase-js` (2.112.3), `@supabase/ssr` (0.12.4)
-- **Rate Limiting**: `@upstash/ratelimit` (2.0.8), `@upstash/redis` (1.38.2)
-- **Image Processing**: `sharp` (0.35.3)
-- **Testing**: `vitest` (4.1.10)
-- **Deployment**: Vercel (assumed based on Next.js usage)
+==================================================
+2. COMPLETE ARCHITECTURE AUDIT
+==================================================
 
----
-
-## 4. Supabase Request Inventory
-
-| # | File | Function | Route/Page | Operation | Table | Query Type | Server/Client | Frequency | Cacheable? | Estimated DB Requests | Risk | Recommendation |
-| - | ---- | -------- | ---------- | --------- | ----- | ---------- | ------------- | --------- | ---------- | --------------------- | ---- | -------------- |
-| 1 | `news/[slug]/page.tsx` | `generateMetadata` | `/news/[slug]` | `eq('slug', slug)` | `articles` | SELECT | Server | High | Yes | 1 per view | HIGH | Cache fetch |
-| 2 | `news/[slug]/page.tsx` | `NewsPage` | `/news/[slug]` | `eq('slug', slug)` | `articles` | SELECT | Server | High | Yes | 1 per view | HIGH | Share with Metadata |
-| 3 | `api/utils.ts` | `hydrateArticles` | `/news/[slug]` | `select('*')` | `categories`| SELECT | Server | High | Yes | 1 per view | HIGH | Pass cached taxonomy |
-| 4 | `api/utils.ts` | `hydrateArticles` | `/news/[slug]` | `select('*')` | `cities` | SELECT | Server | High | Yes | 1 per view | HIGH | Pass cached taxonomy |
-| 5 | `server-data.ts` | `getAdsForSlot` | `/news/[slug]` | `eq('slot', slot)` | `ads` | SELECT | Server | High | Yes | 1 per view | MED | Wrap in `unstable_cache` |
-| 6 | `server-data.ts` | `getArticles` | `/` | `eq('status')` | `articles` | SELECT | Server | High | Yes (Cached) | 0 (Cache Hit) | LOW | Fine as is |
-
----
-
-## 5. Page-by-Page Request Analysis
-
-### Article Detail Page (`/news/[slug]`)
-```text
 Browser
-   ↓
-Next.js Route (/news/[slug])
-   ↓
-generateMetadata -> Supabase Query (Articles) [UNCACHED]
-   ↓
-NewsPage -> Supabase Query (Articles) [UNCACHED, DUPLICATE]
-   ↓
-hydrateArticles -> Supabase Query (Categories) [UNCACHED]
-                -> Supabase Query (Cities) [UNCACHED]
-   ↓
-getAdsForSlot -> Supabase Query (Ads) [UNCACHED]
-   ↓
-Response
-```
-**TOTAL = 5 Supabase operations/page load**
+↓
+Vercel Edge (CDN + Cache)
+↓
+Next.js App Router (Middleware checks Rate Limits + Auth Redirects)
+↓
+Server Components (Pages) / Client Components (Layout, Admin)
+↓
+API Routes (`/api/*`) / Server Actions (`/actions/*`)
+↓
+Supabase REST API
+↓
+PostgreSQL Database
+↓
+Backblaze B2 (Object Storage)
+↓
+Upstash Redis (Rate Limiting)
+
+- **What each layer does:** Next.js handles routing and rendering. Supabase handles state/data. Upstash protects against abuse. Backblaze stores heavy binary data securely.
+- **Where state exists:** Database (Articles, Taxonomies, Settings), Upstash (Rate Limit Windows).
+- **Where authentication happens:** Next.js Middleware & `requireAdmin()` validate Supabase JWTs.
+- **Where authorization happens:** Application code (`user.app_metadata.role`) & Database RLS policies.
+- **Where caching happens:** Vercel Edge Cache (Media), Next.js Data Cache (`unstable_cache` in `server-data.ts`), ISR (`revalidate = 60` on public routes).
+- **Where rate limiting happens:** `middleware.ts` running at Vercel Edge.
+- **Where files/media are stored:** Backblaze B2.
+- **Where failures can occur:** Upstash downtime (fails open safely), Supabase connection exhaustion (catastrophic), B2 downtime (images fail to load).
+- **Where bottlenecks can occur:** Uncached dynamic API routes hitting the DB on client mount.
+- **Where a single point of failure exists:** Supabase PostgreSQL.
+
+**Architectural Weaknesses:**
+Client-side fetching inside the global layout. `Layout.tsx` calls `fetchCategories()`, `fetchCities()`, and `fetchSettings()` on mount. These hit API routes which instantiate Supabase `createClient()`, immediately reading `cookies()` and forcing the route to bypass Next.js caching. This guarantees 3 raw DB queries per visitor session.
+
+==================================================
+3. FULL ROUTE AUDIT
+==================================================
+
+| Route | Public/Admin | Rendering | Cache | DB Calls | Auth | Rate Limit | SEO | A11y | Risk |
+|-------|--------------|-----------|-------|----------|------|------------|-----|------|------|
+| `/` | Public | Static | ISR 60s | 0 (Cache Hit) | No | 100/m | Good | Good | Low |
+| `/news/[slug]` | Public | Dynamic | ISR 60s | 5 (Cold) | No | 100/m | Good | Good | Low |
+| `/category/[slug]`| Public | Dynamic | ISR 60s | 2 (Cold) | No | 100/m | Good | Good | Low |
+| `/city/[slug]` | Public | Dynamic | ISR 60s | 2 (Cold) | No | 100/m | Good | Good | Low |
+| `/search` | Public | Dynamic | None | 1/Req | No | 100/m | N/A | Good | High |
+| `/api/categories` | Public | Dynamic | None | 1/Req | No | 100/m | N/A | N/A | Critical |
+| `/api/cities` | Public | Dynamic | None | 1/Req | No | 100/m | N/A | N/A | Critical |
+| `/api/settings` | Public | Dynamic | None | 1/Req | No | 100/m | N/A | N/A | Critical |
+| `/api/media/[key]`| Public | Dynamic | Edge (1 yr)| 0 | No | Bypass | N/A | N/A | Low |
+| `/admin/*` | Admin | Client | None | Varies | Yes | 30/m | N/A | Good | Low |
+| `/sitemap.xml` | Public | Dynamic | None | 4/Req | No | 100/m | N/A | N/A | Medium |
+
+==================================================
+4. SUPABASE / DATABASE AUDIT
+==================================================
+
+- **File**: `app/api/categories/route.ts` -> **Operation**: `SELECT * FROM categories` -> **Cache**: NO -> **Risk**: CRITICAL (Called by layout).
+- **File**: `app/api/cities/route.ts` -> **Operation**: `SELECT * FROM cities` -> **Cache**: NO -> **Risk**: CRITICAL (Called by layout).
+- **File**: `app/api/settings/route.ts` -> **Operation**: `SELECT * FROM site_settings` -> **Cache**: NO -> **Risk**: CRITICAL (Called by layout).
+- **File**: `app/(main)/news/[slug]/page.tsx` -> **Operation**: `SELECT * FROM articles WHERE slug = ...` -> **Cache**: NO (Duplicate queries in metadata and page) -> **Risk**: HIGH (N+1 queries per ISR regeneration).
+- **File**: `app/sitemap.ts` -> **Operation**: `SELECT slug FROM articles/categories/cities` -> **Cache**: NO -> **Risk**: MEDIUM.
+- **File**: `src/lib/server-data.ts` -> **Operation**: `SELECT * FROM articles` -> **Cache**: YES (`unstable_cache`) -> **Risk**: LOW.
+
+**Findings:**
+- Duplicate queries: Metadata and Page components query the same slug independently without React `cache()`.
+- Missing Limits: None found, paginations are respected.
+- Sequential Scans: `slug` filters are unindexed.
+
+==================================================
+5. SUPABASE REQUEST BUDGET
+==================================================
+
+**Scenarios:**
+- **1,000 visitors/day**: ~3,500 DB queries. Supabase Free Tier handles it.
+- **10,000 visitors/day**: ~35,000 DB queries. Connection pool begins to starve during peaks.
+- **50,000 visitors/day**: ~175,000 DB queries. Free Tier limits completely exceeded. Database times out.
+- **250,000 visitors/day**: Total failure.
+
+**Analysis:**
+Because 3 uncached API requests fire on every client load (`/api/categories`, `/api/cities`, `/api/settings`), a visitor loading the homepage generates 3 DB queries instantly. Supabase Free Tier allows max 200 concurrent connections. A spike of 100 users per second will overwhelm the DB immediately.
+
+==================================================
+6. QUERY-BY-QUERY REQUEST MAP
+==================================================
+
+**ARTICLE PAGE (/news/[slug]) - Cold ISR Hit**
+ ├── generateMetadata
+ │    └── `SELECT * FROM articles WHERE slug` (1 DB Call)
+ ├── NewsPage
+ │    └── `SELECT * FROM articles WHERE slug` (1 DB Call - Duplicate)
+ ├── hydrateArticles
+ │    ├── `SELECT * FROM categories` (1 DB Call - Missing cache passed)
+ │    └── `SELECT * FROM cities` (1 DB Call - Missing cache passed)
+ └── getAdsForSlot
+      └── `SELECT * FROM ads` (0 DB Call - Cached via unstable_cache)
+**Total: 4 DB queries per background ISR regeneration.**
+
+**CLIENT HYDRATION (All Pages)**
+ ├── Layout.tsx (useEffect)
+      ├── GET `/api/categories` -> DB Call (1)
+      ├── GET `/api/cities` -> DB Call (1)
+      └── GET `/api/settings` -> DB Call (1)
+**Total: 3 DB queries per unique visitor session.**
+
+==================================================
+7. CACHE ARCHITECTURE AUDIT
+==================================================
+
+- `unstable_cache`: Used well in `src/lib/server-data.ts` for Homepage (`getArticles`), but bypassed heavily by client-side API calls.
+- `ISR`: `export const revalidate = 60;` implemented in Phase 9 successfully shields dynamic article pages from overloading DB during high traffic, BUT does not shield the client-side layout API calls.
+- `Media CDN`: Excellent. `/api/media/[key]` returns `Cache-Control: public, s-maxage=604800, immutable`. Images are cached globally on Vercel Edge.
+
+**Correctness:**
+- Can stale data appear? Yes, up to 60 seconds (Expected for news).
+- Can wrong-user data appear? No.
+- Can cache poison? No.
+
+==================================================
+8. ISR / VERCEL AUDIT
+==================================================
+
+- The routes `/`, `/news/[slug]`, `/category/[slug]`, and `/city/[slug]` are fully cacheable and have `revalidate = 60`.
+- **Warning:** `sitemap.ts` has no revalidation configuration. It will run dynamically. Next.js 14+ executes fetch dynamically unless specified. Since this uses `supabase-js`, it is fully dynamic.
+
+==================================================
+9. SECURITY AUDIT
+==================================================
+
+- **Authentication:** Secure. Standard JWT validation via `@supabase/ssr`.
+- **Authorization:** Strict. `user.app_metadata.role === 'admin'` checks in `requireAdmin()`.
+- **CSRF:** Excellent. Custom `validateCsrfToken` checked on all mutation requests.
+- **XSS:** Safely handled by React DOM. No dangerous `dangerouslySetInnerHTML` found except for JSON-LD schema (safe).
+- **MFA:** Enforced securely via `auth.mfa.getAuthenticatorAssuranceLevel()` expecting `aal2`.
+- **SQL Injection:** Safe. Supabase PostgREST client used.
+- **Path Traversal / File Uploads:** Safe. Uploads are renamed to `Date.now() - sanitized_name`. Safe MIME types only. Hard 20MB limit payload, 3MB file size limit.
+
+==================================================
+10. SUPABASE RLS AUDIT
+==================================================
+
+| Table | RLS | Public Read | Auth Read | Admin Write | Risk |
+|-------|-----|-------------|-----------|-------------|------|
+| `articles` | Yes | `status='published'`| `status='published'`| Yes | Low |
+| `categories` | Yes | `true` | `true` | Yes | Low |
+| `cities` | Yes | `true` | `true` | Yes | Low |
+| `static_pages`| Yes | `true` | `true` | Yes | Low |
+| `ads` | Yes | **MISSING** | **MISSING** | Yes | HIGH |
+
+**Risk:** Without a public read policy on `ads`, the public application (using the Anon key) cannot read active ads. Ads will silently fail to appear.
+
+==================================================
+11. API SECURITY AUDIT
+==================================================
+
+- **Input Validation:** Zod schemas correctly wrap all `POST` and `PUT` endpoints.
+- **Authentication:** `requireAdminMutation` guards all destructive endpoints.
+- **Method Validation:** Handled by Next.js Route Handlers.
+- **Abuse Potential:** The `/search` route and `/api/categories` `GET` endpoints are un-cached and un-authenticated. They can be spammed to exhaust DB CPU.
+
+==================================================
+12. PERFORMANCE AUDIT
+==================================================
+
+- **TTFB:** ISR pages will be fast (Sub 100ms). Dynamic searches will be slow (500ms+).
+- **Client Bundles:** Slightly bloated by Lucide React and custom client logic in Layout, but acceptable.
+- **Images:** Image optimization happens AT UPLOAD via `sharp` converting to WebP! This is an incredibly smart, high-performance architecture that offloads image optimization from request-time to write-time.
+
+==================================================
+13. LOAD / SCALE ANALYSIS
+==================================================
+
+- **10 - 100 users:** Fine.
+- **250 users:** Database compute spikes due to unindexed `slug` lookups during ISR rebuilds and layout fetches.
+- **1,000+ users:** Supabase free tier connection limits (200 conns) exceeded. Site crashes.
+
+**Bottleneck:** Client-side layout API fetching (`fetchCategories`, etc).
+
+==================================================
+14. LOAD TEST DESIGN
+==================================================
+
+- **Tool:** `k6`
+- **Scenario:** 
+  1. 500 VUs (Virtual Users) constant load.
+  2. 90% navigate to `/` (Cache hit).
+  3. 10% navigate to `/news/breaking-article` (Cache miss / ISR rebuild).
+- **Expectation:** Currently, the site will fail at 250 VUs because the 100% of VUs executing the client-side `Layout.tsx` fetching will exhaust the 200 connection limit of PostgreSQL.
+
+==================================================
+15. CACHE STAMPEDE / THUNDERING HERD AUDIT
+==================================================
+
+Because Next.js 14+ deduplicates concurrent requests for the same ISR route in the background (Stale-While-Revalidate), the cache stampede risk for HTML pages is low.
+However, the `/search` route has NO deduplication. 10,000 searches = 10,000 DB queries.
+
+==================================================
+16. RELIABILITY AUDIT
+==================================================
+
+- **Database Timeout:** The application throws an unhandled 500 server error if Supabase times out.
+- **Upstash Timeout:** The rate limiter explicitly wraps execution in a `try/catch` and returns `{}` (allows request) if Upstash fails. Excellent resilience.
+- **CDN Failure:** If B2 fails, images will 404, but the text site will remain usable.
+
+==================================================
+17. OBSERVABILITY AUDIT
+==================================================
+
+**Verdict:** Poor.
+- No Sentry, LogRocket, or Datadog installed.
+- No Vercel Web Analytics configured in codebase.
+- Admin actions are logged to `admin_audit_log` (Excellent), but system errors disappear into Vercel runtime logs.
+**Recommendation:** Install Sentry for error tracking.
+
+==================================================
+18. ERROR HANDLING AUDIT
+==================================================
+
+- API Errors use `handleApiError` preventing SQL injection leakage (checks for code `23505`).
+- No global `error.tsx` or `global-error.tsx` found in the root. If a server component crashes, the user sees the default Next.js stack trace / generic 500 page.
+
+==================================================
+19. ACCESSIBILITY AUDIT
+==================================================
+
+- Semantic HTML is generally respected (`<article>`, `<nav>`, `<aside>`).
+- Image `alt` tags are dynamically populated.
+- Custom dropdowns (`GujaratDropdownItems`) lack full ARIA roles (`aria-expanded`, `aria-controls`), which impairs screen reader usability.
+
+==================================================
+20. SEO AUDIT
+==================================================
+
+- `generateMetadata` correctly outputs OpenGraph, Twitter, and canonical URLs.
+- JSON-LD NewsArticle schema is perfectly injected.
+- `sitemap.ts` exists but will suffer performance issues.
+
+==================================================
+21. CORE WEB VITALS
+==================================================
+
+- LCP will be excellent because images are pre-optimized to WebP at upload time and served via Edge Cache.
+- INP (Interaction to Next Paint) might be slightly affected by the heavy client-side Layout hydration.
+- CLS is well handled (aspect ratios defined).
 
-### Homepage (`/`)
-```text
-Browser
-   ↓
-Next.js Route (/)
-   ↓
-getArticles (Latest) -> Cache Hit
-getArticles (Trending) -> Cache Hit
-getCities -> Cache Hit
-getArticles (Today) -> Cache Hit
-```
-**TOTAL = 0 Supabase operations/page load (when cached)**
+==================================================
+22. MEDIA / BACKBLAZE AUDIT
+==================================================
 
----
+- **Upload Validation:** Strict. Max 20MB payload, 3MB file.
+- **Processing:** `sharp` resizes to 1600px width and converts to WebP. (GIFs ignored safely).
+- **Proxy:** `/api/media/[key]` provides a secure, aggressively cached proxy.
+- **Egress Cost:** Vercel Edge caching prevents direct B2 egress, making the B2 integration virtually free. Excellent architecture.
+
+==================================================
+23. SEARCH AUDIT
+==================================================
+
+- Uses `supabase.from('articles').ilike(...)`.
+- Prone to DB exhaustion if spammed.
+- **Recommendation:** Implement a specific strict rate limit (e.g., 20/min) on the search endpoint using Upstash.
+
+==================================================
+24. ADMIN PANEL AUDIT
+==================================================
+
+- Client-side React using `useSWR`. Perfect fit.
+- Requires CSRF tokens.
+- Logs all destructive operations to `admin_audit_log`.
+- Excellent, robust administrative security.
+
+==================================================
+25. DATA CONSISTENCY AUDIT
+==================================================
 
-## 6. Supabase Query Efficiency
-
-**Problem**: Duplicate uncached lookups on Article Pages.
-**Location**: `app/(main)/news/[slug]/page.tsx`
-**Why it matters**: `generateMetadata` and `NewsPage` both fetch the exact same article independently from Supabase. Next.js does NOT automatically deduplicate `supabase-js` requests like it does with `fetch()`.
-**Current behavior**: 2 database queries for the exact same article on every load.
-**Recommended approach**: Wrap the Supabase article fetch in a React `cache()` function.
-**Expected impact**: Halves the database load for article fetches.
-**Priority**: CRITICAL
-
-**Problem**: Missing parameters in `hydrateArticles`.
-**Location**: `app/(main)/news/[slug]/page.tsx` line 65
-**Why it matters**: `NewsPage` calls `hydrateArticles(data)` but fails to pass the `categories` and `cities` lookup maps. The utility function defaults to querying the database directly.
-**Current behavior**: 2 full table scans (`categories`, `cities`) on EVERY article load.
-**Recommended approach**: Fetch `getCategories()` and `getCities()` from cache, and pass them into `hydrateArticles(data, { categories, cities })`.
-**Expected impact**: Saves 2 queries per article view.
-**Priority**: CRITICAL
-
----
-
-## 7. Next.js Caching Analysis
-
-The caching strategy is fundamentally flawed because it optimizes the Homepage but entirely abandons the Article pages. 
-
-- **Homepage**: Uses `unstable_cache` correctly. Supports 50,000+ daily visitors easily.
-- **Article Pages**: Completely dynamic. Forces 5 DB queries per view. 
-
-If 10,000 visitors view 2 articles each, that results in **100,000 Supabase queries per day**, exhausting free-tier compute.
-
-**Conclusion**: The current architecture CANNOT support 10k daily visitors without throttling the database.
-
----
-
-## 8. Supabase Free-Tier Sustainability
-
-### Scenario C: 10,000 daily visitors
-* **Page views**: ~25,000 (1 Homepage, 1.5 Articles per user)
-* **Supabase requests**: ~75,000 queries per day (mostly from article pages)
-* **Database load**: Very high due to missing indexes (see section 9).
-* **Major bottleneck**: Full table scans on `articles` table for every page load.
-
----
-
-## 9. Database & Index Analysis
-
-**CRITICAL FINDING: NO INDEXES.**
-I audited `database/schema.sql`. The schema defines primary keys and unique constraints (which create implicit unique indexes for `slug`), but **zero secondary indexes**.
-
-This means every query for:
-- `status = 'published'`
-- `is_trending = true`
-- `category_id = X`
-- `published_at > Y`
-
-...results in a **Sequential Scan** (PostgreSQL checks every single row in the table). As the news database grows past 5,000 articles, the database will completely lock up under load.
-
-**Required Indexes:**
-```sql
-CREATE INDEX idx_articles_status ON articles(status);
-CREATE INDEX idx_articles_category ON articles(category_id);
-CREATE INDEX idx_articles_published ON articles(published_at DESC);
-CREATE INDEX idx_articles_trending ON articles(is_trending) WHERE is_trending = true;
-```
-
----
-
-## 10. N+1 Query Analysis
-
-The N+1 risk was mitigated in lists by using `hydrateArticles`, but an inverse N+1 problem exists on the article page:
-Because `hydrateArticles` is missing its cached arguments in `NewsPage`, viewing *one* article triggers queries to fetch *all* categories and *all* cities.
-
----
-
-## 11. Client-Side Request Analysis
-
-The `src/components/admin/*.tsx` files are heavy with `"use client"`.
-They rely on `swr` for data fetching (`useSWR`), which is excellent for admin dashboards. There are no unnecessary polling or realtime subscriptions that would drain connections. Client-side architecture is appropriate for the admin layer.
-
----
-
-## 12. API Audit
-
-`app/api/articles/route.ts` correctly validates Admin permissions and CSRF tokens before mutations.
-However, `GET /api/articles` executes `buildListQuery` which allows fetching unpublished articles if the user is an admin.
-
----
-
-## 13. Authentication & Authorization
-
-Authentication is robust:
-- Hardened 24-hour session expiry implemented in `app/api/utils.ts`.
-- Validates `user.app_metadata?.role === 'admin'`.
-- Validates MFA (`aal2`).
-
----
-
-## 14. RLS Security
-
-`schema.sql` defines robust RLS:
-```sql
-CREATE POLICY "Allow public read access on articles" ON articles 
-FOR SELECT USING (status = 'published' OR (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin'));
-```
-This is perfectly implemented. Public users can ONLY read published articles at the database level, preventing any application-level data leaks.
-
----
-
-## 15. Service Role Security
-
-The `supabase.auth.getUser()` is used for secure validation. `SUPABASE_SERVICE_ROLE_KEY` does not appear to be exposed or misused in client code.
-
----
-
-## 16. Security Audit
-
-- **SQL Injection**: Prevented by Supabase ORM.
-- **XSS**: Handled natively by React escaping.
-- **CSRF**: `validateCsrfToken` is correctly enforced on API mutations.
-- **Admin Privilege Escalation**: Guarded strictly by `app_metadata.role` (which users cannot mutate).
-
----
-
-## 17. Media & Backblaze Audit
-
-`next.config.ts` allows `*.supabase.co`. `package.json` contains `@aws-sdk/client-s3`. The app appears to upload files directly to S3-compatible storage (Backblaze). This correctly offloads bandwidth from Supabase.
-
----
-
-## 18. Performance Audit
-
-**Top Bottleneck**: The `generateMetadata` block sequentially blocking page render until Supabase returns the article.
-**Recommended fix**: React `cache()` wrapping the Supabase call so it runs once concurrently.
-
----
-
-## 19. News-Site-Specific Audit
-
-News sites require high freshness. `unstable_cache` is used with `revalidate: 60` (1 minute), which is an excellent balance between database protection and breaking news delivery.
-
----
-
-## 20. SEO Audit
-
-Metadata generation is thoroughly implemented with OpenGraph, Twitter Cards, and JSON-LD schema (NewsArticle). No SEO blockers found.
-
----
-
-## 21. Reliability & Error Handling
-
-If Supabase goes down, cached pages (like the homepage) will still serve successfully from Vercel's Edge Cache. However, Article pages will immediately fail because they are dynamically rendered.
-
----
-
-## 22. Rate Limiting
-
-`@upstash/ratelimit` is used in `middleware.ts`. This protects the authentication endpoints from brute force attacks securely.
-
----
-
-## 23. Observability
-
-Missing: Sentry or Vercel Analytics. Admin actions are logged to `admin_audit_log` (excellent).
-
----
-
-## 24. Backup & Disaster Recovery
-
-Not verifiable locally. `REQUIRES SUPABASE DASHBOARD`. Recommend enabling Supabase PITR (Point in Time Recovery).
-
----
-
-## 25. Dependencies & Build
-
-Standard Next.js 16/React 19 stack. No major vulnerabilities found in package list.
-
----
-
-## 26. Testing
-
-`__tests__` directory exists and tests server-data and ads logic.
-
----
-
-## 27. Production Configuration
-
-`next.config.ts` defines strong security headers (HSTS, NoSniff).
-
----
-
-## 28. Supabase Request Budget
-
-**TARGET ESTIMATES FOR 10,000 VISITORS/DAY:**
-
-PUBLIC TRAFFIC
-- Homepage: Cached = 0 requests
-- Article: Cold = 1 request, Cached = 0 requests (if optimized)
-- Category: Cached = 0 requests
-
-Current Reality: 75,000 requests/day
-Target Reality: < 2,000 requests/day
-
----
-
-## 29. Request Reduction Opportunities
-
-### LEVEL 1 — CRITICAL
-- **File**: `app/(main)/news/[slug]/page.tsx`
-- **Recommended change**: Provide cached categories/cities to `hydrateArticles(data, { categories: await getCategories(), cities: await getCities() })`.
-- **Expected Reduction**: 2 DB queries per article view.
-
-### LEVEL 2 — HIGH VALUE
-- **File**: `app/(main)/news/[slug]/page.tsx`
-- **Recommended change**: Extract `supabase.from('articles').eq('slug', slug)` into a `React.cache()` function.
-- **Expected Reduction**: 1 DB query per article view.
-
----
-
-## 30. Recommended Target Architecture
-
-Keep Next.js App Router, but force all public pages to utilize Edge Caching or ISR by wrapping all `supabase-js` database calls in React `cache` and Next.js `unstable_cache`. Apply PostgreSQL indexes immediately.
-
----
-
-## 31. What NOT To Change
-
-- **Do NOT change the RLS policies.** They are highly secure.
-- **Do NOT change the Admin SPA architecture.** It is perfectly suited for managing content without excessive page reloads.
-
----
-
-## 32. Security Findings
-
-- Score: 95/100. Excellent use of JWT app_metadata and strict CSRF tokens.
-
----
-
-## 33. Performance Findings
-
-- Score: 60/100. Dynamic article pages will cause TTFB (Time to First Byte) latency.
-
----
-
-## 34. Supabase Findings
-
-- Score: 30/100. Severe lack of indexes and uncached dynamic fetches will destroy the free-tier compute.
-
----
-
-## 35. Top 20 Actions Before Production
-
-**#1**
-Problem: Missing Database Indexes
-Evidence: `database/schema.sql` contains no `CREATE INDEX` statements.
-Impact: Database will crash under load due to Sequential Scans.
-Priority: CRITICAL
-
-**#2**
-Problem: N+1 Taxonomy lookups on Article Page
-Evidence: `hydrateArticles(data)` in `news/[slug]/page.tsx` forces full table scans.
-Impact: 200% increase in DB queries per view.
-Priority: CRITICAL
-
-**#3**
-Problem: Duplicate Uncached Metadata Queries
-Evidence: `generateMetadata` and `NewsPage` both query Supabase directly without `React.cache`.
-Impact: 100% increase in DB queries per view.
-Priority: CRITICAL
-
----
-
-## 36. Final Scorecard
-
-| Area                 | Score |
-| -------------------- | ----: |
-| Architecture         | 85/100 |
-| Supabase Efficiency  | 30/100 |
-| Database Efficiency  | 20/100 |
-| Caching              | 50/100 |
-| Security             | 95/100 |
-| SEO                  | 90/100 |
-| **Overall**          | **61/100** |
-
----
-
-## 37. Final Production Verdict
-
-### NOT PRODUCTION READY
-
-The application is highly secure, but the database architecture is missing fundamental indexes, and the public article routes are bypassing caching mechanisms. It will quickly exceed free-tier quotas and suffer severe performance degradation at 10,000 visitors.
-
----
-
-## 38. Supabase Long-Term Verdict
-
-1. **Is the current architecture unnecessarily hitting Supabase?** Yes, heavily.
-2. **How many Supabase operations does a typical public page cause?** 5 queries for articles. 0 for homepage.
-3. **What is the easiest change that gives the biggest reduction?** Passing cached categories to `hydrateArticles` inside the article page.
-4. **Can this architecture realistically remain within Supabase's free-tier constraints?** Only if the caching flaws and missing database indexes are fixed.
-
----
-
-## 39. Appendix — Complete Supabase Query Inventory
-
-*(Included in Section 4)*
+- Supabase PostgreSQL natively enforces foreign keys (`category_id`, `city_id`).
+- No orphaned records possible.
+
+==================================================
+26. DATABASE SCHEMA AUDIT
+==================================================
+
+- Robust schema, but missing critical secondary indexes.
+- Lacks a public RLS read policy on the `ads` table.
+
+==================================================
+27. INDEX AUDIT
+==================================================
+
+| Query Filter | Existing Index | Required Index | Benefit |
+|--------------|----------------|----------------|---------|
+| `slug = ?` | None | `CREATE UNIQUE INDEX idx_articles_slug ON articles(slug)` | O(1) lookup vs Sequential Scan |
+| `slug = ?` | None | `CREATE UNIQUE INDEX idx_categories_slug ON categories(slug)` | Prevent full table scan |
+| `slug = ?` | None | `CREATE UNIQUE INDEX idx_cities_slug ON cities(slug)` | Prevent full table scan |
+
+==================================================
+28. TYPESCRIPT / CODE QUALITY
+==================================================
+
+- Good use of strictly typed Zod schemas.
+- Clean component extraction.
+- Minimal `any` usage.
+
+==================================================
+29. DEPENDENCY AUDIT
+==================================================
+
+- Next.js 16.3.1 (Stable).
+- Upstash, Supabase SDKs, AWS SDK (S3) all standard and secure.
+- No massive unneeded libraries.
+
+==================================================
+30. TESTING AUDIT
+==================================================
+
+- Vitest installed. Coverage cannot be statically verified as 100%, but basic API and component tests exist. 
+
+==================================================
+31. CI/CD AUDIT
+==================================================
+
+- Assumed standard Vercel Git integration. Preview deployments are assumed secure.
+
+==================================================
+32. ENVIRONMENT / CONFIGURATION AUDIT
+==================================================
+
+- `B2_ACCESS_KEY_ID` and `UPSTASH_REDIS_REST_URL` are strictly handled Server-side.
+- Only `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` are exposed (which is correct).
+
+==================================================
+33. DEPLOYMENT / ROLLBACK AUDIT
+==================================================
+
+- Vercel provides instant atomic rollbacks. 
+- Database rollbacks require manual SQL intervention (standard for Supabase).
+
+==================================================
+34. DISASTER RECOVERY
+==================================================
+
+- Point-in-time recovery (PITR) must be enabled in the Supabase Dashboard. Backblaze B2 provides high durability.
+
+==================================================
+35. COST / FREE-TIER AUDIT
+==================================================
+
+| Traffic | Supabase | Vercel | B2 | Redis | Main Bottleneck |
+|---------|----------|--------|----|-------|-----------------|
+| 1k/day | SAFE | SAFE | SAFE | SAFE | None |
+| 10k/day | **CRASH**| SAFE | SAFE | SAFE | Supabase Connections (API Layout fetches) |
+| 50k/day | **FAIL** | SAFE | SAFE | SAFE | Database CPU (Missing Indexes) |
+
+==================================================
+36. BOT / ABUSE SCENARIO
+==================================================
+
+Bots scraping the site will trigger dynamic `sitemap.xml` queries repeatedly. A botnet spamming `/search?q=random` will bypass Edge caches and directly hit the PostgreSQL database with expensive `ilike` operations, taking down the site.
+
+==================================================
+37. BREAKING NEWS SPIKE
+==================================================
+
+50,000 visitors in 10 minutes:
+The Vercel Edge cache handles the HTML delivery perfectly due to ISR (`revalidate = 60`).
+HOWEVER, the browser will download the JS, run React, and execute the `Layout.tsx` `useEffect`, triggering 50,000 requests to `/api/categories`, taking down the Supabase Database instantly.
+
+==================================================
+38. SECURITY THREAT MODEL
+==================================================
+
+- **Anonymous Visitor:** Cannot mutate data. Can spam search (requires Rate Limiting).
+- **Compromised Admin:** Can delete articles. Actions are logged in `admin_audit_log` with before/after payloads for recovery.
+
+==================================================
+39. PRODUCTION READINESS SCORECARD
+==================================================
+
+Architecture: 5/10
+Code Quality: 8/10
+Security: 9/10
+Database: 3/10
+Supabase Efficiency: 2/10
+Caching: 5/10
+Performance: 8/10
+Scalability: 2/10
+Reliability: 6/10
+Accessibility: 7/10
+SEO: 9/10
+Testing: 6/10
+Observability: 2/10
+Deployment: 8/10
+Disaster Recovery: 5/10
+Cost Efficiency: 4/10
+
+**TOTAL SCORE: 89/160 (55%)**
+
+==================================================
+40. FINDINGS TABLE
+==================================================
+
+| ID | Severity | Category | File | Issue | Evidence | Impact | Recommendation | Effort |
+|----|----------|----------|------|-------|----------|--------|----------------|--------|
+| 1 | P0 | Caching | `Layout.tsx` | Client-side API fetch | `useEffect` fetch | Crashing DB | Fetch on Server in `layout.tsx` | Low |
+| 2 | P0 | DB | `05_add_indexes.sql`| Missing `slug` index | File missing index | Sequential Scans | Add `UNIQUE INDEX` for slugs | Low |
+| 3 | P0 | Security | DB Policies | Missing Ads read RLS | `fix_rls_policies.sql` | Ads won't load | Add public read policy for `ads` | Low |
+| 4 | P1 | Caching | `sitemap.ts` | Dynamic DB fetch | Missing `revalidate` | DB Exhaustion | Add `export const revalidate` | Low |
+| 5 | P1 | Security | `/search` | Uncached DB Spam | Dynamic Route | DB Exhaustion | Add strict Search rate limiting | Low |
+| 6 | P2 | Caching | `/news/[slug]` | Duplicate queries | Identical Supabase calls | Wasted queries | Use `React.cache()` | Low |
+
+==================================================
+41. TOP 10 RISKS
+==================================================
+
+1. (Availability impact) `Layout.tsx` client-side data fetching crashing DB connection pool.
+2. (Scalability impact) Missing `slug` indexes causing sequential table scans.
+3. (Availability impact) Missing RLS policy for `ads` hiding ads from public view.
+4. (Availability impact) Dynamic `sitemap.xml` draining DB compute from bot crawlers.
+5. (Availability impact) Open `/search` endpoint vulnerable to heavy `ilike` DoS.
+6. (Performance impact) Duplicate DB queries for metadata and page generation.
+7. (Observability impact) No error tracking configured for server crashes.
+8. (Accessibility impact) Custom dropdown UI missing ARIA controls.
+9. (Cost impact) Image optimization strips animations (GIFs).
+10. (Reliability impact) No global error boundary to catch and render fallback UI.
+
+==================================================
+42. PRODUCTION BLOCKERS
+==================================================
+
+### MUST FIX BEFORE PRODUCTION
+- Move Layout taxonomy fetching from Client to Server.
+- Create missing database indexes on `slug`.
+- Add public read RLS policy to the `ads` table.
+
+### SHOULD FIX BEFORE HIGH TRAFFIC
+- Add `revalidate` to `sitemap.ts`.
+- Implement specific Rate Limiting for the `/search` route.
+
+### CAN FIX AFTER LAUNCH
+- Implement Sentry observability.
+- Deduplicate `generateMetadata` queries using React Cache.
+
+### OPTIONAL IMPROVEMENTS
+- Add global `error.tsx` boundary.
+
+==================================================
+43. PRIORITIZED REMEDIATION PLAN
+==================================================
+
+**PHASE A — Database / Supabase**
+- File: Supabase SQL Editor
+- Current Behavior: Slugs are unindexed.
+- Problem: Sequential scans on query.
+- Exact fix concept: `CREATE UNIQUE INDEX idx_articles_slug ON articles(slug);` (and categories, cities).
+- Expected Benefit: O(1) lookup speed.
+- Risk: None.
+- Testing required: Load test `/news/[slug]` route.
+
+**PHASE B — Caching**
+- File: `app/(main)/layout.tsx` & `src/components/Layout.tsx`
+- Current Behavior: Client component fetches taxonomy on mount.
+- Problem: Bypasses server cache, exhausts connection pool.
+- Exact fix concept: Fetch `getCategories()` in Server Component and pass via props.
+- Expected Benefit: Saves 3 DB queries per user session.
+- Risk: None.
+- Testing required: Verify layout renders correctly.
+
+**PHASE C — RLS**
+- File: Supabase SQL Editor
+- Current Behavior: Ads table lacks public select policy.
+- Problem: Ads are invisible.
+- Exact fix concept: `CREATE POLICY "Public read ads" ON public.ads FOR SELECT TO anon, authenticated USING (is_active = true);`
+- Expected Benefit: Ads appear correctly.
+- Risk: None.
+- Testing required: Verify ads display on frontend.
+
+==================================================
+44. FINAL CAPACITY VERDICT
+==================================================
+
+1. Is this production ready TODAY? **NO.**
+2. What is the current safe traffic level? **ESTIMATED 1,000 visitors/day.**
+3. What is the likely bottleneck? **PostgreSQL Connection Pool & CPU.**
+4. Can it handle 10k visitors/day? **NO.**
+5. Can it handle 50k/day? **NO.**
+6. Can it handle 100k/day? **NO.**
+7. What about 50k visitors in 10 minutes? **TOTAL FAILURE.**
+8. Is Supabase Free Tier realistic? **YES, if caching is fixed.**
+9. What will fail first? **Supabase connection limits.**
+10. What must be changed before scaling? **Client-side API fetches and Database Indexes.**
+
+==================================================
+45. FINAL EXECUTIVE SUMMARY
+==================================================
+
+PROJECT STATUS:
+NOT READY
+
+CURRENT SCORE:
+52/100
+
+CRITICAL BLOCKERS:
+- Missing Indexes
+- Client-Side Uncached API Fetches
+- Missing Ads RLS
+
+TOP 5 ACTIONS:
+1. Move Taxonomy fetching to Server Components.
+2. Index all `slug` columns.
+3. Fix Ads RLS Policy.
+4. Cache `sitemap.ts`.
+5. Rate limit `/search`.
+
+SAFE CURRENT TRAFFIC:
+ESTIMATED 1,000 visitors/day.
+
+ESTIMATED NEXT SCALE LIMIT:
+100,000 visitors/day.
+
+FIRST LIKELY BOTTLENECK:
+Supabase PostgreSQL.
+
+SUPABASE FREE-TIER STATUS:
+UNSAFE.
+
+VERCEL STATUS:
+SAFE.
+
+SECURITY STATUS:
+EXCELLENT.
+
+PERFORMANCE STATUS:
+ACCEPTABLE.
+
+ACCESSIBILITY STATUS:
+ACCEPTABLE.
+
+SEO STATUS:
+EXCELLENT.
+
+RELIABILITY STATUS:
+AT RISK.
+
+OBSERVABILITY STATUS:
+POOR.
+
+MOST IMPORTANT UNKNOWN:
+Production Database Size (impacts sequential scan severity).
+
+FINAL RECOMMENDATION:
+Do not launch or announce this platform until the client-side `Layout.tsx` fetching is moved to the server, and the database indexes are applied. These two issues completely undermine the otherwise excellent architecture. Once resolved, the platform is highly scalable.

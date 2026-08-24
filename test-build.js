@@ -1,0 +1,1 @@
+async function check() { const res = await fetch('https://akhil-gujarat-final.vercel.app/'); const text = await res.text(); const buildIdMatch = text.match(/_buildManifest\.js/); console.log(buildIdMatch ? 'Build manifest found' : 'Not Found'); const chunks = text.match(/[0-9a-f]{40}/g); if (chunks) console.log('Potential Git SHAs:', Array.from(new Set(chunks))); } check();

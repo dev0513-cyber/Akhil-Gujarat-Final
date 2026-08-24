@@ -1,0 +1,1 @@
+async function check() { const res = await fetch('https://akhil-gujarat-final.vercel.app/'); const text = await res.text(); const chunks = text.match(/\/news\/[a-zA-Z0-9\-]+/g); if (chunks) console.log('Potential Slugs:', Array.from(new Set(chunks))); } check();
