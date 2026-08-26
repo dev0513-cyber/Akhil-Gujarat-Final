@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
 import { requireAdminMutation, handleApiError } from '../utils';
 
@@ -42,10 +43,10 @@ const adminError = await requireAdminMutation(req);
 
     const { data, error } = await supabase.from('site_settings').select('*');
     if (error) throw error;
+    (revalidateTag as (t: string) => void)('settings');
     return NextResponse.json(data);
   } catch (err) {
     return handleApiError(err);
   }
 }
-
 

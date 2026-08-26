@@ -5,19 +5,25 @@ import Link from 'next/link';
 import { Search, X, MapPin, Newspaper, Phone, Mail } from 'lucide-react';
 import Image from 'next/image';
 import type { Category, City } from '../lib/types';
-import { fetchCategories, fetchCities, fetchSettings } from '../lib/api';
 import { formatTodayMasthead, formatTodayMastheadShort } from '../lib/format';
 
-export default function Layout({ children }: Readonly<{ children: ReactNode }>) {
-  const [cats, setCats] = useState<Category[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
+type LayoutProps = Readonly<{
+  children: ReactNode;
+  initialCategories?: Category[];
+  initialCities?: City[];
+  initialSettings?: Record<string, string>;
+}>;
+
+export default function Layout({ children, initialCategories = [], initialCities = [], initialSettings = {} }: LayoutProps) {
+  const [cats, setCats] = useState<Category[]>(initialCategories);
+  const [cities, setCities] = useState<City[]>(initialCities);
   const [open, setOpen] = useState(false);
   const [gujaratOpen, setGujaratOpen] = useState(false);
   const gujaratBtnRef = useRef<HTMLDivElement | null>(null);
   const [gujaratTop, setGujaratTop] = useState(0);
   const [q, setQ] = useState('');
   const [now, setNow] = useState<Date | null>(null);
-  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [settings, setSettings] = useState<Record<string, string>>(initialSettings);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,19 +42,6 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
     }, 0);
   }, [pathname]);
 
-  useEffect(() => {
-    Promise.all([fetchCategories(), fetchCities(), fetchSettings()])
-      .then(([c, t, s]) => {
-        setCats(c);
-        setCities(t);
-        const map: Record<string, string> = {};
-        if (s && Array.isArray(s)) {
-          s.forEach(item => { map[item.key] = item.value; });
-        }
-        setSettings(map);
-      })
-      .catch((err) => { console.error('Failed to load global layout data:', err); });
-  }, []);
 
   const onSearch = (e: FormEvent) => {
     e.preventDefault();

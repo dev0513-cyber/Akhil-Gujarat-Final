@@ -2,12 +2,10 @@ import supabase from './supabase';
 import { hydrateArticles } from '../../app/api/utils';
 import { unstable_cache } from 'next/cache';
 import { applyArticleSearchAndOrder } from './query-utils';
-import { getISTDayRange } from './format';
-import type { Ad } from './types';
 
 export const getArticles = unstable_cache(
   async (params: Record<string, string | number | boolean> = {}) => {
-    let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, author');
+    let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, view_count, author');
 
     if (params.status) {
       query = query.eq('status', params.status);
@@ -19,10 +17,6 @@ export const getArticles = unstable_cache(
     if (params.city_id) query = query.eq('city_id', params.city_id);
     if (params.trending) query = query.eq('is_trending', true);
     if (params.video) query = query.not('video_url', 'is', null).neq('video_url', '');
-    if (params.day) {
-      const { from, to } = getISTDayRange(String(params.day));
-      query = query.gte('published_at', from).lt('published_at', to);
-    }
     
     query = applyArticleSearchAndOrder(query, params.q as string | undefined);
 
@@ -69,33 +63,18 @@ export const getPages = unstable_cache(
   { revalidate: 3600, tags: ['pages'] }
 );
 
-export const getActiveAdsForSlot = unstable_cache(
-  async (slot: string) => {
-    const { data, error } = await supabase
-      .from('ads')
-      .select('*')
-      .eq('slot', slot)
-      .eq('is_active', true)
-      .limit(20);
+export const getSettings = unstable_cache(
+  async () => {
+    const { data, error } = await supabase.from('site_settings').select('*');
     if (error) throw error;
-    return data || [];
+    
+    // Convert to Record<string, string> as expected by Layout
+    const map: Record<string, string> = {};
+    if (data && Array.isArray(data)) {
+      data.forEach(item => { map[item.key] = item.value; });
+    }
+    return map;
   },
-  ['ads-by-slot'],
-  { revalidate: 300, tags: ['ads'] }
-);
-
-export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
-  const data = await getActiveAdsForSlot(slot);
-  if (!data || data.length === 0) return null;
-  return data[Math.floor(Math.random() * data.length)] as Ad;
-};
-
-export const getArticleBySlug = unstable_cache(
-  async (slug: string) => {
-    const { data, error } = await supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description').eq('slug', slug).maybeSingle();
-    if (error) throw error;
-    return data;
-  },
-  ['article-by-slug'],
-  { revalidate: 60, tags: ['articles'] }
+  ['settings-cache'],
+  { revalidate: 3600, tags: ['settings'] }
 );
