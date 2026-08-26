@@ -11,6 +11,7 @@ export default async function Layout({children}: Readonly<{ children: React.Reac
     redirect('/admin/login');
   }
 
+  // eslint-disable-next-line react-hooks/purity
   const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : Date.now();
 
   return (

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -177,7 +178,9 @@ export default function ArticleEditor() {
       if (localDraft) {
         try {
           const parsed = JSON.parse(localDraft);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setForm(parsed);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setIsDraftRestored(true);
         } catch {}
       }

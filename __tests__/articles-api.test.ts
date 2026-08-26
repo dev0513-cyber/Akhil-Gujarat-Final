@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET, POST, PUT } from '../app/api/articles/route';
 import * as utils from '../app/api/utils';
 
+vi.mock('next/cache', () => ({
+  revalidateTag: vi.fn(),
+  unstable_cache: vi.fn((fn) => fn),
+}));
+
 vi.mock('../app/api/utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../app/api/utils')>();
   return {
@@ -29,7 +34,7 @@ const createMockBuilder = (resolvedValue: unknown) => {
   return builder;
 };
 
-const mockFrom = vi.fn();
+const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }));
 
 vi.mock('../src/utils/supabase/server', () => ({
   createClient: vi.fn(async () => ({
@@ -38,6 +43,10 @@ vi.mock('../src/utils/supabase/server', () => ({
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null })
     }
   }))
+}));
+
+vi.mock('../src/lib/supabase', () => ({
+  default: { from: mockFrom }
 }));
 
 describe('Articles API', () => {

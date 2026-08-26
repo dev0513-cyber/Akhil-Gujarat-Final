@@ -30,6 +30,7 @@ export default function NewsCard({
             fill
             sizes="(max-width: 768px) 100vw, 66vw"
             className="object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+            unoptimized={img.startsWith('/api/media')}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 text-white">
@@ -71,7 +72,7 @@ export default function NewsCard({
       <div className="relative h-full">
         <Link href={href} className="group flex flex-col h-full bg-white border border-rule/70 hover:shadow-md transition-shadow">
           <div className="relative aspect-[16/10] overflow-hidden bg-paper-dark">
-            <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
+            <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized={img.startsWith('/api/media')} />
             {hasVideo && <PlayBadge />}
           </div>
           <div className="p-4 flex-1 flex flex-col">
@@ -92,7 +93,7 @@ export default function NewsCard({
       <div className="relative border-b border-rule/60 last:border-0">
         <Link href={href} className="group flex gap-3 py-3">
           <div className="relative w-28 h-20 shrink-0 overflow-hidden bg-paper-dark">
-            <Image src={img} alt="" fill sizes="112px" className="object-cover group-hover:scale-105 transition-transform duration-500" />
+            <Image src={img} alt="" fill sizes="112px" className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized={img.startsWith('/api/media')} />
             {hasVideo && <PlayBadge small />}
           </div>
           <div className="min-w-0">
@@ -120,7 +121,7 @@ export default function NewsCard({
     return (
       <Link href={href} className="group block">
         <div className="relative aspect-video overflow-hidden bg-ink">
-          <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
+          <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" unoptimized={img.startsWith('/api/media')} />
           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="w-14 h-14 rounded-full bg-crimson text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
@@ -140,7 +141,7 @@ export default function NewsCard({
     <div className="relative">
       <Link href={href} className="group flex flex-col">
         <div className="relative aspect-[16/10] overflow-hidden bg-paper-dark">
-          <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
+          <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized={img.startsWith('/api/media')} />
           {hasVideo && <PlayBadge />}
         </div>
         <Meta article={article} />

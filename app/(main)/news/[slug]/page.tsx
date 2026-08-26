@@ -10,7 +10,6 @@ import ShareButtons from '../../../../src/components/ShareButtons';
 import AdBanner from '../../../../src/components/AdBanner';
 import VideoEmbed from '../../../../src/components/VideoEmbed';
 import type { Article } from '../../../../src/lib/types';
-import { ErrorBanner } from '../../../../src/components/Skeleton';
 import { hydrateArticles } from '../../../api/utils';
 import type { ReactNode } from 'react';
 
@@ -50,16 +49,14 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   };
 }
 
+import { notFound } from 'next/navigation';
+
 export default async function NewsPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
   const data = await getArticleBySlug(slug);
   
   if (!data) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <ErrorBanner message="આ સમાચાર ઉપલબ્ધ નથી." />
-      </div>
-    );
+    notFound();
   }
 
   const [categories, cities] = await Promise.all([getCategories(), getCities()]);
@@ -123,7 +120,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         {article.image_url && (
           <figure className="mt-6">
             <div className="relative w-full aspect-video max-h-[460px] overflow-hidden">
-              <Image src={article.image_url} alt={article.headline} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority />
+              <Image src={article.image_url} alt={article.headline} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority unoptimized={article.image_url.startsWith('/api/media')} />
             </div>
             {article.source && (
               <figcaption className="text-[11px] text-ink/45 mt-1.5">સ્રોત / ક્રેડિટ: {article.source}</figcaption>
@@ -146,7 +143,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {article.extra_images.map((src: string, i: number) => (
                 <a key={src} href={src} target="_blank" rel="noopener noreferrer" className="relative aspect-[4/3] overflow-hidden group block rounded border border-rule">
-                  <Image src={src} alt={`${article.headline} - photo ${i+1}`} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <Image src={src} alt={`${article.headline} - photo ${i+1}`} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized={src.startsWith('/api/media')} />
                 </a>
               ))}
             </div>

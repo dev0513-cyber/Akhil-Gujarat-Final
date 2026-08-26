@@ -15,15 +15,15 @@ type LayoutProps = Readonly<{
 }>;
 
 export default function Layout({ children, initialCategories = [], initialCities = [], initialSettings = {} }: LayoutProps) {
-  const [cats, setCats] = useState<Category[]>(initialCategories);
-  const [cities, setCities] = useState<City[]>(initialCities);
+  const [cats] = useState<Category[]>(initialCategories);
+  const [cities] = useState<City[]>(initialCities);
   const [open, setOpen] = useState(false);
   const [gujaratOpen, setGujaratOpen] = useState(false);
   const gujaratBtnRef = useRef<HTMLDivElement | null>(null);
   const [gujaratTop, setGujaratTop] = useState(0);
   const [q, setQ] = useState('');
   const [now, setNow] = useState<Date | null>(null);
-  const [settings, setSettings] = useState<Record<string, string>>(initialSettings);
+  const [settings] = useState<Record<string, string>>(initialSettings);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -194,7 +194,7 @@ export default function Layout({ children, initialCategories = [], initialCities
                 placeholder="સમાચાર શોધો..."
                 className="flex-1 outline-none text-sm bg-transparent font-gujarati"
               />
-              <button type="submit">
+              <button type="submit" aria-label="શોધ">
                 <Search size={16} />
               </button>
             </form>
@@ -231,7 +231,7 @@ export default function Layout({ children, initialCategories = [], initialCities
             </p>
           </div>
           <div>
-            <h3 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">Contact</h3>
+            <h3 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">સંપર્ક (Contact)</h3>
             <ul className="space-y-3 text-sm text-white/75 font-gujarati min-w-0">
               <li className="flex items-start gap-2 min-w-0">
                 <MapPin size={16} className="text-crimson shrink-0 mt-0.5" />
@@ -248,26 +248,26 @@ export default function Layout({ children, initialCategories = [], initialCities
             </ul>
           </div>
           <div>
-            <h3 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">Information</h3>
-            <ul className="space-y-1.5 text-sm text-white/75 font-sans">
+            <h3 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">માહિતી (Information)</h3>
+            <ul className="space-y-1.5 text-sm text-white/75 font-gujarati">
               <li>
                 <Link href="/p/about" className="hover:text-white">
-                  About Us
+                  અમારા વિશે
                 </Link>
               </li>
               <li>
                 <Link href="/p/privacy" className="hover:text-white">
-                  Privacy Policy
+                  ગોપનીયતા નીતિ
                 </Link>
               </li>
               <li>
                 <Link href="/p/terms" className="hover:text-white">
-                  Terms & Conditions
+                  નિયમો અને શરતો
                 </Link>
               </li>
               <li>
                 <Link href="/p/disclaimer" className="hover:text-white">
-                  Disclaimer
+                  ડિસ્ક્લેમર
                 </Link>
               </li>
             </ul>

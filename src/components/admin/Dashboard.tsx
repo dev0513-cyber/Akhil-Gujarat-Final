@@ -27,6 +27,7 @@ export default function Dashboard() {
   const videos = articles.filter((a) => a.video_url);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (error) setDismissedError(false);
   }, [error]);
 

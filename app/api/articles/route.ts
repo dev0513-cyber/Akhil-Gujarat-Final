@@ -4,6 +4,7 @@ import { createClient } from '../../../src/utils/supabase/server';
 import { requireAdminMutation, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
 import { articleSchema, paginationSchema } from '../../../src/lib/validation';
 import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
+import { getCategories, getCities } from '../../../src/lib/server-data';
 
 
 function buildArticleRow(body: Record<string, unknown>, isCreate: boolean, existingStatus?: string | null) {
@@ -70,7 +71,8 @@ const adminError = await requireAdminMutation(req);
     if (adminError) return adminError;
   }
 
-  const [hydrated] = await hydrateArticles(data);
+  const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+  const [hydrated] = await hydrateArticles(data, { categories, cities });
   return NextResponse.json(hydrated);
 }
 
@@ -151,7 +153,8 @@ export async function GET(req: Request) {
 
     const { data, error } = await finalQuery;
     if (error) throw error;
-    const hydrated = await hydrateArticles(data || []);
+    const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+    const hydrated = await hydrateArticles(data || [], { categories, cities });
     return NextResponse.json(hydrated);
   } catch (err) {
     return handleApiError(err);
@@ -175,7 +178,8 @@ const adminError = await requireAdminMutation(req);
     const { data, error } = await supabase.from('articles').insert(row).select().single();
     if (error) throw error;
     
-    const [hydrated] = await hydrateArticles(data);
+    const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+    const [hydrated] = await hydrateArticles(data, { categories, cities });
     (revalidateTag as (t: string) => void)('articles');
     return NextResponse.json(hydrated, { status: 201 });
   } catch (err) {
@@ -211,7 +215,8 @@ const adminError = await requireAdminMutation(req);
     const { data, error } = await supabase.from('articles').update(row).eq('id', body.id).select().single();
     if (error) throw error;
     
-    const [hydrated] = await hydrateArticles(data);
+    const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+    const [hydrated] = await hydrateArticles(data, { categories, cities });
     (revalidateTag as (t: string) => void)('articles');
     return NextResponse.json(hydrated);
   } catch (err) {

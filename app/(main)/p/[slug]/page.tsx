@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import supabase from '../../../../src/lib/supabase';
 import { splitParagraphs } from '../../../../src/lib/format';
-import { ErrorBanner } from '../../../../src/components/Skeleton';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -13,16 +12,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+import { notFound } from 'next/navigation';
+
 export default async function StaticPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
   const { data: page } = await supabase.from('static_pages').select('*').eq('slug', slug).maybeSingle();
 
   if (!page) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <ErrorBanner message="પેજ મળ્યું નહીં" />
-      </div>
-    );
+    notFound();
   }
 
   return (

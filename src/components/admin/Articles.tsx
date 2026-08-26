@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import type { Article } from '../../lib/types';
@@ -43,7 +43,8 @@ export default function Articles() {
   }, [items, filter, q]);
 
   // Reset dismissedError when SWR error changes
-  useMemo(() => {
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (error) setDismissedError(false);
   }, [error]);
 

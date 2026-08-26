@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 
 const CSRF_COOKIE_NAME = 'csrf_token';
 const CSRF_HEADER_NAME = 'x-csrf-token';

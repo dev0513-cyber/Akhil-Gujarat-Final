@@ -156,7 +156,7 @@ export default function EPaperClient() {
                 
                 <div className="bg-white shadow-xl border border-rule/50 w-full aspect-[2/3] relative mb-8 overflow-hidden group">
                   {selectedEPaper.thumbnail_url ? (
-                    <Image src={selectedEPaper.thumbnail_url} alt={selectedEPaper.title} fill sizes="(max-width: 768px) 100vw, 450px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <Image src={selectedEPaper.thumbnail_url} alt={selectedEPaper.title} fill sizes="(max-width: 768px) 100vw, 450px" className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized={selectedEPaper.thumbnail_url.startsWith('/api/media')} />
                   ) : (
                     <div className="w-full h-full bg-paper flex flex-col items-center justify-center text-ink/20">
                       <FileText size={64} strokeWidth={1} className="mb-4" />

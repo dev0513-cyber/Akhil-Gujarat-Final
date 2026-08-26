@@ -5,6 +5,7 @@ import type { Article } from '../../src/lib/types';
 import { createClient } from '../../src/utils/supabase/server';
 import { validateCsrfToken, getCsrfToken as getCsrfTokenUtil } from '../../src/lib/csrf';
 import { logAdminAction } from '../../src/lib/audit';
+import { logger } from '../../src/lib/logger';
 
 export { validateCsrfToken, getCsrfTokenUtil as getCsrfToken };
 
@@ -98,7 +99,7 @@ export async function hydrateArticles(
 }
 
 export function handleApiError(err: unknown) {
-  console.error('API Error:', err);
+  logger.error('API Error', err);
   // Do not expose database internals or stack traces in responses
   if (err && typeof err === 'object' && 'code' in err && typeof (err as {code?: unknown}).code === 'string') {
     const code = (err as {code: string}).code;
@@ -108,8 +109,9 @@ export function handleApiError(err: unknown) {
     // Likely a Supabase/PostgREST error
     return NextResponse.json({ error: 'DATABASE_ERROR' }, { status: 500 });
   }
-  const msg = err instanceof Error ? err.message : 'An unexpected error occurred';
-  return NextResponse.json({ error: msg }, { status: 500 });
+  // Hide all error messages to prevent internal details or stack traces from leaking
+  // The full error is logged above via console.error
+  return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
 }
 
 export async function requireCsrf(request: Request) {

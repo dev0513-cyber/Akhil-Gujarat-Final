@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import supabase from '../../../../src/lib/supabase';
 import { getArticles, getCities } from '../../../../src/lib/server-data';
-import { ErrorBanner } from '../../../../src/components/Skeleton';
 import { FilteredArticleView } from '../../../../src/components/FilteredArticleView';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -15,12 +14,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+import { notFound } from 'next/navigation';
+
 export default async function CategoryPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
   const { data: cat } = await supabase.from('categories').select('*').eq('slug', slug).maybeSingle();
   
   if (!cat) {
-    return <ErrorBanner message="આ વિભાગ મળ્યો નથી" />;
+    notFound();
   }
 
   const [items, cities] = await Promise.all([

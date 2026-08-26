@@ -48,9 +48,9 @@ const adminError = await requireAdminMutation(req);
       return NextResponse.json({ error: 'Unsupported Media Type: ' + file.type }, { status: 415 });
     }
 
-    const dangerousExtensions = /\.(exe|sh|bat|js|html|php|svg)$/i;
-    if (dangerousExtensions.test(file.name)) {
-      return NextResponse.json({ error: 'Dangerous file extension detected' }, { status: 400 });
+    const allowedExtensions = /\.(jpg|jpeg|png|webp|gif|pdf)$/i;
+    if (!allowedExtensions.test(file.name)) {
+      return NextResponse.json({ error: 'Invalid file extension' }, { status: 400 });
     }
 
     const safe = String(file.name).replace(/[^a-zA-Z0-9._-]/g, '_');

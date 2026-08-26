@@ -19,8 +19,9 @@ export default function SessionWarning({ lastSignIn }: { lastSignIn: number }) {
       const remaining = TWENTY_FOUR_HOURS - elapsed;
 
       if (remaining <= 0) {
-        // Hard reload to trigger middleware logout and redirect
-        window.location.href = '/admin/login?error=SessionExpired';
+        // Use router to redirect
+        router.push('/admin/login?error=SessionExpired');
+        router.refresh();
       } else if (remaining <= WARNING_THRESHOLD) {
         setShowWarning(true);
         setMinutesLeft(Math.ceil(remaining / 60000));
