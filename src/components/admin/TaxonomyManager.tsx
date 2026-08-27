@@ -27,6 +27,7 @@ interface TaxonomyManagerProps<T extends TaxonomyItem> {
   descriptionEn: string;
   descriptionGu: string;
   hasDescriptionField?: boolean;
+  initialData?: T[];
 }
 
 export function TaxonomyManager<T extends TaxonomyItem>({
@@ -39,8 +40,9 @@ export function TaxonomyManager<T extends TaxonomyItem>({
   descriptionEn,
   descriptionGu,
   hasDescriptionField = false,
+  initialData = [],
 }: TaxonomyManagerProps<T>) {
-  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR<T[]>(cacheKey, fetcher);
+  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR<T[]>(cacheKey, fetcher, { fallbackData: initialData });
   const [editing, setEditing] = useState<Partial<T>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);

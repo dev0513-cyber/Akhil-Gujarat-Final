@@ -1,4 +1,5 @@
 "use client";
+import type { SiteSetting } from '../../lib/types';
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import { fetchSettings, saveSettings } from '../../lib/api';
@@ -6,13 +7,13 @@ import { Save, AlertCircle } from 'lucide-react';
 import { useAdminLang } from '../../contexts/AdminLangContext';
 import { SuccessModal } from '../SuccessModal';
 
-export default function Settings() {
+export default function Settings({ initialSettings }: { initialSettings: SiteSetting[] }) {
   const [links, setLinks] = useState({
     facebook_url: '',
     instagram_url: '',
     youtube_url: '',
   });
-  const { data: settingsData, error: loadError, isLoading: loading, mutate } = useSWR('settings', fetchSettings);
+  const { data: settingsData, error: loadError, isLoading: loading, mutate } = useSWR('settings', fetchSettings, { fallbackData: initialSettings });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);

@@ -4,7 +4,6 @@ import { createClient } from '../../../src/utils/supabase/server';
 import { requireAdminMutation, requireAdmin, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
 import { articleSchema, paginationSchema } from '../../../src/lib/validation';
 import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
-import { getCategories, getCities } from '../../../src/lib/server-data';
 
 
 function buildArticleRow(body: Record<string, unknown>, isCreate: boolean, existingStatus?: string | null) {
@@ -57,7 +56,7 @@ function buildArticleRow(body: Record<string, unknown>, isCreate: boolean, exist
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchSingleArticle(supabase: any, id: string | null, slug: string | null, req: Request) {
+async function fetchSingleArticle(supabase: any, id: string | null, slug: string | null) {
   let query = supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description');
   if (id) query = query.eq('id', id);
   else query = query.eq('slug', slug);
@@ -71,8 +70,7 @@ async function fetchSingleArticle(supabase: any, id: string | null, slug: string
     if (adminError) return adminError;
   }
 
-  const [categories, cities] = await Promise.all([getCategories(), getCities()]);
-  const [hydrated] = await hydrateArticles(data, { categories, cities });
+  const [hydrated] = await hydrateArticles(data);
   return NextResponse.json(hydrated);
 }
 
@@ -85,7 +83,7 @@ function applyBooleanFilters(query: any, trending: string | null, video: string 
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function buildListQuery(supabase: any, searchParams: URLSearchParams, req: Request) {
+async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
   const status = searchParams.get('status');
   const category = searchParams.get('category');
   const city = searchParams.get('city');
@@ -94,7 +92,7 @@ async function buildListQuery(supabase: any, searchParams: URLSearchParams, req:
   const q = searchParams.get('q');
   const related = searchParams.get('related');
 
-  let query = supabase.from('articles').select('id, headline, description, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author');
+  let query = supabase.from('articles').select('id, headline, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author');
 
   if (status === 'all') {
     const adminError = await requireAdmin();
@@ -130,7 +128,7 @@ export async function GET(req: Request) {
     const id = searchParams.get('id');
 
     if (slug || id) {
-      return await fetchSingleArticle(supabase, id, slug, req);
+      return await fetchSingleArticle(supabase, id, slug);
     }
     
     const pageParam = searchParams.get('page');
@@ -144,7 +142,7 @@ export async function GET(req: Request) {
     const page = pag.success ? pag.data.page : 1;
     const limit = pag.success ? pag.data.limit : 20;
 
-    const { query, empty, error: filterErr } = await buildListQuery(supabase, searchParams, req);
+    const { query, empty, error: filterErr } = await buildListQuery(supabase, searchParams);
     if (filterErr) return filterErr;
     if (empty) return NextResponse.json([]);
 
@@ -153,8 +151,7 @@ export async function GET(req: Request) {
 
     const { data, error } = await finalQuery;
     if (error) throw error;
-    const [categories, cities] = await Promise.all([getCategories(), getCities()]);
-    const hydrated = await hydrateArticles(data || [], { categories, cities });
+    const hydrated = await hydrateArticles(data || []);
     return NextResponse.json(hydrated);
   } catch (err) {
     return handleApiError(err);
@@ -178,8 +175,7 @@ const adminError = await requireAdminMutation(req);
     const { data, error } = await supabase.from('articles').insert(row).select().single();
     if (error) throw error;
     
-    const [categories, cities] = await Promise.all([getCategories(), getCities()]);
-    const [hydrated] = await hydrateArticles(data, { categories, cities });
+    const [hydrated] = await hydrateArticles(data);
     (revalidateTag as (t: string) => void)('articles');
     return NextResponse.json(hydrated, { status: 201 });
   } catch (err) {
@@ -215,8 +211,7 @@ const adminError = await requireAdminMutation(req);
     const { data, error } = await supabase.from('articles').update(row).eq('id', body.id).select().single();
     if (error) throw error;
     
-    const [categories, cities] = await Promise.all([getCategories(), getCities()]);
-    const [hydrated] = await hydrateArticles(data, { categories, cities });
+    const [hydrated] = await hydrateArticles(data);
     (revalidateTag as (t: string) => void)('articles');
     return NextResponse.json(hydrated);
   } catch (err) {

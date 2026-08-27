@@ -1,9 +1,13 @@
-import AdminAds from '@/components/admin/Ads';
+import AdsClient from '@/components/admin/Ads';
+import { createClient } from '@/utils/supabase/server';
+import { requireAdminServer } from '../../../../api/utils';
 
-export const metadata = {
-  title: 'જાહેરાત મેનેજમેન્ટ | અખિલ ગુજરાત CMS',
-};
+export const dynamic = 'force-dynamic';
 
-export default function Page() {
-  return <AdminAds />;
+export default async function AdminAdsPage() {
+  await requireAdminServer();
+  const supabase = await createClient();
+  const { data: ads } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+
+  return <AdsClient initialAds={ads || []} />;
 }

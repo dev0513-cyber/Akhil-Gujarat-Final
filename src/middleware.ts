@@ -161,9 +161,9 @@ export async function middleware(request: NextRequest) {
       }
     )
     const {
-      data: { user: sessionUser },
-    } = await supabase.auth.getUser()
-    user = sessionUser
+      data: { session },
+    } = await supabase.auth.getSession()
+    user = session?.user || null
 
     // Enforce strict 24-hour session limit
     if (user) {

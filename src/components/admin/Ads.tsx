@@ -15,9 +15,9 @@ const emptyForm = { title: '', image_url: '', link_url: '', slot: AD_SLOTS[0].ke
 
 type AdForm = { title: string; image_url: string; link_url: string; slot: string; frame: string; is_active: boolean };
 
-export default function AdminAds() {
+export default function AdminAds({ initialAds }: { initialAds: Ad[] }) {
   const { t, lang } = useAdminLang();
-  const { data: ads = [], mutate } = useSWR(['ads'], fetchAds);
+  const { data: ads = [], mutate } = useSWR(['ads'], fetchAds, { fallbackData: initialAds });
   const [form, setForm] = useState<AdForm>({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);

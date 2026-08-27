@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import Link from 'next/link';
 import type { Article } from '../../lib/types';
@@ -10,13 +11,24 @@ import { ConfirmDeleteModal } from '../ConfirmDeleteModal';
 import { AlertModal } from '../AlertModal';
 import { SuccessModal } from '../SuccessModal';
 
-export default function Articles() {
+export default function Articles({
+  initialArticles,
+  initialStatus,
+  initialSearch
+}: {
+  initialArticles: Article[];
+  initialStatus: string;
+  initialSearch: string;
+}) {
+  const router = useRouter();
   const { data: items = [], error, isLoading: loading, mutate } = useSWR(
-    ['articles', 'all', 100],
-    ([, status, limit]) => fetchArticles({ status, limit: Number(limit) })
+    ['articles', initialStatus, 100, initialSearch],
+    () => fetchArticles({ status: initialStatus, q: initialSearch, limit: 100 }),
+    { fallbackData: initialArticles }
   );
-  const [filter, setFilter] = useState('all');
-  const [q, setQ] = useState('');
+  
+  const [filter, setFilter] = useState(initialStatus);
+  const [q, setQ] = useState(initialSearch);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Article | null>(null);
   const [alertMessage, setAlertMessage] = useState('');
@@ -34,13 +46,16 @@ export default function Articles() {
 
 
 
-  const visible = useMemo(() => {
-    return items.filter((a) => {
-      if (filter !== 'all' && a.status !== filter) return false;
-      if (q && !`${a.headline} ${a.slug}`.toLowerCase().includes(q.toLowerCase())) return false;
-      return true;
-    });
-  }, [items, filter, q]);
+  // Trigger URL updates on search/filter changes (debounced for search)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (filter !== 'all') params.set('status', filter);
+      if (q) params.set('q', q);
+      router.push(`/admin/articles?${params.toString()}`);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filter, q, router]);
 
   // Reset dismissedError when SWR error changes
   useEffect(() => {
@@ -138,7 +153,7 @@ export default function Articles() {
             </tr>
           </thead>
           <tbody>
-            {visible.map((a) => (
+            {items.map((a) => (
               <tr key={a.id} className="border-t border-rule/60 align-top">
                 <td className="px-3 py-3 font-gujarati">
                   <Link href={`/admin/articles/${a.id}`} className="hover:text-crimson font-medium">
@@ -185,7 +200,7 @@ export default function Articles() {
                 </td>
               </tr>
             ))}
-            {!loading && visible.length === 0 && (
+            {!loading && items.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-3 py-10 text-center text-ink/45 font-gujarati">
                   {t('કોઈ સમાચાર નથી.', 'No articles found.')}

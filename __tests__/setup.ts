@@ -16,6 +16,7 @@ vi.mock('server-only', () => ({}));
 vi.mock('next/cache', () => ({
   revalidateTag: vi.fn(),
   revalidatePath: vi.fn(),
+  unstable_cache: vi.fn((fn) => fn),
 }));
 
 // Mock next/headers

@@ -61,6 +61,12 @@ export async function deleteArticle(id: number): Promise<void> {
   await readJson(res);
 }
 
+export async function fetchAdminStats(): Promise<{ published: number; drafts: number; archived: number; videos: number }> {
+  const headers = await authHeaders();
+  const res = await adminFetch('/api/admin/stats', { headers });
+  return readJson(res);
+}
+
 export async function fetchCategories(): Promise<Category[]> {
   const res = await fetch('/api/categories');
   return readJson<Category[]>(res);

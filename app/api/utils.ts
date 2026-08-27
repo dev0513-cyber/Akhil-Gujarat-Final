@@ -1,31 +1,33 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
-import supabasePublic from '../../src/lib/supabase';
+import { cache } from 'react';
+import { redirect } from 'next/navigation';
 import type { Article } from '../../src/lib/types';
 import { createClient } from '../../src/utils/supabase/server';
 import { validateCsrfToken, getCsrfToken as getCsrfTokenUtil } from '../../src/lib/csrf';
 import { logAdminAction } from '../../src/lib/audit';
 import { logger } from '../../src/lib/logger';
+import { getCategories, getCities } from '../../src/lib/server-data';
 
 export { validateCsrfToken, getCsrfTokenUtil as getCsrfToken };
 
-export async function requireAdmin() {
+export const verifyAdminAccess = cache(async () => {
   const supabaseAuth = await createClient();
   const { data: { user }, error } = await supabaseAuth.auth.getUser();
 
   if (error || user?.aud !== 'authenticated') {
-    return NextResponse.json({ error: 'Unauthorized: Invalid or missing session cookie' }, { status: 401 });
+    return { error: 'Unauthorized: Invalid or missing session cookie', status: 401, reason: 'InvalidSession' };
   }
   
   if (user.app_metadata?.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden: Insufficient privileges' }, { status: 403 });
+    return { error: 'Forbidden: Insufficient privileges', status: 403, reason: 'AccessDenied' };
   }
 
   // Enforce strict 24-hour session limit
   const lastSignIn = new Date(user.last_sign_in_at || user.created_at).getTime();
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
   if (Date.now() - lastSignIn > TWENTY_FOUR_HOURS) {
-    return NextResponse.json({ error: 'Unauthorized: Session expired after 24 hours' }, { status: 401 });
+    return { error: 'Unauthorized: Session expired after 24 hours', status: 401, reason: 'SessionExpired' };
   }
 
   // MFA Verification
@@ -34,11 +36,26 @@ export async function requireAdmin() {
     const { currentLevel, nextLevel } = mfaData;
     // If nextLevel is aal2, it means the user has MFA enrolled but hasn't completed it
     if (nextLevel === 'aal2' && currentLevel !== 'aal2') {
-      return NextResponse.json({ error: 'Forbidden: MFA verification required' }, { status: 403 });
+      return { error: 'Forbidden: MFA verification required', status: 403, reason: 'MfaRequired' };
     }
   }
   
+  return { error: null, user };
+});
+
+export async function requireAdmin() {
+  const { error, status } = await verifyAdminAccess();
+  if (error) {
+    return NextResponse.json({ error }, { status });
+  }
   return null;
+}
+
+export async function requireAdminServer() {
+  const { error, reason } = await verifyAdminAccess();
+  if (error) {
+    redirect(`/admin/login?error=${reason}`);
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,9 +98,9 @@ export async function hydrateArticles(
   let categories: HydrateLookup[] | null | undefined = options.categories;
   let cities: HydrateLookup[] | null | undefined = options.cities;
   if (!categories || !cities) {
-    const [{ data: catData }, { data: cityData }] = await Promise.all([
-      supabasePublic.from('categories').select('*'),
-      supabasePublic.from('cities').select('*'),
+    const [catData, cityData] = await Promise.all([
+      getCategories(),
+      getCities(),
     ]);
     categories = categories || (catData as HydrateLookup[] | null);
     cities = cities || (cityData as HydrateLookup[] | null);

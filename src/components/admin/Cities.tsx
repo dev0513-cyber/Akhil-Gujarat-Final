@@ -3,9 +3,10 @@ import { fetchCities, saveCity, deleteCity } from '../../lib/api';
 import { TaxonomyManager } from './TaxonomyManager';
 import type { City } from '../../lib/types';
 
-export default function Cities() {
+export default function Cities({ initialCities }: { initialCities: City[] }) {
   return (
     <TaxonomyManager<City>
+      initialData={initialCities}
       cacheKey="cities"
       fetcher={fetchCities}
       saver={saveCity}

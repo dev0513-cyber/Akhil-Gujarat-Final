@@ -53,12 +53,27 @@ async function generateThumbnail(file: File): Promise<{ thumbFile: File; thumbPr
   });
 }
 
-export default function AdminEPapers() {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+export default function AdminEPapers({ 
+  initialEpapers, 
+  initialMonth, 
+  initialYear 
+}: { 
+  initialEpapers: EPaper[]; 
+  initialMonth: number; 
+  initialYear: number; 
+}) {
+  const [currentMonth, setCurrentMonth] = useState(new Date(initialYear, initialMonth - 1, 1));
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  // Conditionally use fallbackData if the requested month matches the initial month
   const { data: monthEPapers = [], mutate } = useSWR(
     ['epapers', currentMonth.getMonth() + 1, currentMonth.getFullYear()],
-    ([, month, year]) => fetchEPapers({ month: Number(month), year: Number(year) })
+    ([, month, year]) => fetchEPapers({ month: Number(month), year: Number(year) }),
+    { 
+      fallbackData: (currentMonth.getMonth() + 1 === initialMonth && currentMonth.getFullYear() === initialYear) 
+        ? initialEpapers 
+        : undefined 
+    }
   );
   const [showMobileCalendar, setShowMobileCalendar] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

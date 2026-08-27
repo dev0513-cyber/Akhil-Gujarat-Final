@@ -5,31 +5,40 @@ import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { FileText, Newspaper, Video, Plus } from 'lucide-react';
+import type { Article } from '../../lib/types';
 
-import { fetchArticles } from '../../lib/api';
+import { fetchArticles, fetchAdminStats } from '../../lib/api';
 import { formatDateTimeGu, getErrorMessage } from '../../lib/format';
 import { useAdminLang } from '../../contexts/AdminLangContext';
 
 import { AlertModal } from '../AlertModal';
 
-export default function Dashboard() {
+export default function Dashboard({ 
+  initialStats, 
+  initialArticles 
+}: { 
+  initialStats: { published: number; drafts: number; archived: number; videos: number };
+  initialArticles: Article[];
+}) {
   const { t, lang } = useAdminLang();
   const [dismissedError, setDismissedError] = useState(false);
   
   const { data: articles = [], error, isLoading: loading } = useSWR(
-    ['articles', 'all', 100],
-    ([, status, limit]) => fetchArticles({ status, limit: Number(limit) })
+    ['articles', 'all', 8],
+    ([, status, limit]) => fetchArticles({ status, limit: Number(limit) }),
+    { fallbackData: initialArticles }
   );
 
-  const published = articles.filter((a) => a.status === 'published');
-  const drafts = articles.filter((a) => a.status === 'draft');
-  const archived = articles.filter((a) => a.status === 'archived');
-  const videos = articles.filter((a) => a.video_url);
+  const { data: stats, error: statsError } = useSWR(
+    '/api/admin/stats',
+    () => fetchAdminStats(),
+    { fallbackData: initialStats }
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (error) setDismissedError(false);
-  }, [error]);
+    if (error || statsError) setDismissedError(false);
+  }, [error, statsError]);
 
   return (
     <div>
@@ -40,9 +49,9 @@ export default function Dashboard() {
       {loading && <p className={`mt-8 text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
 
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <Stat icon={Newspaper} label={t('પ્રકાશિત', 'Published')} value={published.length} lang={lang} />
-        <Stat icon={FileText} label={t('ડ્રાફ્ટ', 'Draft')} value={drafts.length} lang={lang} />
-        <Stat icon={Video} label={t('વિડિયો', 'Videos')} value={videos.length} lang={lang} />
+        <Stat icon={Newspaper} label={t('પ્રકાશિત', 'Published')} value={stats?.published ?? 0} lang={lang} />
+        <Stat icon={FileText} label={t('ડ્રાફ્ટ', 'Draft')} value={stats?.drafts ?? 0} lang={lang} />
+        <Stat icon={Video} label={t('વિડિયો', 'Videos')} value={stats?.videos ?? 0} lang={lang} />
       </div>
 
       <div className="mt-8 flex gap-3">
@@ -84,10 +93,10 @@ export default function Dashboard() {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-ink/40">{archived.length} {t('આર્કાઇવ્ડ આઇટમ', 'Archived Items')}</p>
+      <p className="mt-3 text-xs text-ink/40">{stats?.archived ?? 0} {t('આર્કાઇવ્ડ આઇટમ', 'Archived Items')}</p>
       <AlertModal
-        isOpen={!!error && !dismissedError}
-        message={error ? getErrorMessage(error, t) : ''}
+        isOpen={!!(error || statsError) && !dismissedError}
+        message={(error || statsError) ? getErrorMessage(error || statsError, t) : ''}
         onConfirm={() => setDismissedError(true)}
       />
     </div>

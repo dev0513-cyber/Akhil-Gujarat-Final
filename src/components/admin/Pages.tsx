@@ -8,8 +8,8 @@ import { useAdminLang } from '../../contexts/AdminLangContext';
 import { SuccessModal } from '../SuccessModal';
 import { AlertModal } from '../AlertModal';
 
-export default function Pages() {
-  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR('pages', fetchPages);
+export default function Pages({ initialPages }: { initialPages: StaticPage[] }) {
+  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR('pages', fetchPages, { fallbackData: initialPages });
   const [active, setActive] = useState<StaticPage | null>(null);
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
