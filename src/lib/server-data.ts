@@ -7,7 +7,7 @@ import type { Ad } from './types';
 
 export const getArticles = unstable_cache(
   async (params: Record<string, string | number | boolean> = {}) => {
-    let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, view_count, author');
+    let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, author');
 
     if (params.status) {
       query = query.eq('status', params.status);
@@ -42,7 +42,7 @@ export const getArticles = unstable_cache(
 // Uncached specifically to prevent search cache poisoning (arbitrary 'q' params filling Next.js Data Cache)
 export const searchArticles = async (q: string, limit = 40) => {
   let query = supabase.from('articles')
-    .select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, view_count, author')
+    .select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, author')
     .eq('status', 'published');
 
   query = applyArticleSearchAndOrder(query, q);
@@ -131,7 +131,7 @@ export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
 
 export const getArticleBySlug = unstable_cache(
   async (slug: string) => {
-    const { data, error } = await supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, view_count, author, source, tags, seo_title, seo_description').eq('slug', slug).maybeSingle();
+    const { data, error } = await supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description').eq('slug', slug).maybeSingle();
     if (error) throw error;
     return data;
   },

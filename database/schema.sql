@@ -44,7 +44,6 @@ CREATE TABLE articles (
   video_url TEXT,
   status TEXT DEFAULT 'draft',
   is_trending BOOLEAN DEFAULT false,
-  view_count INTEGER DEFAULT 0,
   author TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -101,7 +100,6 @@ CREATE TABLE epapers (
   title TEXT NOT NULL,
   pdf_url TEXT NOT NULL,
   thumbnail_url TEXT,
-  view_count INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -110,6 +108,61 @@ CREATE TRIGGER update_epapers_updated_at
 BEFORE UPDATE ON epapers
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+
+-- Ads Table
+CREATE TABLE ads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  link_url TEXT DEFAULT '',
+  slot TEXT NOT NULL,
+  frame TEXT NOT NULL DEFAULT 'banner',
+  is_active BOOLEAN DEFAULT true,
+  start_date TIMESTAMP WITH TIME ZONE,
+  end_date TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER update_ads_updated_at
+BEFORE UPDATE ON ads
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Admin Audit Log Table
+-- Run this in Supabase SQL Editor
+
+CREATE TABLE IF NOT EXISTS public.admin_audit_log (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_email TEXT NOT NULL,
+  action TEXT NOT NULL,
+  table_name TEXT NOT NULL,
+  record_id TEXT,
+  old_data JSONB,
+  new_data JSONB,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for common queries
+CREATE INDEX IF NOT EXISTS idx_admin_audit_user_id ON public.admin_audit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_table_record ON public.admin_audit_log(table_name, record_id);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_created_at ON public.admin_audit_log(created_at DESC);
+
+-- RLS: only admins can read
+ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin read audit log" ON public.admin_audit_log
+  FOR SELECT TO authenticated
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+-- System can insert (service role)
+CREATE POLICY "System insert audit log" ON public.admin_audit_log
+  FOR INSERT TO authenticated
+  WITH CHECK (true);
 
 -- ==========================================
 -- ROW LEVEL SECURITY (RLS)
@@ -121,6 +174,7 @@ ALTER TABLE cities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE static_pages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE epapers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ads ENABLE ROW LEVEL SECURITY;
 
 -- Public SELECT (Read Only)
 CREATE POLICY "Allow public read access on articles" ON articles FOR SELECT USING (status = 'published' OR (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin'));
@@ -129,6 +183,7 @@ CREATE POLICY "Allow public read access on cities" ON cities FOR SELECT USING (t
 CREATE POLICY "Allow public read access on static_pages" ON static_pages FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on site_settings" ON site_settings FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on epapers" ON epapers FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on ads" ON ads FOR SELECT USING (true);
 
 -- Authenticated Admin Mutations (Insert, Update, Delete)
 CREATE POLICY "Allow admin insert on articles" ON articles FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
@@ -154,3 +209,34 @@ CREATE POLICY "Allow admin delete on site_settings" ON site_settings FOR DELETE 
 CREATE POLICY "Allow admin insert on epapers" ON epapers FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Allow admin update on epapers" ON epapers FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Allow admin delete on epapers" ON epapers FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Allow admin insert on ads" ON ads FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin update on ads" ON ads FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin delete on ads" ON ads FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+
+
+-- ==========================================
+-- INDEXES
+-- ==========================================
+CREATE INDEX IF NOT EXISTS idx_articles_status_published ON articles(status, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category_id);
+CREATE INDEX IF NOT EXISTS idx_articles_city ON articles(city_id);
+CREATE INDEX IF NOT EXISTS idx_articles_trending ON articles(is_trending) WHERE is_trending = true;
+CREATE INDEX IF NOT EXISTS idx_ads_slot_active ON ads(slot, is_active);
+
+
+-- Migration: 20260827160000_search_indexes.sql
+-- Description: Adds pg_trgm extension and creates GIN indexes for ILIKE substring matching to support scalable Gujarati text search.
+
+-- Enable the pg_trgm extension
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Create GIN trigram indexes on the heavily searched text columns.
+-- Since PostgREST translates query.or('headline.ilike.*,description.ilike.*') into 
+-- individual OR conditions, we need individual indexes for the planner to utilize bitmap ORs.
+CREATE INDEX IF NOT EXISTS idx_articles_headline_trgm ON articles USING GIN (headline gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_articles_description_trgm ON articles USING GIN (description gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_articles_content_trgm ON articles USING GIN (content gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_articles_tags_trgm ON articles USING GIN (tags gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_articles_seo_title_trgm ON articles USING GIN (seo_title gin_trgm_ops);

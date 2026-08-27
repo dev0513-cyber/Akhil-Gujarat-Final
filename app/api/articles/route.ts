@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
-import { requireAdminMutation, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
+import { requireAdminMutation, requireAdmin, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
 import { articleSchema, paginationSchema } from '../../../src/lib/validation';
 import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
 import { getCategories, getCities } from '../../../src/lib/server-data';
@@ -67,7 +67,7 @@ async function fetchSingleArticle(supabase: any, id: string | null, slug: string
   if (!data) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
 
   if (data.status !== 'published') {
-const adminError = await requireAdminMutation(req);
+    const adminError = await requireAdmin();
     if (adminError) return adminError;
   }
 
@@ -97,7 +97,7 @@ async function buildListQuery(supabase: any, searchParams: URLSearchParams, req:
   let query = supabase.from('articles').select('id, headline, description, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author');
 
   if (status === 'all') {
-    const adminError = await requireAdminMutation(req);
+    const adminError = await requireAdmin();
     if (adminError) return { error: adminError };
   } else if (status) {
     query = query.eq('status', status);

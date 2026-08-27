@@ -180,7 +180,6 @@ export default function ArticleEditor() {
           const parsed = JSON.parse(localDraft);
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setForm(parsed);
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setIsDraftRestored(true);
         } catch {}
       }
@@ -321,7 +320,7 @@ export default function ArticleEditor() {
         <legend className="px-3 py-1 text-sm font-bold tracking-wider uppercase text-ink bg-gray-50 border border-rule rounded shadow-sm">{t('મીડિયા', 'Media')}</legend>
         
         <div>
-          <label className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+          <label htmlFor="main-photo-upload" className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
             {t('મુખ્ય ફોટો', 'Main Photo')}
           </label>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
@@ -511,7 +510,13 @@ export default function ArticleEditor() {
         </div>
 
         <div className="pt-2 mt-5">
-          <button type="button" className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} onClick={() => set('is_trending', !form.is_trending)}>
+          <button 
+            type="button" 
+            role="switch"
+            aria-checked={form.is_trending}
+            className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} 
+            onClick={() => set('is_trending', !form.is_trending)}
+          >
             <div className="text-left">
               <div className={`font-bold flex items-center gap-2 ${form.is_trending ? 'text-crimson' : 'text-ink/70'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
                 <span className="text-lg">{form.is_trending ? '⭐' : '☆'}</span> 

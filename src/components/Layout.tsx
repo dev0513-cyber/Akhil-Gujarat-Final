@@ -138,6 +138,8 @@ export default function Layout({ children, initialCategories = [], initialCities
                 return (
                   <div key={c.id} className="relative" ref={gujaratBtnRef}>
                     <button type="button"
+                      aria-expanded={gujaratOpen}
+                      aria-haspopup="true"
                       onClick={() => {
                         if (!gujaratOpen) {
                           const r = gujaratBtnRef.current?.getBoundingClientRect();

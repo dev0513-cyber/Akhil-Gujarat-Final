@@ -99,15 +99,13 @@ B2_BUCKET_NAME=
 3. **Add to env**: `SUPABASE_PROJECT_REF` + `SUPABASE_ACCESS_TOKEN`
 4. **Remove/rotate** `SUPABASE_SERVICE_ROLE_KEY` from this project (keep only for other services that need it)
 
-## SQL Scripts to Run (in order)
+## Database Setup
 
-1. `supabase/admin_audit_log.sql` - Creates audit log table
-2. `supabase/fix_rls_policies.sql` - Hardens RLS on all tables
-3. `supabase/ads_frame_migration.sql` - Adds `frame` column to ads (from ads v2 feature)
+All required tables (including `admin_audit_log` and `ads`) and RLS policies have been integrated into the unified `database/schema.sql`. Please follow the instructions in [Database Setup & Migration Policy](docs/DATABASE.md) to initialize the database.
 
 ## Verification Checklist
 
-After applying all settings and running SQL:
+After applying all settings and initializing the database:
 
 - [ ] Login as admin → verify MFA prompt if enrolled but not verified
 - [ ] Login as non-admin → verify `/admin/*` redirects to `/admin/login`

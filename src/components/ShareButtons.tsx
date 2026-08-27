@@ -15,6 +15,7 @@ export default function ShareButtons({
 
   useEffect(() => {
     if (!url) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShareUrl(window.location.href);
     }
   }, [url]);
