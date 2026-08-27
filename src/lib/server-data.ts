@@ -39,6 +39,22 @@ export const getArticles = unstable_cache(
   { revalidate: 60, tags: ['articles'] }
 );
 
+// Uncached specifically to prevent search cache poisoning (arbitrary 'q' params filling Next.js Data Cache)
+export const searchArticles = async (q: string, limit = 40) => {
+  let query = supabase.from('articles')
+    .select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, view_count, author')
+    .eq('status', 'published');
+
+  query = applyArticleSearchAndOrder(query, q);
+  query = query.limit(Math.min(limit, 100));
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+  return hydrateArticles(data || [], { categories, cities });
+};
+
 export const getCities = unstable_cache(
   async () => {
     const { data, error } = await supabase.from('cities').select('*').order('sort_order', { ascending: true });

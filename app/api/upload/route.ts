@@ -63,21 +63,34 @@ const adminError = await requireAdminMutation(req);
     let body = buffer;
     let contentType = file.type;
 
-    // Optimize images (except GIF, which may be animated) to WebP, max 1600px wide.
-    // Keeps stored files small so the /api/media proxy streams quickly on first fetch.
-    if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp') {
+    // Enforce binary validation
+    if (file.type === 'application/pdf') {
+      // PDF magic bytes: %PDF- (25 50 44 46 2D)
+      if (buffer.length < 5 || buffer[0] !== 0x25 || buffer[1] !== 0x50 || buffer[2] !== 0x44 || buffer[3] !== 0x46 || buffer[4] !== 0x2D) {
+        return NextResponse.json({ error: 'Invalid PDF binary signature' }, { status: 415 });
+      }
+    } else {
+      // For images, force Sharp to parse the metadata. If it fails, it's not a real image.
       try {
-        const optimized = await sharp(buffer)
-          .rotate()
-          .resize({ width: 1600, withoutEnlargement: true })
-          .webp({ quality: 80 })
-          .toBuffer();
-        if (optimized.length < buffer.length) {
-          body = optimized;
-          contentType = 'image/webp';
+        const metadata = await sharp(buffer).metadata();
+        if (!['jpeg', 'png', 'webp', 'gif'].includes(metadata.format || '')) {
+          return NextResponse.json({ error: 'Invalid image format detected' }, { status: 415 });
+        }
+        
+        // Optimize images (except GIF) to WebP, max 1600px wide.
+        if (metadata.format !== 'gif') {
+          const optimized = await sharp(buffer)
+            .rotate()
+            .resize({ width: 1600, withoutEnlargement: true })
+            .webp({ quality: 80 })
+            .toBuffer();
+          if (optimized.length < buffer.length) {
+            body = optimized;
+            contentType = 'image/webp';
+          }
         }
       } catch {
-        // Fall back to the original bytes if optimization fails
+        return NextResponse.json({ error: 'Invalid or corrupt image file' }, { status: 415 });
       }
     }
 

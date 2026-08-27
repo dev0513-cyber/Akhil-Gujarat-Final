@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       image_url: validation.data.image_url,
       link_url: validation.data.link_url,
       slot: validation.data.slot,
+      frame: validation.data.frame,
       is_active: validation.data.is_active,
     }).select().single();
 
@@ -62,6 +63,7 @@ export async function PUT(req: Request) {
       image_url: validation.data.image_url,
       link_url: validation.data.link_url,
       slot: validation.data.slot,
+      frame: validation.data.frame,
       is_active: validation.data.is_active,
     };
 

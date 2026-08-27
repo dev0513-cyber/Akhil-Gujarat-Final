@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, Link2 } from 'lucide-react';
 
 export default function ShareButtons({
@@ -11,7 +11,13 @@ export default function ShareButtons({
   compact?: boolean; }>) {
   const [copied, setCopied] = useState(false);
   const [igCopied, setIgCopied] = useState(false);
-  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  const [shareUrl, setShareUrl] = useState(url || '');
+
+  useEffect(() => {
+    if (!url) {
+      setShareUrl(window.location.href);
+    }
+  }, [url]);
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedText = encodeURIComponent(title);
 

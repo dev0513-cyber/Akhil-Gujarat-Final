@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { Search as SearchIcon } from 'lucide-react';
-import { getArticles } from '../../../src/lib/server-data';
+import { searchArticles } from '../../../src/lib/server-data';
 import NewsCard from '../../../src/components/NewsCard';
 import AdBanner from '../../../src/components/AdBanner';
 import type { Article } from '../../../src/lib/types';
@@ -15,9 +15,16 @@ export async function generateMetadata({ searchParams }: Readonly<{ searchParams
 
 export default async function SearchPage({ searchParams }: Readonly<{ searchParams: Promise<{ q?: string }> }>) {
   const { q } = await searchParams;
-  const term = q?.trim() || '';
+  let term = q?.trim() || '';
+  
+  if (term.length > 0 && term.length < 3) {
+    term = ''; // Too short for a full text scan
+  }
+  if (term.length > 50) {
+    term = term.substring(0, 50); // Bound the length
+  }
 
-  const items = term ? await getArticles({ q: term, limit: 40 }) : [];
+  const items = term ? await searchArticles(term, 40) : [];
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

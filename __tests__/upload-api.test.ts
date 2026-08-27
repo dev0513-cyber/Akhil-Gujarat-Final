@@ -20,6 +20,18 @@ vi.mock('@aws-sdk/client-s3', () => {
   };
 });
 
+vi.mock('sharp', () => {
+  return {
+    default: vi.fn().mockImplementation(() => ({
+      metadata: vi.fn().mockResolvedValue({ format: 'jpeg' }),
+      rotate: vi.fn().mockReturnThis(),
+      resize: vi.fn().mockReturnThis(),
+      webp: vi.fn().mockReturnThis(),
+      toBuffer: vi.fn().mockResolvedValue(Buffer.from('tiny-optimized')),
+    })),
+  };
+});
+
 function makeReq(formData: FormData) {
   return new Request('http://localhost/api/upload', {
     method: 'POST',

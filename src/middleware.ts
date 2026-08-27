@@ -55,7 +55,10 @@ function executeLimit(limitersObj: NonNullable<typeof limiters>, isAuth: boolean
 }
 
 async function checkRateLimit(request: NextRequest, pathname: string): Promise<{ response?: NextResponse; result?: RateLimitResultType }> {
-  if (process.env.NODE_ENV === 'development' || (!pathname.startsWith('/api') && !pathname.startsWith('/auth'))) {
+  if (
+    process.env.NODE_ENV === 'development' || 
+    (!pathname.startsWith('/api') && !pathname.startsWith('/auth') && !pathname.startsWith('/search'))
+  ) {
     return {};
   }
 
