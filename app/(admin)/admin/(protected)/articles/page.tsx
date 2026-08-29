@@ -11,7 +11,6 @@ export default async function AdminArticlesPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  await requireAdminServer();
   const params = await searchParams;
   const status = params.status as string || 'all';
   const q = params.q as string || '';
@@ -26,10 +25,16 @@ export default async function AdminArticlesPage({
 
   query = applyArticleSearchAndOrder(query, q);
 
-  // For scalable admin, we should limit to 100 for now or implement real pagination. The old UI did 100 max.
-  query = query.limit(100);
+  const page = Number(params.page) || 1;
+  const pageSize = 20;
+  const fetchLimit = pageSize + 1; // N+1 trick to check for next page
+  const from = (page - 1) * pageSize;
+  const to = from + fetchLimit - 1;
 
-  const [{ data: rawArticles }] = await Promise.all([
+  query = query.range(from, to);
+
+  const [_, { data: rawArticles }] = await Promise.all([
+    requireAdminServer().catch(e => { throw e; }),
     query
   ]);
 
@@ -40,6 +45,7 @@ export default async function AdminArticlesPage({
       initialArticles={hydratedArticles} 
       initialStatus={status}
       initialSearch={q}
+      initialPage={page}
     />
   );
 }

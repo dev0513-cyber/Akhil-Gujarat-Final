@@ -5,9 +5,10 @@ import { applyArticleSearchAndOrder } from './query-utils';
 import { getISTDayRange } from './format';
 import type { Ad } from './types';
 
-export const getArticles = unstable_cache(
-  async (params: Record<string, string | number | boolean> = {}) => {
-    let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, author');
+export const getArticles = async (params: Record<string, string | number | boolean> = {}) => {
+  return unstable_cache(
+    async () => {
+      let query = supabase.from('articles').select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, author');
 
     if (params.status) {
       query = query.eq('status', params.status);
@@ -34,10 +35,11 @@ export const getArticles = unstable_cache(
 
     const [categories, cities] = await Promise.all([getCategories(), getCities()]);
     return hydrateArticles(data || [], { categories, cities });
-  },
-  ['articles-cache'],
-  { revalidate: 60, tags: ['articles'] }
-);
+    },
+    ['articles-cache', JSON.stringify(params)],
+    { revalidate: 60, tags: ['feed-articles'] }
+  )();
+};
 
 // Uncached specifically to prevent search cache poisoning (arbitrary 'q' params filling Next.js Data Cache)
 export const searchArticles = async (q: string, limit = 40) => {
@@ -101,10 +103,11 @@ export const getSettings = unstable_cache(
   { revalidate: 3600, tags: ['settings'] }
 );
 
-export const getActiveAdsForSlot = unstable_cache(
-  async (slot: string) => {
-    const { data, error } = await supabase
-      .from('ads')
+export const getActiveAdsForSlot = async (slot: string) => {
+  return unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from('ads')
       .select('*')
       .eq('slot', slot)
       .eq('is_active', true)
@@ -118,10 +121,11 @@ export const getActiveAdsForSlot = unstable_cache(
       if (ad.end_date && new Date(ad.end_date) < now) return false;
       return true;
     });
-  },
-  ['ads-by-slot'],
-  { revalidate: 300, tags: ['ads'] }
-);
+    },
+    ['ads-by-slot', slot],
+    { revalidate: 300, tags: ['ads'] }
+  )();
+};
 
 export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
   const data = await getActiveAdsForSlot(slot);
@@ -129,12 +133,14 @@ export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
   return data[0] as Ad; // Return first ad for presence checks and tests
 };
 
-export const getArticleBySlug = unstable_cache(
-  async (slug: string) => {
-    const { data, error } = await supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description').eq('slug', slug).maybeSingle();
+export const getArticleBySlug = async (slug: string) => {
+  return unstable_cache(
+    async () => {
+      const { data, error } = await supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description').eq('slug', slug).maybeSingle();
     if (error) throw error;
     return data;
-  },
-  ['article-by-slug'],
-  { revalidate: 60, tags: ['articles'] }
-);
+    },
+    ['article-by-slug', slug],
+    { revalidate: 60, tags: ['articles', `article-detail-${slug}`] }
+  )();
+};

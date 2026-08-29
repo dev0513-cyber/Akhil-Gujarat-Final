@@ -5,7 +5,6 @@ import { requireAdminServer } from '../../../../api/utils';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminEpapersPage() {
-  await requireAdminServer();
   const supabase = await createClient();
   
   const now = new Date();
@@ -17,11 +16,14 @@ export default async function AdminEpapersPage() {
   const startStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
   const endStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
 
-  const { data: epapers } = await supabase
-    .from('epapers')
-    .select('*')
-    .gte('published_date', startStr)
-    .lte('published_date', endStr);
+  const [_, { data: epapers }] = await Promise.all([
+    requireAdminServer().catch(e => { throw e; }),
+    supabase
+      .from('epapers')
+      .select('*')
+      .gte('published_date', startStr)
+      .lte('published_date', endStr)
+  ]);
 
   return <EpapersClient initialEpapers={epapers || []} initialMonth={currentMonth} initialYear={currentYear} />;
 }

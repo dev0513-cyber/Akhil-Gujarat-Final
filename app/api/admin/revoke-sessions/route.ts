@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminMutation } from '../../utils';
+import { logger } from '../../../../src/lib/logger';
 import { logAdminAction } from '../../../../src/lib/audit';
 
 // Supabase Management API base URL
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
           throw new Error(`Management API signout failed: ${error}`);
         }
       } catch (mgmtError) {
-        console.warn('Management API failed, falling back to service role:', mgmtError);
+        logger.warn('Management API failed, falling back to service role', { error: String(mgmtError) });
         // Fall through to Option 2
       }
     }
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('Session revocation error:', err);
+    logger.error('Session revocation error:', err);
     return NextResponse.json({ error: 'Failed to revoke sessions' }, { status: 500 });
   }
 }

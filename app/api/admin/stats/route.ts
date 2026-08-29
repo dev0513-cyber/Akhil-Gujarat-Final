@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../src/utils/supabase/server';
 import { requireAdmin } from '../../utils';
+import { logger } from '../../../../src/lib/logger';
 
 export async function GET() {
   try {
@@ -24,7 +25,7 @@ export async function GET() {
       videos: vid.count || 0,
     });
   } catch (error) {
-    console.error('Stats API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch statistics' }, { status: 500 });
+    logger.error('Stats API error', error);
+    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
 }

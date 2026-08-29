@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAdminLang } from '../contexts/AdminLangContext';
 
@@ -27,6 +27,17 @@ export function BaseModal({
   isActioning = false,
 }: BaseModalProps) {
   const { lang } = useAdminLang();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isActioning) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, isActioning]);
 
   if (!isOpen) return null;
 

@@ -29,6 +29,7 @@ export function SuccessModal({
       iconColorClass="text-green-600"
     >
       <button type="button"
+        autoFocus
         onClick={onConfirm}
         className={`px-6 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors flex items-center gap-2 shadow-sm font-medium ${lang === 'gu' ? 'font-gujarati' : ''}`}
       >

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { handleApiError, requireAdminMutation } from '../utils';
+import { logger } from '../../../src/lib/logger';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 
@@ -109,7 +110,7 @@ const adminError = await requireAdminMutation(req);
 
     return NextResponse.json({ url: publicUrl }, { status: 201 });
   } catch (error) {
-    console.error('Upload error:', error);
+    logger.error('Upload error', error);
     return handleApiError(error);
   }
 }

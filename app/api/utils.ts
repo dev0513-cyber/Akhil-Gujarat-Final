@@ -13,7 +13,15 @@ export { validateCsrfToken, getCsrfTokenUtil as getCsrfToken };
 
 export const verifyAdminAccess = cache(async () => {
   const supabaseAuth = await createClient();
-  const { data: { user }, error } = await supabaseAuth.auth.getUser();
+  
+  // Fetch user and MFA status in parallel to reduce sequential waterfall
+  const [userResponse, mfaResponse] = await Promise.all([
+    supabaseAuth.auth.getUser(),
+    supabaseAuth.auth.mfa.getAuthenticatorAssuranceLevel()
+  ]);
+
+  const { data: { user }, error } = userResponse;
+  const { data: mfaData, error: mfaError } = mfaResponse;
 
   if (error || user?.aud !== 'authenticated') {
     return { error: 'Unauthorized: Invalid or missing session cookie', status: 401, reason: 'InvalidSession' };
@@ -31,7 +39,6 @@ export const verifyAdminAccess = cache(async () => {
   }
 
   // MFA Verification
-  const { data: mfaData, error: mfaError } = await supabaseAuth.auth.mfa.getAuthenticatorAssuranceLevel();
   if (!mfaError && mfaData) {
     const { currentLevel, nextLevel } = mfaData;
     // If nextLevel is aal2, it means the user has MFA enrolled but hasn't completed it
@@ -52,10 +59,11 @@ export async function requireAdmin() {
 }
 
 export async function requireAdminServer() {
-  const { error, reason } = await verifyAdminAccess();
+  const { error, reason, user } = await verifyAdminAccess();
   if (error) {
     redirect(`/admin/login?error=${reason}`);
   }
+  return user;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -152,7 +160,7 @@ export async function requireAdminMutation(request: Request) {
 export async function handleAdminDelete(req: Request, tableName: string, cacheTag?: string, idKey: string = 'id') {
   const supabase = await createClient();
   try {
-    const adminError = await requireAdmin();
+    const adminError = await requireAdminMutation(req);
     if (adminError) return adminError;
 
     const body = await req.json();
@@ -175,6 +183,9 @@ export async function handleAdminDelete(req: Request, tableName: string, cacheTa
 
     if (cacheTag) {
       (revalidateTag as (t: string) => void)(cacheTag);
+    }
+    if (tableName === 'articles' && oldData?.slug) {
+      (revalidateTag as (t: string) => void)(`article-detail-${oldData.slug}`);
     }
     return NextResponse.json({ ok: true });
   } catch (err) {

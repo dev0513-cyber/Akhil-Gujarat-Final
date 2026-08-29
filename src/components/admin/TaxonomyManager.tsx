@@ -42,7 +42,7 @@ export function TaxonomyManager<T extends TaxonomyItem>({
   hasDescriptionField = false,
   initialData = [],
 }: TaxonomyManagerProps<T>) {
-  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR<T[]>(cacheKey, fetcher, { fallbackData: initialData });
+  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR<T[]>(cacheKey, fetcher, { fallbackData: initialData, revalidateOnMount: false });
   const [editing, setEditing] = useState<Partial<T>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);

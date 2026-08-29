@@ -361,7 +361,7 @@ export default function ArticleEditor() {
               
               {form.image_url?.includes('supabase') ? (
                 <div className="flex flex-col items-center">
-                  <img src={form.image_url} alt="Main" className="h-24 object-cover rounded shadow mb-3" />
+                  <img src={form.image_url} alt="Article main image preview" className="h-24 object-cover rounded shadow mb-3" />
                   <span className="font-semibold text-ink text-sm max-w-full truncate px-2">{t('ફોટો અપલોડ થયો', 'Photo uploaded')}</span>
                   <button 
                     type="button" 
@@ -400,7 +400,7 @@ export default function ArticleEditor() {
             <div className="bg-gray-50 border border-rule border-dashed p-6 rounded flex flex-col justify-center relative min-h-[160px] group transition-colors hover:border-crimson/50">
               {form.image_url && !form.image_url.includes('supabase') ? (
                 <div className="flex flex-col items-center">
-                  <img src={form.image_url} alt="Main" className="h-32 object-cover rounded shadow mb-2" />
+                  <img src={form.image_url} alt="Article main image preview" className="h-32 object-cover rounded shadow mb-2" />
                   <button type="button" onClick={() => set('image_url', '')} className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">×</button>
                 </div>
               ) : (

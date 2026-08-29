@@ -55,6 +55,7 @@ export default function Layout({ children, initialCategories = [], initialCities
 
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-black focus:font-bold">Skip to content</a>
       <div className="bg-ink text-white/80 text-[11px] tracking-wide">
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2 md:gap-3">
           <div className="flex items-center gap-3 md:gap-4 shrink-0">
@@ -221,7 +222,7 @@ export default function Layout({ children, initialCategories = [], initialCities
         </div>
       )}
 
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">{children}</main>
 
       <footer className="mt-12 bg-ink text-white">
         <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">

@@ -6,9 +6,14 @@ import type { SiteSetting } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminSettingsPage() {
-  await requireAdminServer();
   const supabase = await createClient();
-  const { data: settings } = await supabase.from('site_settings').select('*');
+  
+  // Parallelize auth check and database fetch.
+  // requireAdminServer throws a redirect exception if unauthorized, which Promise.all correctly propagates.
+  const [_, { data: settings }] = await Promise.all([
+    requireAdminServer().catch((e) => { throw e; }),
+    supabase.from('site_settings').select('*')
+  ]);
 
   return <SettingsClient initialSettings={(settings as SiteSetting[]) || []} />;
 }

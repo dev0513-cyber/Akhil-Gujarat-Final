@@ -26,13 +26,13 @@ export default function Dashboard({
   const { data: articles = [], error, isLoading: loading } = useSWR(
     ['articles', 'all', 8],
     ([, status, limit]) => fetchArticles({ status, limit: Number(limit) }),
-    { fallbackData: initialArticles }
+    { fallbackData: initialArticles, revalidateOnMount: false }
   );
 
   const { data: stats, error: statsError } = useSWR(
     '/api/admin/stats',
     () => fetchAdminStats(),
-    { fallbackData: initialStats }
+    { fallbackData: initialStats, revalidateOnMount: false }
   );
 
   useEffect(() => {

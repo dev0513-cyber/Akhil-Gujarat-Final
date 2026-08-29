@@ -72,7 +72,8 @@ export default function AdminEPapers({
     { 
       fallbackData: (currentMonth.getMonth() + 1 === initialMonth && currentMonth.getFullYear() === initialYear) 
         ? initialEpapers 
-        : undefined 
+        : undefined,
+      revalidateOnMount: false
     }
   );
   const [showMobileCalendar, setShowMobileCalendar] = useState(false);

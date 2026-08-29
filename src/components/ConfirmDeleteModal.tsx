@@ -41,6 +41,7 @@ export function ConfirmDeleteModal({
         {t('રદ કરો', 'Cancel')}
       </button>
       <button type="button"
+        autoFocus
         onClick={onConfirm}
         disabled={isDeleting}
         className={`px-4 py-2 text-sm bg-crimson hover:bg-red-700 text-white rounded transition-colors flex items-center gap-2 shadow-sm font-medium ${lang === 'gu' ? 'font-gujarati' : ''}`}

@@ -162,7 +162,7 @@ CREATE POLICY "Admin read audit log" ON public.admin_audit_log
 -- System can insert (service role)
 CREATE POLICY "System insert audit log" ON public.admin_audit_log
   FOR INSERT TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 
 -- ==========================================
 -- ROW LEVEL SECURITY (RLS)

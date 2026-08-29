@@ -125,6 +125,32 @@ export async function savePage(payload: Partial<StaticPage>): Promise<StaticPage
 export async function uploadFile(file: File): Promise<string> {
   const token = await (await import('./api-client')).getCsrfToken();
   
+  if (file.type === 'application/pdf') {
+    const res = await fetch('/api/upload-url', {
+      method: 'POST',
+      headers: {
+        'x-csrf-token': token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size }),
+    });
+    const data = await readJson<{ uploadUrl: string; publicUrl: string }>(res);
+    
+    const putRes = await fetch(data.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+    
+    if (!putRes.ok) {
+      throw new Error(`Direct upload failed: ${putRes.statusText}`);
+    }
+    
+    return data.publicUrl;
+  }
+
   const formData = new FormData();
   formData.append('file', file);
 

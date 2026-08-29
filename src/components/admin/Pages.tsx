@@ -9,7 +9,7 @@ import { SuccessModal } from '../SuccessModal';
 import { AlertModal } from '../AlertModal';
 
 export default function Pages({ initialPages }: { initialPages: StaticPage[] }) {
-  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR('pages', fetchPages, { fallbackData: initialPages });
+  const { data: items = [], error: loadError, isLoading: loading, mutate } = useSWR('pages', fetchPages, { fallbackData: initialPages, revalidateOnMount: false });
   const [active, setActive] = useState<StaticPage | null>(null);
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);

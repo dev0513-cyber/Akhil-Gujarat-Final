@@ -13,7 +13,7 @@ export default function Settings({ initialSettings }: { initialSettings: SiteSet
     instagram_url: '',
     youtube_url: '',
   });
-  const { data: settingsData, error: loadError, isLoading: loading, mutate } = useSWR('settings', fetchSettings, { fallbackData: initialSettings });
+  const { data: settingsData, error: loadError, isLoading: loading, mutate } = useSWR('settings', fetchSettings, { fallbackData: initialSettings, revalidateOnMount: false });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);

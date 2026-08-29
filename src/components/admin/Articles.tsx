@@ -14,21 +14,28 @@ import { SuccessModal } from '../SuccessModal';
 export default function Articles({
   initialArticles,
   initialStatus,
-  initialSearch
+  initialSearch,
+  initialPage = 1
 }: {
   initialArticles: Article[];
   initialStatus: string;
   initialSearch: string;
+  initialPage?: number;
 }) {
   const router = useRouter();
-  const { data: items = [], error, isLoading: loading, mutate } = useSWR(
-    ['articles', initialStatus, 100, initialSearch],
-    () => fetchArticles({ status: initialStatus, q: initialSearch, limit: 100 }),
-    { fallbackData: initialArticles }
-  );
   
+  const { data: rawItems = [], error, isLoading: loading, mutate } = useSWR(
+    ['articles', initialStatus, 21, initialSearch, initialPage],
+    () => fetchArticles({ status: initialStatus, q: initialSearch, limit: 21, page: initialPage }),
+    { fallbackData: initialArticles, revalidateOnMount: false }
+  );
+
+  const displayItems = rawItems.slice(0, 20);
+  const hasNextPage = rawItems.length > 20;
+
   const [filter, setFilter] = useState(initialStatus);
   const [q, setQ] = useState(initialSearch);
+  const [page, setPage] = useState(initialPage);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Article | null>(null);
   const [alertMessage, setAlertMessage] = useState('');
@@ -46,16 +53,17 @@ export default function Articles({
 
 
 
-  // Trigger URL updates on search/filter changes (debounced for search)
+  // Trigger URL updates on search/filter/page changes (debounced for search)
   useEffect(() => {
     const timer = setTimeout(() => {
       const params = new URLSearchParams();
       if (filter !== 'all') params.set('status', filter);
       if (q) params.set('q', q);
+      if (page > 1) params.set('page', page.toString());
       router.push(`/admin/articles?${params.toString()}`);
     }, 300);
     return () => clearTimeout(timer);
-  }, [filter, q, router]);
+  }, [filter, q, page, router]);
 
   // Reset dismissedError when SWR error changes
   useEffect(() => {
@@ -97,7 +105,10 @@ export default function Articles({
     try {
       await deleteArticle(deleteTarget.id);
       setDeleteTarget(null);
-      await mutate();
+      const newData = await mutate();
+      if (newData && newData.slice(0, 20).length === 0 && initialPage > 1) {
+        setPage(initialPage - 1);
+      }
     } catch (err) {
       setAlertMessage(getErrorMessage(err, t));
     } finally {
@@ -124,7 +135,7 @@ export default function Articles({
           <button
             key={f.id}
             type="button"
-            onClick={() => setFilter(f.id)}
+            onClick={() => { setFilter(f.id); setPage(1); }}
             className={`px-3 py-1.5 text-sm border ${filter === f.id ? 'bg-ink text-white border-ink' : 'bg-white border-rule'}`}
           >
             {f.label}
@@ -132,7 +143,7 @@ export default function Articles({
         ))}
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => { setQ(e.target.value); setPage(1); }}
           placeholder={t('શોધો...', 'Search...')}
           className="ml-auto border border-rule bg-white px-3 py-1.5 text-sm"
         />
@@ -153,7 +164,7 @@ export default function Articles({
             </tr>
           </thead>
           <tbody>
-            {items.map((a) => (
+            {displayItems.map((a) => (
               <tr key={a.id} className="border-t border-rule/60 align-top">
                 <td className="px-3 py-3 font-gujarati">
                   <Link href={`/admin/articles/${a.id}`} className="hover:text-crimson font-medium">
@@ -200,15 +211,36 @@ export default function Articles({
                 </td>
               </tr>
             ))}
-            {!loading && items.length === 0 && (
+            {!loading && displayItems.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-10 text-center text-ink/45 font-gujarati">
+                <td colSpan={6} className="px-3 py-10 text-center text-ink/45 font-gujarati">
                   {t('કોઈ સમાચાર નથી.', 'No articles found.')}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        <div className="flex items-center justify-between px-3 py-4 border-t border-rule bg-white">
+          <button 
+            type="button"
+            disabled={page <= 1} 
+            onClick={() => setPage(page - 1)}
+            className="px-3 py-1.5 text-sm bg-white border border-rule disabled:opacity-40 font-gujarati"
+          >
+            {t('પાછળ', 'Previous')}
+          </button>
+          <span className="text-sm text-ink/60 font-gujarati">
+            {t('પાનું', 'Page')} {page}
+          </span>
+          <button 
+            type="button"
+            disabled={!hasNextPage} 
+            onClick={() => setPage(page + 1)}
+            className="px-3 py-1.5 text-sm bg-white border border-rule disabled:opacity-40 font-gujarati"
+          >
+            {t('આગળ', 'Next')}
+          </button>
+        </div>
       </div>
 
       <ConfirmDeleteModal

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { handleApiError } from '../../utils';
+import { logger } from '../../../../src/lib/logger';
 
 const B2_ENDPOINT = process.env.B2_ENDPOINT || '';
 const B2_REGION = process.env.B2_REGION || 'us-east-005';
@@ -27,29 +29,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
       Key: key,
     });
 
-    const response = await s3.send(command);
+    // Generate a pre-signed URL valid for 1 hour
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
-    if (!response.Body) {
-      return new NextResponse('Not Found', { status: 404 });
-    }
-
-    // Convert the readable stream from AWS SDK to a Web ReadableStream
-    const stream = response.Body.transformToWebStream();
-
-    const headers = new Headers();
-    if (response.ContentType) headers.set('Content-Type', response.ContentType);
-    if (response.ContentLength) headers.set('Content-Length', response.ContentLength.toString());
-    // s-maxage enables caching at the Vercel/CDN edge so B2 is fetched ~once per image,
-    // not on every request. Browser cache keeps it for a year (keys are immutable).
-    headers.set('Cache-Control', 'public, max-age=31536000, s-maxage=604800, stale-while-revalidate=86400, immutable');
-
-    return new NextResponse(stream, { headers });
+    const response = NextResponse.redirect(signedUrl, 307);
+    
+    // Cache the redirect itself at the Vercel Edge for ~50 minutes, since the signed URL expires in 60 mins.
+    // This eliminates Vercel execution time for repeated requests while supporting byte ranges natively via B2.
+    response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=3000, stale-while-revalidate=300, immutable');
+    
+    return response;
   } catch (error) {
-    const err = error as Error & { name?: string };
-    if (err.name === 'NoSuchKey') {
-      return new NextResponse('Not Found', { status: 404 });
-    }
-    console.error('Media proxy error:', error);
+    logger.error('Media proxy error', error);
     return handleApiError(error);
   }
 }

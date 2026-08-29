@@ -98,6 +98,7 @@ function AdminSidebar({ children, email }: Readonly<{ children: React.ReactNode,
 
   return (
     <div className="min-h-screen bg-[#f3eee4] text-ink flex flex-col md:flex-row font-sans">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-ink focus:text-white focus:font-bold">Skip to content</a>
       <aside className="md:w-64 bg-ink text-white shrink-0 flex flex-col relative z-20 shadow-2xl">
         <div className="px-5 py-6 border-b border-white/10 flex flex-col items-center text-center">
           <div className="flex flex-col items-center w-full mb-5">
@@ -115,7 +116,7 @@ function AdminSidebar({ children, email }: Readonly<{ children: React.ReactNode,
             <Link
               href="/"
               className="flex items-center justify-center gap-1.5 text-[10px] bg-white/10 hover:bg-white/20 transition-colors px-3 py-2 rounded text-white/90 tracking-widest font-bold shadow-sm flex-1 max-w-[90px]"
-              title="View Site"
+              aria-label="View Site"
             >
               <Globe size={12} className="shrink-0" />
               <span>{t("સાઇટ", "SITE")}</span>
@@ -123,7 +124,7 @@ function AdminSidebar({ children, email }: Readonly<{ children: React.ReactNode,
             <button type="button"
               onClick={toggleLang}
               className="flex items-center justify-center gap-1.5 text-[10px] bg-white/10 hover:bg-white/20 transition-colors px-3 py-2 rounded text-white/90 tracking-widest font-bold shadow-sm flex-1 max-w-[90px]"
-              title="Toggle Language"
+              aria-label="Toggle Language"
             >
               <Languages size={12} className="shrink-0" />
               <span>{lang === "gu" ? "EN" : "GU"}</span>
@@ -131,7 +132,7 @@ function AdminSidebar({ children, email }: Readonly<{ children: React.ReactNode,
             <button type="button"
               onClick={handleLogout}
               className="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-100 transition-colors px-3 py-2 rounded tracking-widest font-bold shadow-sm border border-red-500/20 flex-1 max-w-[90px]"
-              title="Sign Out"
+              aria-label="Sign Out"
             >
               <LogOut size={12} className="shrink-0" />
               <span>{t("આઉટ", "EXIT")}</span>
@@ -155,9 +156,9 @@ function AdminSidebar({ children, email }: Readonly<{ children: React.ReactNode,
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-paper">
+        <main id="main-content" className="flex-1 overflow-y-auto p-4 md:p-8 bg-paper">
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );

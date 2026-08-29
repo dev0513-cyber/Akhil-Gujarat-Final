@@ -176,7 +176,7 @@ const adminError = await requireAdminMutation(req);
     if (error) throw error;
     
     const [hydrated] = await hydrateArticles(data);
-    (revalidateTag as (t: string) => void)('articles');
+    (revalidateTag as (t: string) => void)('feed-articles');
     return NextResponse.json(hydrated, { status: 201 });
   } catch (err) {
     return handleApiError(err);
@@ -212,7 +212,8 @@ const adminError = await requireAdminMutation(req);
     if (error) throw error;
     
     const [hydrated] = await hydrateArticles(data);
-    (revalidateTag as (t: string) => void)('articles');
+    (revalidateTag as (t: string) => void)('feed-articles');
+    (revalidateTag as (t: string) => void)(`article-detail-${data.slug}`);
     return NextResponse.json(hydrated);
   } catch (err) {
     return handleApiError(err);
@@ -220,6 +221,6 @@ const adminError = await requireAdminMutation(req);
 }
 
 export async function DELETE(req: Request) {
-  return handleAdminDelete(req, 'articles', 'articles');
+  return handleAdminDelete(req, 'articles', 'feed-articles');
 }
 
