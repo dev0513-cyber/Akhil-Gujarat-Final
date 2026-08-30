@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createClient } from '@supabase/supabase-js';
 import https from 'https';
-
+import crypto from 'crypto';
 // --- CONFIGURATION ---
 const {
   SEED_SUPABASE_CONFIRM,
@@ -81,7 +81,7 @@ function fetchBuffer(url) {
 }
 
 function getRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[crypto.randomInt(0, arr.length)];
 }
 
 function formatSlug(text, index) {
@@ -156,13 +156,13 @@ async function run() {
     const daysAgo = TOTAL_ARTICLES - i;
     const pubDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
     // Add random hour/minute
-    pubDate.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+    pubDate.setHours(crypto.randomInt(0, 24), crypto.randomInt(0, 60));
 
     const slug = formatSlug(getRandom(GUJARATI_HEADLINES), i);
     if (existingSlugs.has(slug)) continue;
 
-    const hasVideo = Math.random() < 0.15; // 15% with video
-    const status = Math.random() < 0.90 ? 'published' : 'draft';
+    const hasVideo = crypto.randomInt(0, 100) < 15; // 15% with video
+    const status = crypto.randomInt(0, 100) < 90 ? 'published' : 'draft';
 
     articlesToInsert.push({
       headline: getRandom(GUJARATI_HEADLINES),
@@ -171,12 +171,12 @@ async function run() {
       image_url: getRandom(uploadedImagePaths),
       extra_images: [],
       category_id: getRandom(categories).id,
-      city_id: cities && cities.length > 0 && Math.random() > 0.2 ? getRandom(cities).id : null,
+      city_id: cities && cities.length > 0 && crypto.randomInt(0, 100) > 20 ? getRandom(cities).id : null,
       published_at: pubDate.toISOString(),
       slug: slug,
       video_url: hasVideo ? "https://www.youtube.com/watch?v=dQw4w9WgXcQ" : null,
       status: status,
-      is_trending: Math.random() < 0.05, // 5% trending
+      is_trending: crypto.randomInt(0, 100) < 5, // 5% trending
       author: "Akhil Gujarat Desk",
     });
   }

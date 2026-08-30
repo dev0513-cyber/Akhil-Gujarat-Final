@@ -12,8 +12,11 @@ export default function AdBannerClient({ ads, className = 'my-8' }: Readonly<{ a
     if (!ads || ads.length === 0) return;
 
     if (ads.length > 0) {
+      const array = new Uint32Array(1);
+      window.crypto.getRandomValues(array);
+      const randomIndex = array[0] % ads.length;
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAd(ads[Math.floor(Math.random() * ads.length)]);
+      setAd(ads[randomIndex]);
     }
   }, [ads]);
 
