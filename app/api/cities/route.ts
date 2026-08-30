@@ -7,7 +7,7 @@ import { citySchema } from '../../../src/lib/validation';
 export async function GET() {
   const supabase = await createClient();
   try {
-    const { data, error } = await supabase.from('cities').select('*').order('sort_order', { ascending: true });
+    const { data, error } = await supabase.from('cities').select('id, name_en, name_gu, slug, sort_order').order('sort_order', { ascending: true });
     if (error) throw error;
     return NextResponse.json(data || []);
   } catch (err) {

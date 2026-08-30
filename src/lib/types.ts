@@ -76,7 +76,5 @@ export type Ad = {
   slot: string;
   frame: string;
   is_active: boolean;
-  start_date: string | null;
-  end_date: string | null;
   created_at: string;
 };

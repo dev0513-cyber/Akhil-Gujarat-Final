@@ -4,7 +4,7 @@ import { splitParagraphs } from '../../../../src/lib/format';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await supabase.from('static_pages').select('*').eq('slug', slug).maybeSingle();
+  const { data } = await supabase.from('static_pages').select('id, slug, title_gu, title_en, content, seo_title, seo_description, updated_at').eq('slug', slug).maybeSingle();
   if (!data) return { title: 'Not Found' };
   return {
     title: data.seo_title || data.title_gu,
@@ -16,7 +16,7 @@ import { notFound } from 'next/navigation';
 
 export default async function StaticPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
-  const { data: page } = await supabase.from('static_pages').select('*').eq('slug', slug).maybeSingle();
+  const { data: page } = await supabase.from('static_pages').select('id, slug, title_gu, title_en, content, seo_title, seo_description, updated_at').eq('slug', slug).maybeSingle();
 
   if (!page) {
     notFound();

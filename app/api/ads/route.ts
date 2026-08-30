@@ -7,7 +7,7 @@ import { adSchema } from '../../../src/lib/validation';
 export async function GET() {
   const supabase = await createClient();
   try {
-    const { data, error } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('ads').select('id, title, image_url, link_url, slot, frame, is_active, created_at').order('created_at', { ascending: false });
     if (error) throw error;
     return NextResponse.json(data || []);
   } catch (err) {

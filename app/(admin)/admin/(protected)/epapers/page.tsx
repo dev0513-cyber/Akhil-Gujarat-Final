@@ -20,7 +20,7 @@ export default async function AdminEpapersPage() {
     requireAdminServer().catch(e => { throw e; }),
     supabase
       .from('epapers')
-      .select('*')
+      .select('id, title, published_date, pdf_url, thumbnail_url, created_at, updated_at')
       .gte('published_date', startStr)
       .lte('published_date', endStr)
   ]);

@@ -6,7 +6,7 @@ import { requireAdminMutation, handleApiError } from '../utils';
 export async function GET() {
   const supabase = await createClient();
   try {
-    const { data, error } = await supabase.from('site_settings').select('*');
+    const { data, error } = await supabase.from('site_settings').select('key, value, updated_at');
     if (error) throw error;
     return NextResponse.json(data || []);
   } catch (err) {
@@ -41,7 +41,7 @@ const adminError = await requireAdminMutation(req);
 
     await Promise.all(promises);
 
-    const { data, error } = await supabase.from('site_settings').select('*');
+    const { data, error } = await supabase.from('site_settings').select('key, value, updated_at');
     if (error) throw error;
     (revalidateTag as (t: string) => void)('settings');
     return NextResponse.json(data);

@@ -7,7 +7,7 @@ import { categorySchema } from '../../../src/lib/validation';
 export async function GET() {
   const supabase = await createClient();
   try {
-    const { data, error } = await supabase.from('categories').select('*').order('sort_order', { ascending: true });
+    const { data, error } = await supabase.from('categories').select('id, name_en, name_gu, slug, sort_order, description').order('sort_order', { ascending: true });
     if (error) throw error;
     return NextResponse.json(data || []);
   } catch (err) {

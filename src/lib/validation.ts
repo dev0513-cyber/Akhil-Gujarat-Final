@@ -64,6 +64,18 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export const articleSearchSchema = z.object({
+  status: z.enum(['all', 'published', 'draft', 'archived']).optional(),
+  category: z.string().max(255).optional(),
+  city: z.string().max(255).optional(),
+  trending: z.enum(['true', 'false', '1', '0']).optional(),
+  video: z.enum(['true', 'false', '1', '0']).optional(),
+  q: z.string().max(100).optional(),
+  related: z.string().max(50).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export const adSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1).max(255),

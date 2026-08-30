@@ -11,13 +11,13 @@ export async function GET(req: Request) {
     const slug = searchParams.get('slug');
 
     if (slug) {
-      const { data, error } = await supabase.from('static_pages').select('*').eq('slug', slug).maybeSingle();
+      const { data, error } = await supabase.from('static_pages').select('id, slug, title_gu, title_en, content, seo_title, seo_description, updated_at').eq('slug', slug).maybeSingle();
       if (error) throw error;
       if (!data) return NextResponse.json({ error: 'Page not found' }, { status: 404 });
       return NextResponse.json(data);
     }
 
-    const { data, error } = await supabase.from('static_pages').select('*').order('id', { ascending: true });
+    const { data, error } = await supabase.from('static_pages').select('id, slug, title_gu, title_en, content, seo_title, seo_description, updated_at').order('id', { ascending: true });
     if (error) throw error;
     return NextResponse.json(data || []);
   } catch (err) {

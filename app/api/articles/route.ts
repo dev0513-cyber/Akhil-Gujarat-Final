@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
 import { requireAdminMutation, requireAdmin, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
-import { articleSchema, paginationSchema } from '../../../src/lib/validation';
+import { articleSchema, articleSearchSchema } from '../../../src/lib/validation';
 import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
 
 
@@ -83,14 +83,8 @@ function applyBooleanFilters(query: any, trending: string | null, video: string 
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function buildListQuery(supabase: any, searchParams: URLSearchParams) {
-  const status = searchParams.get('status');
-  const category = searchParams.get('category');
-  const city = searchParams.get('city');
-  const trending = searchParams.get('trending');
-  const video = searchParams.get('video');
-  const q = searchParams.get('q');
-  const related = searchParams.get('related');
+async function buildListQuery(supabase: any, params: any) {
+  const { status, category, city, trending, video, q, related } = params;
 
   let query = supabase.from('articles').select('id, headline, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author');
 
@@ -131,18 +125,15 @@ export async function GET(req: Request) {
       return await fetchSingleArticle(supabase, id, slug);
     }
     
-    const pageParam = searchParams.get('page');
-    const limitParam = searchParams.get('limit');
-    
-    const pag = paginationSchema.safeParse({ 
-      page: pageParam ? Number(pageParam) : undefined, 
-      limit: limitParam ? Number(limitParam) : undefined 
-    });
-    
-    const page = pag.success ? pag.data.page : 1;
-    const limit = pag.success ? pag.data.limit : 20;
+    const paramsObj = Object.fromEntries(searchParams.entries());
+    const validation = articleSearchSchema.safeParse(paramsObj);
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Validation failed', details: validation.error.issues }, { status: 400 });
+    }
 
-    const { query, empty, error: filterErr } = await buildListQuery(supabase, searchParams);
+    const { page, limit } = validation.data;
+
+    const { query, empty, error: filterErr } = await buildListQuery(supabase, validation.data);
     if (filterErr) return filterErr;
     if (empty) return NextResponse.json([]);
 

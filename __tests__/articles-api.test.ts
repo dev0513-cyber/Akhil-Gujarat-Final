@@ -79,6 +79,16 @@ describe('Articles API', () => {
       const res = await GET(req);
       expect(res.status).toBe(404);
     });
+
+    it('rejects invalid search parameters', async () => {
+      const req = new Request('http://localhost/api/articles?limit=500&page=-1');
+      
+      const res = await GET(req);
+      expect(res.status).toBe(400);
+      
+      const body = await res.json();
+      expect(body.error).toBe('Validation failed');
+    });
   });
 
   describe('POST (Article Mutations)', () => {

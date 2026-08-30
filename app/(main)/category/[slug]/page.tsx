@@ -6,7 +6,7 @@ import { FilteredArticleView } from '../../../../src/components/FilteredArticleV
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await supabase.from('categories').select('*').eq('slug', slug).maybeSingle();
+  const { data } = await supabase.from('categories').select('id, name_en, name_gu, slug, sort_order, description').eq('slug', slug).maybeSingle();
   if (!data) return { title: 'વિભાગ' };
   return {
     title: data.name_gu,
@@ -18,7 +18,7 @@ import { notFound } from 'next/navigation';
 
 export default async function CategoryPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
-  const { data: cat } = await supabase.from('categories').select('*').eq('slug', slug).maybeSingle();
+  const { data: cat } = await supabase.from('categories').select('id, name_en, name_gu, slug, sort_order, description').eq('slug', slug).maybeSingle();
   
   if (!cat) {
     notFound();

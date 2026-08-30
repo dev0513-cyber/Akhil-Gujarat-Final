@@ -1,20 +1,31 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../src/utils/supabase/server';
+import supabase from '../../../src/lib/supabase';
 import { requireAdminMutation, handleApiError, handleAdminDelete } from '../utils';
 import { ePaperSchema } from '../../../src/lib/validation';
+import { revalidateTag } from 'next/cache';
 
-import { unstable_cache, revalidateTag } from 'next/cache';
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const month = searchParams.get('month');
+    const year = searchParams.get('year');
+    const date = searchParams.get('date');
 
-const getCachedEpapers = async (id: string | null, month: string | null, year: string | null, date: string | null) => {
-  return unstable_cache(
-    async () => {
-      const supabase = await createClient();
-      let query = supabase.from('epapers').select('*');
+    let query = supabase.from('epapers').select('id, title, pdf_url, thumbnail_url, published_date, created_at, updated_at');
 
     if (id) {
       const { data, error } = await query.eq('id', id).maybeSingle();
       if (error) throw error;
-      return data;
+      if (!data) {
+        return NextResponse.json({ error: 'E-Paper not found' }, { status: 404 });
+      }
+      return NextResponse.json(data, {
+        headers: {
+          'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      });
     }
 
     if (date) {
@@ -29,28 +40,12 @@ const getCachedEpapers = async (id: string | null, month: string | null, year: s
     query = query.order('published_date', { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
-    },
-    ['epapers-api', String(id), String(month), String(year), String(date)],
-    { revalidate: 3600, tags: ['epapers'] }
-  )();
-};
-
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    const month = searchParams.get('month');
-    const year = searchParams.get('year');
-    const date = searchParams.get('date');
-
-    const data = await getCachedEpapers(id, month, year, date);
-
-    if (id && !data) {
-      return NextResponse.json({ error: 'E-Paper not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(data);
+    
+    return NextResponse.json(data || [], {
+      headers: {
+        'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    });
   } catch (err) {
     return handleApiError(err);
   }

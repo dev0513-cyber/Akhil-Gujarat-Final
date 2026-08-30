@@ -59,7 +59,7 @@ export const searchArticles = async (q: string, limit = 40) => {
 
 export const getCities = unstable_cache(
   async () => {
-    const { data, error } = await supabase.from('cities').select('*').order('sort_order', { ascending: true });
+    const { data, error } = await supabase.from('cities').select('id, name_en, name_gu, slug, sort_order').order('sort_order', { ascending: true });
     if (error) throw error;
     return data || [];
   },
@@ -69,7 +69,7 @@ export const getCities = unstable_cache(
 
 export const getCategories = unstable_cache(
   async () => {
-    const { data, error } = await supabase.from('categories').select('*').order('sort_order', { ascending: true });
+    const { data, error } = await supabase.from('categories').select('id, name_en, name_gu, slug, sort_order, description').order('sort_order', { ascending: true });
     if (error) throw error;
     return data || [];
   },
@@ -79,7 +79,7 @@ export const getCategories = unstable_cache(
 
 export const getPages = unstable_cache(
   async () => {
-    const { data, error } = await supabase.from('static_pages').select('*').order('id', { ascending: true });
+    const { data, error } = await supabase.from('static_pages').select('id, slug, title_gu, title_en, content, seo_title, seo_description, updated_at').order('id', { ascending: true });
     if (error) throw error;
     return data || [];
   },
@@ -89,7 +89,7 @@ export const getPages = unstable_cache(
 
 export const getSettings = unstable_cache(
   async () => {
-    const { data, error } = await supabase.from('site_settings').select('*');
+    const { data, error } = await supabase.from('site_settings').select('key, value, updated_at');
     if (error) throw error;
 
     // Convert to Record<string, string> as expected by Layout
@@ -108,19 +108,14 @@ export const getActiveAdsForSlot = async (slot: string) => {
     async () => {
       const { data, error } = await supabase
         .from('ads')
-      .select('*')
+      .select('id, title, image_url, link_url, slot, frame, is_active, created_at')
       .eq('slot', slot)
       .eq('is_active', true)
       .limit(20);
     if (error) throw error;
 
     // Server-side coarse filtering (relies on cache expiration for precision)
-    const now = new Date();
-    return (data || []).filter(ad => {
-      if (ad.start_date && new Date(ad.start_date) > now) return false;
-      if (ad.end_date && new Date(ad.end_date) < now) return false;
-      return true;
-    });
+    return data || [];
     },
     ['ads-by-slot', slot],
     { revalidate: 300, tags: ['ads'] }

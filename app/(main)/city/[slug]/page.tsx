@@ -6,7 +6,7 @@ import { FilteredArticleView } from '../../../../src/components/FilteredArticleV
 
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await supabase.from('cities').select('*').eq('slug', slug).maybeSingle();
+  const { data } = await supabase.from('cities').select('id, name_en, name_gu, slug, sort_order').eq('slug', slug).maybeSingle();
   if (!data) return { title: 'શહેર' };
   return {
     title: data.name_gu,
@@ -18,7 +18,7 @@ import { notFound } from 'next/navigation';
 
 export default async function CityPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
-  const { data: city } = await supabase.from('cities').select('*').eq('slug', slug).maybeSingle();
+  const { data: city } = await supabase.from('cities').select('id, name_en, name_gu, slug, sort_order').eq('slug', slug).maybeSingle();
   
   if (!city) {
     notFound();

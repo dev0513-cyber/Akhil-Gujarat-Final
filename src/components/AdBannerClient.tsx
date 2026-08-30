@@ -11,16 +11,9 @@ export default function AdBannerClient({ ads, className = 'my-8' }: Readonly<{ a
   useEffect(() => {
     if (!ads || ads.length === 0) return;
 
-    const now = new Date();
-    const validAds = ads.filter(a => {
-      if (a.start_date && new Date(a.start_date) > now) return false;
-      if (a.end_date && new Date(a.end_date) < now) return false;
-      return true;
-    });
-
-    if (validAds.length > 0) {
+    if (ads.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAd(validAds[Math.floor(Math.random() * validAds.length)]);
+      setAd(ads[Math.floor(Math.random() * ads.length)]);
     }
   }, [ads]);
 
