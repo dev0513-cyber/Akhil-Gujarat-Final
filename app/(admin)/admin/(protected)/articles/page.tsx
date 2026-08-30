@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminArticlesPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}) {
+}>) {
   const params = await searchParams;
   const status = params.status as string || 'all';
   const q = params.q as string || '';

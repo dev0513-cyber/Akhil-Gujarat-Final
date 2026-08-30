@@ -111,9 +111,10 @@ export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>)
 
   const gu = lang === 'gu';
 
-  const slotLabel = (key: string) => {
-    const s = AD_SLOTS.find((x) => x.key === key);
-    return s ? (gu ? s.labelGu : s.labelEn) : key;
+  const slotLabel = (slotKey: string) => {
+    const s = AD_SLOTS.find((x) => x.key === slotKey);
+    if (!s) return slotKey;
+    return gu ? s.labelGu : s.labelEn;
   };
 
   const frameLabel = (frameKey: string) => {

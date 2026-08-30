@@ -110,7 +110,7 @@ export default function Articles({
       await deleteArticle(deleteTarget.id);
       setDeleteTarget(null);
       const newData = await mutate();
-      if (newData && newData.slice(0, 20).length === 0 && initialPage > 1) {
+      if (newData?.slice(0, 20).length === 0 && initialPage > 1) {
         setPage(initialPage - 1);
       }
     } catch (err) {

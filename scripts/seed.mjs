@@ -89,6 +89,43 @@ function formatSlug(text, index) {
   return `gujarat-news-update-seed-${index}-${Date.now().toString().slice(-4)}`;
 }
 
+function buildArticleRecord(i, now, categories, cities, uploadedImagePaths) {
+  const daysAgo = TOTAL_ARTICLES - i;
+  const pubDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+  pubDate.setHours(crypto.randomInt(0, 24), crypto.randomInt(0, 60));
+  const slug = formatSlug(getRandom(GUJARATI_HEADLINES), i);
+  const hasCities = cities && cities.length > 0;
+  return {
+    slug,
+    headline: getRandom(GUJARATI_HEADLINES),
+    description: "આ એક અગત્યના સમાચાર છે જે રાજ્યના અનેક લોકોને સ્પર્શે છે. (Seed Description)",
+    content: GUJARATI_BODY,
+    image_url: getRandom(uploadedImagePaths),
+    extra_images: [],
+    category_id: getRandom(categories).id,
+    city_id: hasCities && crypto.randomInt(0, 100) > 20 ? getRandom(cities).id : null,
+    published_at: pubDate.toISOString(),
+    video_url: crypto.randomInt(0, 100) < 15 ? "https://www.youtube.com/watch?v=dQw4w9WgXcQ" : null,
+    status: crypto.randomInt(0, 100) < 90 ? 'published' : 'draft',
+    is_trending: crypto.randomInt(0, 100) < 5,
+    author: "Akhil Gujarat Desk",
+  };
+}
+
+async function batchInsert(client, table, rows, logLabel) {
+  console.log(`💾 Inserting ${rows.length} ${logLabel} into Supabase (Batching)...`);
+  for (let i = 0; i < rows.length; i += 50) {
+    const batch = rows.slice(i, i + 50);
+    const { error } = await client.from(table).insert(batch);
+    if (error) {
+      console.error(`❌ Batch insert error:`, error);
+    } else {
+      process.stdout.write('█');
+    }
+  }
+  console.log('\n✅ Inserted.');
+}
+
 async function seedArticles(client, categories, cities, uploadedImagePaths) {
   console.log("🔍 Checking existing seed articles to maintain idempotency...");
   const { data: existingSeed } = await client.from('articles').select('slug').like('slug', '%-seed-%');
@@ -96,49 +133,17 @@ async function seedArticles(client, categories, cities, uploadedImagePaths) {
   console.log(`Found ${existingSlugs.size} previously seeded articles.`);
 
   console.log("📝 Generating 365 articles...");
-  const articlesToInsert = [];
   const now = new Date();
+  const articlesToInsert = [];
 
   for (let i = 0; i < TOTAL_ARTICLES; i++) {
-    const daysAgo = TOTAL_ARTICLES - i;
-    const pubDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
-    pubDate.setHours(crypto.randomInt(0, 24), crypto.randomInt(0, 60));
-
-    const slug = formatSlug(getRandom(GUJARATI_HEADLINES), i);
-    if (existingSlugs.has(slug)) continue;
-
-    const hasVideo = crypto.randomInt(0, 100) < 15;
-    const status = crypto.randomInt(0, 100) < 90 ? 'published' : 'draft';
-
-    articlesToInsert.push({
-      headline: getRandom(GUJARATI_HEADLINES),
-      description: "આ એક અગત્યના સમાચાર છે જે રાજ્યના અનેક લોકોને સ્પર્શે છે. (Seed Description)",
-      content: GUJARATI_BODY,
-      image_url: getRandom(uploadedImagePaths),
-      extra_images: [],
-      category_id: getRandom(categories).id,
-      city_id: cities && cities.length > 0 && crypto.randomInt(0, 100) > 20 ? getRandom(cities).id : null,
-      published_at: pubDate.toISOString(),
-      slug: slug,
-      video_url: hasVideo ? "https://www.youtube.com/watch?v=dQw4w9WgXcQ" : null,
-      status: status,
-      is_trending: crypto.randomInt(0, 100) < 5,
-      author: "Akhil Gujarat Desk",
-    });
+    const record = buildArticleRecord(i, now, categories, cities, uploadedImagePaths);
+    if (existingSlugs.has(record.slug)) continue;
+    articlesToInsert.push(record);
   }
 
   if (articlesToInsert.length > 0) {
-    console.log(`💾 Inserting ${articlesToInsert.length} articles into Supabase (Batching)...`);
-    for (let i = 0; i < articlesToInsert.length; i += 50) {
-      const batch = articlesToInsert.slice(i, i + 50);
-      const { error } = await client.from('articles').insert(batch);
-      if (error) {
-        console.error("❌ Batch insert error:", error);
-      } else {
-        process.stdout.write('█');
-      }
-    }
-    console.log("\n✅ Articles inserted.");
+    await batchInsert(client, 'articles', articlesToInsert, 'articles');
   } else {
     console.log("✅ All articles already seeded.");
   }
@@ -168,17 +173,7 @@ async function seedEpapers(client, pdfUrl, uploadedImagePaths) {
   }
 
   if (epapersToInsert.length > 0) {
-    console.log(`💾 Inserting ${epapersToInsert.length} e-papers into Supabase...`);
-    for (let i = 0; i < epapersToInsert.length; i += 50) {
-      const batch = epapersToInsert.slice(i, i + 50);
-      const { error } = await client.from('epapers').insert(batch);
-      if (error) {
-        console.error("❌ E-paper batch insert error:", error);
-      } else {
-        process.stdout.write('█');
-      }
-    }
-    console.log("\n✅ E-papers inserted.");
+    await batchInsert(client, 'epapers', epapersToInsert, 'e-papers');
   } else {
     console.log("✅ All e-papers already seeded.");
   }
