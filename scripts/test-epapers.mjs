@@ -12,13 +12,9 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function test() {
-  const { data, error } = await supabase.from('epapers').select('id, title, pdf_url, thumbnail_url, published_date, created_at, updated_at');
-  if (error) {
-    console.error("Error fetching epapers:", error);
-  } else {
-    console.log("Success fetching epapers:", data);
-  }
+const { data, error } = await supabase.from('epapers').select('id, title, pdf_url, thumbnail_url, published_date, created_at, updated_at');
+if (error) {
+  console.error("Error fetching epapers:", error);
+} else {
+  console.log("Success fetching epapers:", data);
 }
-
-test();

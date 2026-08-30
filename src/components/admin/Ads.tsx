@@ -116,6 +116,12 @@ export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>)
     return s ? (gu ? s.labelGu : s.labelEn) : key;
   };
 
+  const frameLabel = (frameKey: string) => {
+    const frame = getAdFrame(frameKey);
+    if (!frame) return '—';
+    return gu ? frame.labelGu : frame.labelEn;
+  };
+
   const handleToggle = async (ad: Ad) => {
     try {
       await saveAd({ ...ad, is_active: !ad.is_active });
@@ -171,7 +177,7 @@ export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>)
                   <td className="px-4 py-2 font-semibold">{ad.title}</td>
                   <td className="px-4 py-2 text-ink/60">{slotLabel(ad.slot)}</td>
                   <td className="px-4 py-2 whitespace-nowrap">
-                    {getAdFrame(ad.frame) ? (gu ? getAdFrame(ad.frame).labelGu : getAdFrame(ad.frame).labelEn) : '—'}
+                    {frameLabel(ad.frame)}
                   </td>
                   <td className="px-4 py-2 text-ink/60 max-w-[180px] truncate">
                     {ad.link_url ? (

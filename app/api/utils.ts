@@ -4,12 +4,13 @@ import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import type { Article } from '../../src/lib/types';
 import { createClient } from '../../src/utils/supabase/server';
-import { validateCsrfToken, getCsrfToken as getCsrfTokenUtil } from '../../src/lib/csrf';
+import { validateCsrfToken } from '../../src/lib/csrf';
 import { logAdminAction } from '../../src/lib/audit';
 import { logger } from '../../src/lib/logger';
 import { getCategories, getCities } from '../../src/lib/server-data';
 
-export { validateCsrfToken, getCsrfTokenUtil as getCsrfToken };
+export { validateCsrfToken };
+export { getCsrfToken } from '../../src/lib/csrf';
 
 export const verifyAdminAccess = cache(async () => {
   const supabaseAuth = await createClient();

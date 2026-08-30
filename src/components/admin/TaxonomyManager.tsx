@@ -115,7 +115,7 @@ export function TaxonomyManager<T extends TaxonomyItem>({
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget || !deleteTarget.id) return;
+    if (!deleteTarget?.id) return;
     setBusyId(deleteTarget.id);
     try {
       await deleter(deleteTarget.id);
