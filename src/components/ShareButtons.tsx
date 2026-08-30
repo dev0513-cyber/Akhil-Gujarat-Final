@@ -4,9 +4,11 @@ import { Check, Link2 } from 'lucide-react';
 
 export default function ShareButtons({
   title,
+  description,
   url,
   compact = false,
 }: Readonly<{ title: string;
+  description?: string;
   url?: string;
   compact?: boolean; }>) {
   const [copied, setCopied] = useState(false);
@@ -20,7 +22,7 @@ export default function ShareButtons({
     }
   }, [url]);
   const encodedUrl = encodeURIComponent(shareUrl);
-  const encodedText = encodeURIComponent(title);
+  const encodedText = encodeURIComponent(description ? `${title} - ${description}` : title);
 
   const copy = async () => {
     try {
@@ -35,7 +37,7 @@ export default function ShareButtons({
   const shareInstagram = async () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title, url: shareUrl });
+        await navigator.share({ title, text: description, url: shareUrl });
       } catch {
         // user cancelled — ignore
       }
@@ -51,7 +53,7 @@ export default function ShareButtons({
   };
 
   const btn =
-    'inline-flex items-center gap-1.5 rounded-full border border-rule bg-white px-3 py-1.5 text-xs font-medium text-ink/80 hover:border-crimson hover:text-crimson transition-colors';
+    'inline-flex items-center gap-1.5 rounded-full border border-rule bg-white px-3 py-1.5 text-xs font-medium text-ink/80 hover:border-crimson hover:text-crimson transition-all active:scale-95 active:opacity-80';
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${compact ? '' : 'mt-3'}`}>

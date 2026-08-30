@@ -39,6 +39,7 @@ async function run() {
     slugs.add(art.slug);
 
     if (!art.category_id) invalidCategory++;
+    if (!art.city_id) invalidCity++; // Add usage
     else categoriesCount[art.category_id] = (categoriesCount[art.category_id] || 0) + 1;
 
     if (art.city_id) {

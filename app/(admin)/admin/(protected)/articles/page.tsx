@@ -33,7 +33,7 @@ export default async function AdminArticlesPage({
 
   query = query.range(from, to);
 
-  const [_, { data: rawArticles }] = await Promise.all([
+  const [, { data: rawArticles }] = await Promise.all([
     requireAdminServer().catch(e => { throw e; }),
     query
   ]);

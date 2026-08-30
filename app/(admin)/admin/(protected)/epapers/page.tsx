@@ -16,7 +16,7 @@ export default async function AdminEpapersPage() {
   const startStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
   const endStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
 
-  const [_, { data: epapers }] = await Promise.all([
+  const [, { data: epapers }] = await Promise.all([
     requireAdminServer().catch(e => { throw e; }),
     supabase
       .from('epapers')

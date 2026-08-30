@@ -20,7 +20,12 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
 
   const title = data.seo_title || data.headline;
   const description = data.seo_description || data.description;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://akhilgujarat.com');
+  const url = `${siteUrl}/news/${slug}`;
+  
+  const ogImageUrl = data.image_url 
+    ? (data.image_url.startsWith('http') ? data.image_url : `${siteUrl}${data.image_url.startsWith('/') ? '' : '/'}${data.image_url}`)
+    : undefined;
 
   return {
     title,
@@ -34,7 +39,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
       url,
       type: 'article',
       siteName: 'Akhil Gujarat',
-      images: data.image_url ? [{ url: data.image_url }] : [],
+      images: ogImageUrl ? [{ url: ogImageUrl }] : [],
       publishedTime: data.published_at || undefined,
       modifiedTime: data.updated_at || undefined,
       authors: [data.author || 'Akhil Gujarat'],
@@ -44,7 +49,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
       card: 'summary_large_image',
       title,
       description,
-      images: data.image_url ? [data.image_url] : [],
+      images: ogImageUrl ? [ogImageUrl] : [],
     },
   };
 }
@@ -115,7 +120,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
 
         <AdBanner slot="article_top" className="mt-6" />
 
-        <ShareButtons title={article.headline} />
+        <ShareButtons title={article.headline} description={article.description} />
 
         {article.image_url && (
           <figure className="mt-6">
@@ -173,7 +178,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         )}
 
         <div className="mt-6 border-t border-rule pt-4">
-<ShareButtons title={article.headline} />
+<ShareButtons title={article.headline} description={article.description} />
         </div>
 
         <AdBanner slot="article_bottom" className="mt-8" />

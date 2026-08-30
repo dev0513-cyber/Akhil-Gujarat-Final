@@ -174,7 +174,7 @@ export default function EPaperClient() {
                       href={selectedEPaper.pdf_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-crimson text-white font-bold rounded shadow-md shadow-crimson/20 hover:bg-crimson/90 transition-all hover:-translate-y-0.5"
+                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-crimson text-white font-bold rounded shadow-md shadow-crimson/20 hover:bg-crimson/90 transition-all hover:-translate-y-0.5 active:scale-95 active:opacity-90"
                     >
                       <ExternalLink size={18} /> વાંચો (Read)
                     </a>
@@ -183,7 +183,7 @@ export default function EPaperClient() {
                       download
                       target="_blank"
                       rel="noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-ink text-white font-bold rounded shadow-md shadow-ink/20 hover:bg-ink/90 transition-all hover:-translate-y-0.5"
+                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-ink text-white font-bold rounded shadow-md shadow-ink/20 hover:bg-ink/90 transition-all hover:-translate-y-0.5 active:scale-95 active:opacity-90"
                     >
                       <Download size={18} /> ડાઉનલોડ
                     </a>
@@ -191,7 +191,7 @@ export default function EPaperClient() {
                   
                   <button type="button"
                     onClick={handleShare}
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-crimson transition-colors"
+                    className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-crimson transition-all active:scale-95"
                   >
                     <Share2 size={16} /> મિત્રો સાથે શેર કરો
                   </button>

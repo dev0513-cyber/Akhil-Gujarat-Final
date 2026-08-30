@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminCitiesPage() {
   const supabase = await createClient();
-  const [_, { data: cities }] = await Promise.all([
+  const [, { data: cities }] = await Promise.all([
     requireAdminServer().catch(e => { throw e; }),
     supabase.from('cities').select('id, name_en, name_gu, slug, sort_order').order('sort_order', { ascending: true })
   ]);

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminCategoriesPage() {
   const supabase = await createClient();
-  const [_, { data: categories }] = await Promise.all([
+  const [, { data: categories }] = await Promise.all([
     requireAdminServer().catch(e => { throw e; }),
     supabase.from('categories').select('id, name_en, name_gu, slug, sort_order, description').order('sort_order', { ascending: true })
   ]);

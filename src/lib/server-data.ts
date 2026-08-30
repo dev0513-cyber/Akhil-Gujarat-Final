@@ -103,11 +103,10 @@ export const getSettings = unstable_cache(
   { revalidate: 3600, tags: ['settings'] }
 );
 
-export const getActiveAdsForSlot = async (slot: string) => {
-  return unstable_cache(
-    async () => {
-      const { data, error } = await supabase
-        .from('ads')
+const getCachedAdsForSlot = unstable_cache(
+  async (slot: string) => {
+    const { data, error } = await supabase
+      .from('ads')
       .select('id, title, image_url, link_url, slot, frame, is_active, created_at')
       .eq('slot', slot)
       .eq('is_active', true)
@@ -116,10 +115,13 @@ export const getActiveAdsForSlot = async (slot: string) => {
 
     // Server-side coarse filtering (relies on cache expiration for precision)
     return data || [];
-    },
-    ['ads-by-slot', slot],
-    { revalidate: 300, tags: ['ads'] }
-  )();
+  },
+  ['ads-by-slot'],
+  { revalidate: 300, tags: ['ads'] }
+);
+
+export const getActiveAdsForSlot = async (slot: string) => {
+  return getCachedAdsForSlot(slot);
 };
 
 export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
