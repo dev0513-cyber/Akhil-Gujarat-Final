@@ -265,3 +265,20 @@ export async function checkCrossTableConflicts(supabase: any, crossTable: string
   }
   return null;
 }
+
+import { ZodSchema } from 'zod';
+
+export async function validateAdminTableRequest<T>(req: Request, schema: ZodSchema<T>, isPost: boolean) {
+  const body = await req.json();
+  if (isPost && (!body.name_en || !body.name_gu || !body.slug)) {
+    return { errorResponse: NextResponse.json({ error: 'name_en, name_gu and slug are required' }, { status: 400 }) };
+  }
+  if (!isPost && !body.id) {
+    return { errorResponse: NextResponse.json({ error: 'id is required' }, { status: 400 }) };
+  }
+  const validation = schema.safeParse(body);
+  if (!validation.success) {
+    return { errorResponse: NextResponse.json({ error: 'Validation failed', details: validation.error.issues }, { status: 400 }) };
+  }
+  return { body, validationData: validation.data };
+}

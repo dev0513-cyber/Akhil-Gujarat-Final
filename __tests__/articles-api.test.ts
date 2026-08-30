@@ -1,20 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET, POST, PUT } from '../app/api/articles/route';
-import * as utils from '../app/api/utils';
-
-vi.mock('../app/api/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../app/api/utils')>();
-  return {
-    ...actual,
-    requireAdminMutation: vi.fn(),
-    validateCsrfToken: vi.fn(),
-    hydrateArticles: vi.fn(async (articles) => Array.isArray(articles) ? articles : [articles]),
-  };
-});
-
+import { mockFrom } from './utils/shared-mocks';
 import { createMockBuilder } from './utils/mock-builder';
 
-const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }));
+import { GET, POST, PUT } from '../app/api/articles/route';
+import * as utils from '../app/api/utils';
 
 vi.mock('../src/utils/supabase/server', () => ({
   createClient: vi.fn(async () => ({
@@ -23,10 +12,6 @@ vi.mock('../src/utils/supabase/server', () => ({
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null })
     }
   }))
-}));
-
-vi.mock('../src/lib/supabase', () => ({
-  default: { from: mockFrom }
 }));
 
 describe('Articles API', () => {
