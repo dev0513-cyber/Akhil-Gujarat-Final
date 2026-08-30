@@ -37,7 +37,7 @@ describe('Ads API', () => {
 
   it('GET returns ad list', async () => {
     mockFrom.mockReturnValue(createMockBuilder({ data: [{ id: '1', ...validAd }], error: null }));
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/ads'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(Array.isArray(body)).toBe(true);

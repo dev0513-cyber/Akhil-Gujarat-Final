@@ -10,22 +10,7 @@ vi.mock('../app/api/utils', async (importOriginal) => {
   };
 });
 
-// A builder that can chain any method and then be awaited
-const createMockBuilder = (resolvedValue: unknown) => {
-  type ChainMock = ReturnType<typeof vi.fn>;
-  const builder: Record<string, ChainMock> & {
-    then: (resolve: (val: unknown) => void) => void;
-  } = {} as Record<string, ChainMock> & {
-    then: (resolve: (val: unknown) => void) => void;
-  };
-  const methods = ['select', 'eq', 'neq', 'not'];
-  for (const method of methods) {
-    builder[method] = vi.fn().mockReturnValue(builder);
-  }
-  // Make it awaitable
-  builder.then = (resolve: (val: unknown) => void) => resolve(resolvedValue);
-  return builder;
-};
+import { createMockBuilder } from './utils/mock-builder';
 
 const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }));
 

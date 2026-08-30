@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { handleApiError, requireAdminMutation } from '../utils';
+import { withAdminApi } from '../wrappers';
 import { logger } from '../../../src/lib/logger';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
-
 
 const B2_ENDPOINT = process.env.B2_ENDPOINT || '';
 const B2_REGION = process.env.B2_REGION || 'us-east-005';
@@ -21,11 +20,8 @@ const s3 = new S3Client({
   },
 });
 
-export async function POST(req: Request) {
+export const POST = withAdminApi(async (req) => {
   try {
-const adminError = await requireAdminMutation(req);
-    if (adminError) return adminError;
-
     const contentLength = req.headers.get('content-length');
     if (contentLength && Number.parseInt(contentLength, 10) > 3 * 1024 * 1024) { // 3MB hard limit for photos/epapers
       return NextResponse.json({ error: 'Payload Too Large' }, { status: 413 });
@@ -57,7 +53,7 @@ const adminError = await requireAdminMutation(req);
     const safe = String(file.name).replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `${Date.now()}-${safe}`;
 
-// Convert File to Buffer
+    // Convert File to Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -111,7 +107,6 @@ const adminError = await requireAdminMutation(req);
     return NextResponse.json({ url: publicUrl }, { status: 201 });
   } catch (error) {
     logger.error('Upload error', error);
-    return handleApiError(error);
+    throw error;
   }
-}
-
+});

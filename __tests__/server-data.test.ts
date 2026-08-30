@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { createMockBuilder } from './utils/mock-builder';
+
 const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }));
-const builder: Record<string, unknown> = {};
-const methods = ['select', 'eq', 'neq', 'not', 'or', 'order', 'range', 'limit', 'gte', 'lt'];
-for (const method of methods) {
-  builder[method] = vi.fn().mockReturnValue(builder);
-}
-builder.then = (resolve: (val: unknown) => void) => resolve({ data: [], error: null });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const builder = createMockBuilder({ data: [], error: null }) as any;
 
 vi.mock('../src/lib/supabase', () => ({ default: { from: mockFrom } }));
 vi.mock('next/cache', () => ({ unstable_cache: (fn: unknown) => fn }));

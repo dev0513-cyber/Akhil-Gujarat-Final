@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { handleApiError, requireAdminMutation } from '../utils';
+import { withAdminApi } from '../wrappers';
 import { logger } from '../../../src/lib/logger';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -19,11 +19,8 @@ const s3 = new S3Client({
   },
 });
 
-export async function POST(req: Request) {
+export const POST = withAdminApi(async (req) => {
   try {
-    const adminError = await requireAdminMutation(req);
-    if (adminError) return adminError;
-
     const body = await req.json();
     const { filename, contentType, size } = body;
 
@@ -61,6 +58,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ uploadUrl, publicUrl }, { status: 201 });
   } catch (error) {
     logger.error('Presigned URL generation error', error);
-    return handleApiError(error);
+    throw error;
   }
-}
+});
