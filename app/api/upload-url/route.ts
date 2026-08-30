@@ -1,23 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAdminApi } from '../wrappers';
 import { logger } from '../../../src/lib/logger';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const B2_ENDPOINT = process.env.B2_ENDPOINT || '';
-const B2_REGION = process.env.B2_REGION || 'us-east-005';
-const B2_ACCESS_KEY_ID = process.env.B2_ACCESS_KEY_ID || '';
-const B2_SECRET_ACCESS_KEY = process.env.B2_SECRET_ACCESS_KEY || '';
-const B2_BUCKET_NAME = process.env.B2_BUCKET_NAME || '';
-
-const s3 = new S3Client({
-  region: B2_REGION,
-  endpoint: B2_ENDPOINT,
-  credentials: {
-    accessKeyId: B2_ACCESS_KEY_ID,
-    secretAccessKey: B2_SECRET_ACCESS_KEY,
-  },
-});
+import { s3, B2_BUCKET_NAME } from '../../../src/lib/b2';
 
 export const POST = withAdminApi(async (req) => {
   try {

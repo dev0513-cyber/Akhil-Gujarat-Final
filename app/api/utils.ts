@@ -250,3 +250,18 @@ export async function handleAdminMutation(
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function checkCrossTableConflicts(supabase: any, crossTable: string, slug?: string, name_en?: string, name_gu?: string) {
+  if (slug) {
+    const { data: slugCheck } = await supabase.from(crossTable).select('id').eq('slug', slug).limit(1);
+    if (slugCheck && slugCheck.length > 0) {
+      return NextResponse.json({ error: `SLUG_EXISTS_IN_${crossTable.toUpperCase()}` }, { status: 400 });
+    }
+  }
+  if (name_en && name_gu) {
+    if (await hasNameConflict(supabase, crossTable, name_en, name_gu)) {
+      return NextResponse.json({ error: `NAME_EXISTS_IN_${crossTable.toUpperCase()}` }, { status: 400 });
+    }
+  }
+  return null;
+}

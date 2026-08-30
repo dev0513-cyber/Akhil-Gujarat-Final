@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
-import { handleAdminDelete, hasNameConflict } from '../utils';
+import { handleAdminDelete, checkCrossTableConflicts } from '../utils';
 import { withApi, withAdminApi } from '../wrappers';
 import { citySchema } from '../../../src/lib/validation';
 
@@ -23,14 +23,9 @@ export const POST = withAdminApi(async (req, supabase) => {
   
   const slug = String(validation.data.slug).toLowerCase().trim();
 
-  const { data: catCheck } = await supabase.from('categories').select('id').eq('slug', slug).limit(1);
-  if (catCheck && catCheck.length > 0) {
-    return NextResponse.json({ error: 'SLUG_EXISTS_IN_CATEGORIES' }, { status: 400 });
-  }
+  const conflict = await checkCrossTableConflicts(supabase, 'categories', slug, validation.data.name_en, validation.data.name_gu);
+  if (conflict) return conflict;
 
-  if (await hasNameConflict(supabase, 'categories', validation.data.name_en, validation.data.name_gu)) {
-    return NextResponse.json({ error: 'NAME_EXISTS_IN_CATEGORIES' }, { status: 400 });
-  }
 
   const { data, error } = await supabase.from('cities').insert({
     name_en: validation.data.name_en,
@@ -58,16 +53,12 @@ export const PUT = withAdminApi(async (req, supabase) => {
   if (body.name_gu !== undefined) patch.name_gu = validation.data.name_gu;
   if (body.slug !== undefined) {
     patch.slug = String(validation.data.slug).toLowerCase().trim();
-    const { data: catCheck } = await supabase.from('categories').select('id').eq('slug', patch.slug).limit(1);
-    if (catCheck && catCheck.length > 0) {
-      return NextResponse.json({ error: 'SLUG_EXISTS_IN_CATEGORIES' }, { status: 400 });
-    }
   }
   if (body.sort_order !== undefined) patch.sort_order = validation.data.sort_order;
 
-  if (await hasNameConflict(supabase, 'categories', validation.data.name_en, validation.data.name_gu)) {
-    return NextResponse.json({ error: 'NAME_EXISTS_IN_CATEGORIES' }, { status: 400 });
-  }
+  const conflict = await checkCrossTableConflicts(supabase, 'categories', patch.slug as string | undefined, validation.data.name_en, validation.data.name_gu);
+  if (conflict) return conflict;
+
 
   const { data, error } = await supabase.from('cities').update(patch).eq('id', body.id).select().single();
   if (error) throw error;

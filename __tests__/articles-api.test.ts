@@ -2,11 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET, POST, PUT } from '../app/api/articles/route';
 import * as utils from '../app/api/utils';
 
-vi.mock('next/cache', () => ({
-  revalidateTag: vi.fn(),
-  unstable_cache: vi.fn((fn) => fn),
-}));
-
 vi.mock('../app/api/utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../app/api/utils')>();
   return {

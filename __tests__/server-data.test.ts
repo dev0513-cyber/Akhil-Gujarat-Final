@@ -7,7 +7,6 @@ const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }));
 const builder = createMockBuilder({ data: [], error: null }) as any;
 
 vi.mock('../src/lib/supabase', () => ({ default: { from: mockFrom } }));
-vi.mock('next/cache', () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock('../app/api/utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../app/api/utils')>();
   return {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
-import { handleAdminDelete, hasNameConflict } from '../utils';
+import { handleAdminDelete, checkCrossTableConflicts } from '../utils';
 import { withApi, withAdminApi } from '../wrappers';
 import { categorySchema } from '../../../src/lib/validation';
 
@@ -23,14 +23,9 @@ export const POST = withAdminApi(async (req, supabase) => {
   
   const slug = String(validation.data.slug).toLowerCase().trim();
 
-  const { data: cityCheck } = await supabase.from('cities').select('id').eq('slug', slug).limit(1);
-  if (cityCheck && cityCheck.length > 0) {
-    return NextResponse.json({ error: 'SLUG_EXISTS_IN_CITIES' }, { status: 400 });
-  }
+  const conflict = await checkCrossTableConflicts(supabase, 'cities', slug, validation.data.name_en, validation.data.name_gu);
+  if (conflict) return conflict;
 
-  if (await hasNameConflict(supabase, 'cities', validation.data.name_en, validation.data.name_gu)) {
-    return NextResponse.json({ error: 'NAME_EXISTS_IN_CITIES' }, { status: 400 });
-  }
 
   const { data, error } = await supabase.from('categories').insert({
     name_en: validation.data.name_en,
@@ -59,17 +54,13 @@ export const PUT = withAdminApi(async (req, supabase) => {
   if (body.name_gu !== undefined) patch.name_gu = validation.data.name_gu;
   if (body.slug !== undefined) {
     patch.slug = String(validation.data.slug).toLowerCase().trim();
-    const { data: cityCheck } = await supabase.from('cities').select('id').eq('slug', patch.slug).limit(1);
-    if (cityCheck && cityCheck.length > 0) {
-      return NextResponse.json({ error: 'SLUG_EXISTS_IN_CITIES' }, { status: 400 });
-    }
   }
   if (body.sort_order !== undefined) patch.sort_order = validation.data.sort_order;
   if (body.description !== undefined) patch.description = validation.data.description;
 
-  if (await hasNameConflict(supabase, 'cities', validation.data.name_en, validation.data.name_gu)) {
-    return NextResponse.json({ error: 'NAME_EXISTS_IN_CITIES' }, { status: 400 });
-  }
+  const conflict = await checkCrossTableConflicts(supabase, 'cities', patch.slug as string | undefined, validation.data.name_en, validation.data.name_gu);
+  if (conflict) return conflict;
+
 
   const { data, error } = await supabase.from('categories').update(patch).eq('id', body.id).select().single();
   if (error) throw error;
