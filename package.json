@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:all": "node --env-file=.env.local scripts/seed.mjs",
+    "seed:validate": "node --env-file=.env.local scripts/seed-validate.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1111.0",
