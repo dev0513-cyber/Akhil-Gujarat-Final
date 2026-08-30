@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createClient } from '@supabase/supabase-js';
-import https from 'https';
-import crypto from 'crypto';
+import https from 'node:https';
+import crypto from 'node:crypto';
 // --- CONFIGURATION ---
 const {
   SEED_SUPABASE_CONFIRM,
@@ -89,6 +89,101 @@ function formatSlug(text, index) {
   return `gujarat-news-update-seed-${index}-${Date.now().toString().slice(-4)}`;
 }
 
+async function seedArticles(client, categories, cities, uploadedImagePaths) {
+  console.log("🔍 Checking existing seed articles to maintain idempotency...");
+  const { data: existingSeed } = await client.from('articles').select('slug').like('slug', '%-seed-%');
+  const existingSlugs = new Set((existingSeed || []).map(a => a.slug));
+  console.log(`Found ${existingSlugs.size} previously seeded articles.`);
+
+  console.log("📝 Generating 365 articles...");
+  const articlesToInsert = [];
+  const now = new Date();
+
+  for (let i = 0; i < TOTAL_ARTICLES; i++) {
+    const daysAgo = TOTAL_ARTICLES - i;
+    const pubDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+    pubDate.setHours(crypto.randomInt(0, 24), crypto.randomInt(0, 60));
+
+    const slug = formatSlug(getRandom(GUJARATI_HEADLINES), i);
+    if (existingSlugs.has(slug)) continue;
+
+    const hasVideo = crypto.randomInt(0, 100) < 15;
+    const status = crypto.randomInt(0, 100) < 90 ? 'published' : 'draft';
+
+    articlesToInsert.push({
+      headline: getRandom(GUJARATI_HEADLINES),
+      description: "આ એક અગત્યના સમાચાર છે જે રાજ્યના અનેક લોકોને સ્પર્શે છે. (Seed Description)",
+      content: GUJARATI_BODY,
+      image_url: getRandom(uploadedImagePaths),
+      extra_images: [],
+      category_id: getRandom(categories).id,
+      city_id: cities && cities.length > 0 && crypto.randomInt(0, 100) > 20 ? getRandom(cities).id : null,
+      published_at: pubDate.toISOString(),
+      slug: slug,
+      video_url: hasVideo ? "https://www.youtube.com/watch?v=dQw4w9WgXcQ" : null,
+      status: status,
+      is_trending: crypto.randomInt(0, 100) < 5,
+      author: "Akhil Gujarat Desk",
+    });
+  }
+
+  if (articlesToInsert.length > 0) {
+    console.log(`💾 Inserting ${articlesToInsert.length} articles into Supabase (Batching)...`);
+    for (let i = 0; i < articlesToInsert.length; i += 50) {
+      const batch = articlesToInsert.slice(i, i + 50);
+      const { error } = await client.from('articles').insert(batch);
+      if (error) {
+        console.error("❌ Batch insert error:", error);
+      } else {
+        process.stdout.write('█');
+      }
+    }
+    console.log("\n✅ Articles inserted.");
+  } else {
+    console.log("✅ All articles already seeded.");
+  }
+}
+
+async function seedEpapers(client, pdfUrl, uploadedImagePaths) {
+  console.log("📰 Generating 365 E-papers...");
+  const epapersToInsert = [];
+  const now = new Date();
+  const { data: existingEpapers } = await client.from('epapers').select('title').like('title', '%(Seed)%');
+  const existingEpaperTitles = new Set((existingEpapers || []).map(e => e.title));
+
+  for (let i = 0; i < TOTAL_EPAPERS; i++) {
+    const daysAgo = TOTAL_EPAPERS - i;
+    const pubDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+    const titleDate = pubDate.toISOString().split('T')[0];
+    const title = `અખિલ ગુજરાત ઇ-પેપર - ${titleDate} (Seed)`;
+
+    if (existingEpaperTitles.has(title)) continue;
+
+    epapersToInsert.push({
+      title: title,
+      published_date: titleDate,
+      pdf_url: pdfUrl,
+      thumbnail_url: getRandom(uploadedImagePaths),
+    });
+  }
+
+  if (epapersToInsert.length > 0) {
+    console.log(`💾 Inserting ${epapersToInsert.length} e-papers into Supabase...`);
+    for (let i = 0; i < epapersToInsert.length; i += 50) {
+      const batch = epapersToInsert.slice(i, i + 50);
+      const { error } = await client.from('epapers').insert(batch);
+      if (error) {
+        console.error("❌ E-paper batch insert error:", error);
+      } else {
+        process.stdout.write('█');
+      }
+    }
+    console.log("\n✅ E-papers inserted.");
+  } else {
+    console.log("✅ All e-papers already seeded.");
+  }
+}
+
 // --- SEED EXECUTION ---
 async function run() {
   console.log("🚀 Starting Production-Safe Seed...");
@@ -140,102 +235,14 @@ async function run() {
   const pdfUrl = `/api/media/${pdfKey}`;
   console.log(`✅ Uploaded PDF: ${pdfUrl}`);
 
-  // 3. Prevent Duplicates
-  console.log("🔍 Checking existing seed articles to maintain idempotency...");
-  const { data: existingSeed } = await supabase.from('articles').select('slug').like('slug', '%-seed-%');
-  const existingSlugs = new Set((existingSeed || []).map(a => a.slug));
-  console.log(`Found ${existingSlugs.size} previously seeded articles.`);
-
-  // 4. Generate Articles
-  console.log("📝 Generating 365 articles...");
-  const articlesToInsert = [];
-  const now = new Date();
-
-  for (let i = 0; i < TOTAL_ARTICLES; i++) {
-    // Generate dates progressively over the last 365 days
-    const daysAgo = TOTAL_ARTICLES - i;
-    const pubDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
-    // Add random hour/minute
-    pubDate.setHours(crypto.randomInt(0, 24), crypto.randomInt(0, 60));
-
-    const slug = formatSlug(getRandom(GUJARATI_HEADLINES), i);
-    if (existingSlugs.has(slug)) continue;
-
-    const hasVideo = crypto.randomInt(0, 100) < 15; // 15% with video
-    const status = crypto.randomInt(0, 100) < 90 ? 'published' : 'draft';
-
-    articlesToInsert.push({
-      headline: getRandom(GUJARATI_HEADLINES),
-      description: "આ એક અગત્યના સમાચાર છે જે રાજ્યના અનેક લોકોને સ્પર્શે છે. (Seed Description)",
-      content: GUJARATI_BODY,
-      image_url: getRandom(uploadedImagePaths),
-      extra_images: [],
-      category_id: getRandom(categories).id,
-      city_id: cities && cities.length > 0 && crypto.randomInt(0, 100) > 20 ? getRandom(cities).id : null,
-      published_at: pubDate.toISOString(),
-      slug: slug,
-      video_url: hasVideo ? "https://www.youtube.com/watch?v=dQw4w9WgXcQ" : null,
-      status: status,
-      is_trending: crypto.randomInt(0, 100) < 5, // 5% trending
-      author: "Akhil Gujarat Desk",
-    });
-  }
-
-  if (articlesToInsert.length > 0) {
-    console.log(`💾 Inserting ${articlesToInsert.length} articles into Supabase (Batching)...`);
-    for (let i = 0; i < articlesToInsert.length; i += 50) {
-      const batch = articlesToInsert.slice(i, i + 50);
-      const { error } = await supabase.from('articles').insert(batch);
-      if (error) {
-        console.error("❌ Batch insert error:", error);
-      } else {
-        process.stdout.write('█');
-      }
-    }
-    console.log("\n✅ Articles inserted.");
-  } else {
-    console.log("✅ All articles already seeded.");
-  }
-
-  // 5. Generate E-papers
-  console.log("📰 Generating 365 E-papers...");
-  const epapersToInsert = [];
-  const { data: existingEpapers } = await supabase.from('epapers').select('title').like('title', '%(Seed)%');
-  const existingEpaperTitles = new Set((existingEpapers || []).map(e => e.title));
-
-  for (let i = 0; i < TOTAL_EPAPERS; i++) {
-    const daysAgo = TOTAL_EPAPERS - i;
-    const pubDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
-    const titleDate = pubDate.toISOString().split('T')[0];
-    const title = `અખિલ ગુજરાત ઇ-પેપર - ${titleDate} (Seed)`;
-
-    if (existingEpaperTitles.has(title)) continue;
-
-    epapersToInsert.push({
-      title: title,
-      published_date: titleDate,
-      pdf_url: pdfUrl,
-      thumbnail_url: getRandom(uploadedImagePaths),
-    });
-  }
-
-  if (epapersToInsert.length > 0) {
-    console.log(`💾 Inserting ${epapersToInsert.length} e-papers into Supabase...`);
-    for (let i = 0; i < epapersToInsert.length; i += 50) {
-      const batch = epapersToInsert.slice(i, i + 50);
-      const { error } = await supabase.from('epapers').insert(batch);
-      if (error) {
-        console.error("❌ E-paper batch insert error:", error);
-      } else {
-        process.stdout.write('█');
-      }
-    }
-    console.log("\n✅ E-papers inserted.");
-  } else {
-    console.log("✅ All e-papers already seeded.");
-  }
+  await seedArticles(supabase, categories, cities, uploadedImagePaths);
+  await seedEpapers(supabase, pdfUrl, uploadedImagePaths);
 
   console.log("🎉 Seeding completed successfully!");
 }
 
-run().catch(console.error);
+try {
+  await run();
+} catch (error) {
+  console.error(error);
+}

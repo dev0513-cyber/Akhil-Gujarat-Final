@@ -20,12 +20,25 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
 
   const title = data.seo_title || data.headline;
   const description = data.seo_description || data.description;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://akhilgujarat.com');
+  
+  let siteUrl = 'https://akhilgujarat.com';
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  } else if (process.env.VERCEL_URL) {
+    siteUrl = `https://${process.env.VERCEL_URL}`;
+  }
+
   const url = `${siteUrl}/news/${slug}`;
   
-  const ogImageUrl = data.image_url 
-    ? (data.image_url.startsWith('http') ? data.image_url : `${siteUrl}${data.image_url.startsWith('/') ? '' : '/'}${data.image_url}`)
-    : undefined;
+  let ogImageUrl: string | undefined;
+  if (data.image_url) {
+    if (data.image_url.startsWith('http')) {
+      ogImageUrl = data.image_url;
+    } else {
+      const prefix = data.image_url.startsWith('/') ? '' : '/';
+      ogImageUrl = `${siteUrl}${prefix}${data.image_url}`;
+    }
+  }
 
   return {
     title,

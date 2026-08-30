@@ -3,7 +3,7 @@ import { fetchCities, saveCity, deleteCity } from '../../lib/api';
 import { TaxonomyManager } from './TaxonomyManager';
 import type { City } from '../../lib/types';
 
-export default function Cities({ initialCities }: { initialCities: City[] }) {
+export default function Cities({ initialCities }: Readonly<{ initialCities: City[] }>) {
   return (
     <TaxonomyManager<City>
       initialData={initialCities}

@@ -15,27 +15,20 @@ const emptyForm = { title: '', image_url: '', link_url: '', slot: AD_SLOTS[0].ke
 
 type AdForm = { title: string; image_url: string; link_url: string; slot: string; frame: string; is_active: boolean };
 
-export default function AdminAds({ initialAds }: { initialAds: Ad[] }) {
-  const { t, lang } = useAdminLang();
+function useAdsData(initialAds: Ad[]) {
   const { data: ads = [], mutate } = useSWR(['ads'], fetchAds, { fallbackData: initialAds, revalidateOnMount: false });
+  return { ads, mutate };
+}
+
+function useAdForm(mutate: () => Promise<unknown>, t: (g: string, e: string) => string) {
   const [form, setForm] = useState<AdForm>({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<Ad | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-
-  const gu = lang === 'gu';
-
-  const slotLabel = (key: string) => {
-    const s = AD_SLOTS.find((x) => x.key === key);
-    return s ? (gu ? s.labelGu : s.labelEn) : key;
-  };
 
   const startCreate = () => {
     setForm({ ...emptyForm });
@@ -80,15 +73,13 @@ export default function AdminAds({ initialAds }: { initialAds: Ad[] }) {
     }
   };
 
-  const handleToggle = async (ad: Ad) => {
-    try {
-      await saveAd({ ...ad, is_active: !ad.is_active });
-      await mutate();
-    } catch (err) {
-      console.error(err);
-      setAlertMessage(t('અપડેટ કરવામાં નિષ્ફળ', 'Failed to update'));
-    }
-  };
+  return { form, setForm, imagePreview, setImagePreview, setImageFile, uploading, showForm, setShowForm, showSuccess, setShowSuccess, alertMessage, setAlertMessage, startCreate, startEdit, handleImageSelection, handleSubmit, editingId };
+}
+
+function useAdDelete(mutate: () => Promise<unknown>, t: (g: string, e: string) => string, setAlertMessage: (m: string) => void) {
+  const [deleteTarget, setDeleteTarget] = useState<Ad | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -105,6 +96,33 @@ export default function AdminAds({ initialAds }: { initialAds: Ad[] }) {
     } finally {
       setDeleting(false);
       setBusyId(null);
+    }
+  };
+
+  return { deleteTarget, setDeleteTarget, deleting, busyId, handleDelete };
+}
+
+export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>) {
+  const { t, lang } = useAdminLang();
+  const { ads, mutate } = useAdsData(initialAds);
+  
+  const { form, setForm, imagePreview, setImagePreview, setImageFile, uploading, showForm, setShowForm, showSuccess, setShowSuccess, alertMessage, setAlertMessage, startCreate, startEdit, handleImageSelection, handleSubmit, editingId } = useAdForm(mutate, t);
+  const { deleteTarget, setDeleteTarget, deleting, busyId, handleDelete } = useAdDelete(mutate, t, setAlertMessage);
+
+  const gu = lang === 'gu';
+
+  const slotLabel = (key: string) => {
+    const s = AD_SLOTS.find((x) => x.key === key);
+    return s ? (gu ? s.labelGu : s.labelEn) : key;
+  };
+
+  const handleToggle = async (ad: Ad) => {
+    try {
+      await saveAd({ ...ad, is_active: !ad.is_active });
+      await mutate();
+    } catch (err) {
+      console.error(err);
+      setAlertMessage(t('અપડેટ કરવામાં નિષ્ફળ', 'Failed to update'));
     }
   };
 

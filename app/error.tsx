@@ -1,11 +1,17 @@
 'use client';
 
+import { useEffect } from 'react';
+
 export default function ErrorBoundary({
+  error,
   reset,
-}: {
+}: Readonly<{
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}>) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] px-4 text-center">
       <h2 className="text-2xl font-bold mb-4 font-display text-ink">ક્ષમા કરશો, કંઈક ખોટું થયું. (Something went wrong)</h2>

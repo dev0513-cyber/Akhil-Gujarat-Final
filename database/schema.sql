@@ -155,14 +155,19 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created_at ON public.admin_audit_log(
 -- RLS: only admins can read
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
 
+-- Admin Check Function
+CREATE OR REPLACE FUNCTION public.is_admin() RETURNS BOOLEAN AS $$
+  SELECT (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin';
+$$ LANGUAGE sql STABLE;
+
 CREATE POLICY "Admin read audit log" ON public.admin_audit_log
   FOR SELECT TO authenticated
-  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+  USING (public.is_admin());
 
 -- System can insert (service role)
 CREATE POLICY "System insert audit log" ON public.admin_audit_log
   FOR INSERT TO authenticated
-  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+  WITH CHECK (public.is_admin());
 
 -- ==========================================
 -- ROW LEVEL SECURITY (RLS)
@@ -177,7 +182,7 @@ ALTER TABLE epapers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ads ENABLE ROW LEVEL SECURITY;
 
 -- Public SELECT (Read Only)
-CREATE POLICY "Allow public read access on articles" ON articles FOR SELECT USING (status = 'published' OR (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin'));
+CREATE POLICY "Allow public read access on articles" ON articles FOR SELECT USING (status = 'published' OR public.is_admin());
 CREATE POLICY "Allow public read access on categories" ON categories FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on cities" ON cities FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on static_pages" ON static_pages FOR SELECT USING (true);
@@ -186,33 +191,33 @@ CREATE POLICY "Allow public read access on epapers" ON epapers FOR SELECT USING 
 CREATE POLICY "Allow public read access on ads" ON ads FOR SELECT USING (true);
 
 -- Authenticated Admin Mutations (Insert, Update, Delete)
-CREATE POLICY "Allow admin insert on articles" ON articles FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin update on articles" ON articles FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin delete on articles" ON articles FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin insert on articles" ON articles FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin update on articles" ON articles FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin delete on articles" ON articles FOR DELETE TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Allow admin insert on categories" ON categories FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin update on categories" ON categories FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin delete on categories" ON categories FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin insert on categories" ON categories FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin update on categories" ON categories FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin delete on categories" ON categories FOR DELETE TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Allow admin insert on cities" ON cities FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin update on cities" ON cities FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin delete on cities" ON cities FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin insert on cities" ON cities FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin update on cities" ON cities FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin delete on cities" ON cities FOR DELETE TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Allow admin insert on static_pages" ON static_pages FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin update on static_pages" ON static_pages FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin delete on static_pages" ON static_pages FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin insert on static_pages" ON static_pages FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin update on static_pages" ON static_pages FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin delete on static_pages" ON static_pages FOR DELETE TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Allow admin insert on site_settings" ON site_settings FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin update on site_settings" ON site_settings FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin delete on site_settings" ON site_settings FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin insert on site_settings" ON site_settings FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin update on site_settings" ON site_settings FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin delete on site_settings" ON site_settings FOR DELETE TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Allow admin insert on epapers" ON epapers FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin update on epapers" ON epapers FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin delete on epapers" ON epapers FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin insert on epapers" ON epapers FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin update on epapers" ON epapers FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin delete on epapers" ON epapers FOR DELETE TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Allow admin insert on ads" ON ads FOR INSERT TO authenticated WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin update on ads" ON ads FOR UPDATE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin') WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
-CREATE POLICY "Allow admin delete on ads" ON ads FOR DELETE TO authenticated USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+CREATE POLICY "Allow admin insert on ads" ON ads FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin update on ads" ON ads FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Allow admin delete on ads" ON ads FOR DELETE TO authenticated USING (public.is_admin());
 
 
 

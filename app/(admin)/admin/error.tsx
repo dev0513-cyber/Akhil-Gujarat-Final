@@ -5,10 +5,10 @@ import { AlertCircle } from 'lucide-react';
 export default function AdminError({
   error,
   reset,
-}: {
+}: Readonly<{
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}>) {
   return (
     <div className="p-8 bg-white border border-red-200 rounded max-w-2xl mx-auto mt-10">
       <div className="flex items-center gap-3 text-red-600 mb-4">

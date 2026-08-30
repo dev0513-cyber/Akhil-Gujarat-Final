@@ -116,6 +116,50 @@ function setSecurityHeaders(res: NextResponse, rateLimitResult?: RateLimitResult
   }
 }
 
+async function verifyAdminSession(
+  request: NextRequest, 
+  initialResponse: NextResponse, 
+  rateLimitResult?: RateLimitResultType
+): Promise<{ user: unknown; response: NextResponse }> {
+  let response = initialResponse;
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          response = NextResponse.next({ request })
+          setSecurityHeaders(response, rateLimitResult);
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  );
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  let user = session?.user || null;
+
+  if (user) {
+    const lastSignIn = new Date(user.last_sign_in_at || user.created_at).getTime();
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    
+    if (now - lastSignIn > TWENTY_FOUR_HOURS) {
+      await supabase.auth.signOut();
+      user = null;
+      request.headers.set('x-session-expired', 'true');
+    }
+  }
+
+  return { user, response };
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
@@ -127,92 +171,52 @@ export async function middleware(request: NextRequest) {
 
   let supabaseResponse = NextResponse.next({
     request,
-  })
+  });
 
   // Apply Security Headers globally
   setSecurityHeaders(supabaseResponse, rateLimitResult);
 
-  const isAdminRoute = pathname.startsWith('/admin')
-  const isLoginRoute = pathname === '/admin/login'
+  const isAdminRoute = pathname.startsWith('/admin');
+  const isLoginRoute = pathname === '/admin/login';
 
-  // Only /admin routes need a session check here.
-  // Public pages and API routes skip the Supabase Auth round-trip entirely;
-  // API routes perform their own authentication via requireAdmin().
   let user = null;
   if (isAdminRoute) {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-            supabaseResponse = NextResponse.next({
-              request,
-            })
-            setSecurityHeaders(supabaseResponse, rateLimitResult);
-            cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options)
-            )
-          },
-        },
-      }
-    )
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    user = session?.user || null
-
-    // Enforce strict 24-hour session limit
-    if (user) {
-      const lastSignIn = new Date(user.last_sign_in_at || user.created_at).getTime()
-      const now = Date.now()
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000
-      
-      if (now - lastSignIn > TWENTY_FOUR_HOURS) {
-        await supabase.auth.signOut()
-        user = null
-        request.headers.set('x-session-expired', 'true') // Signal for the redirect block below
-      }
-    }
+    const authResult = await verifyAdminSession(request, supabaseResponse, rateLimitResult);
+    user = authResult.user;
+    supabaseResponse = authResult.response;
   }
 
   // Protect admin routes: redirect unauthenticated users to login
-  if (isAdminRoute && !isLoginRoute) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin/login'
-      if (request.headers.get('x-session-expired') === 'true') {
-        url.searchParams.set('error', 'SessionExpired')
-      }
-      const redirectResponse = NextResponse.redirect(url)
-      
-      // Copy over the cleared cookies from supabaseResponse
-      supabaseResponse.cookies.getAll().forEach(cookie => {
-        redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
-      })
-      
-      return redirectResponse
+  if (isAdminRoute && !isLoginRoute && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin/login';
+    if (request.headers.get('x-session-expired') === 'true') {
+      url.searchParams.set('error', 'SessionExpired');
     }
+    const redirectResponse = NextResponse.redirect(url);
+    
+    // Copy over the cleared cookies from supabaseResponse
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    
+    return redirectResponse;
   }
 
   // If already logged in and visiting /admin/login, redirect to dashboard
   if (isLoginRoute && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin'
-    return NextResponse.redirect(url)
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin';
+    return NextResponse.redirect(url);
   }
 
   if (isAdminRoute) {
-    supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-    supabaseResponse.headers.set('Pragma', 'no-cache')
-    supabaseResponse.headers.set('Expires', '0')
+    supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    supabaseResponse.headers.set('Pragma', 'no-cache');
+    supabaseResponse.headers.set('Expires', '0');
   }
 
-  return supabaseResponse
+  return supabaseResponse;
 }
 
 export const config = {

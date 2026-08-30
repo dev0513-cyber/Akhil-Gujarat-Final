@@ -1,7 +1,6 @@
 import ArticlesClient from '@/components/admin/Articles';
 import { createClient } from '@/utils/supabase/server';
-import { hydrateArticles } from '../../../../api/utils';
-import { requireAdminServer } from '../../../../api/utils';
+import { hydrateArticles, requireAdminServer } from '../../../../api/utils';
 import { applyArticleSearchAndOrder } from '@/lib/query-utils';
 
 export const dynamic = 'force-dynamic';

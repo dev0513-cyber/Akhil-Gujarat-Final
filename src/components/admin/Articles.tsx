@@ -16,12 +16,12 @@ export default function Articles({
   initialStatus,
   initialSearch,
   initialPage = 1
-}: {
+}: Readonly<{
   initialArticles: Article[];
   initialStatus: string;
   initialSearch: string;
   initialPage?: number;
-}) {
+}>) {
   const router = useRouter();
   
   const { data: rawItems = [], error, isLoading: loading, mutate } = useSWR(
@@ -80,13 +80,17 @@ export default function Articles({
         status,
       });
       await mutate();
-      setSuccessMessage(
-        status === 'published' 
-          ? t('આર્ટિકલ સફળતાપૂર્વક પ્રકાશિત કરવામાં આવ્યો.', 'Article published successfully.') 
-          : status === 'archived'
-            ? t('આર્ટિકલ આર્કાઇવ કરવામાં આવ્યો.', 'Article archived successfully.')
-            : t('આર્ટિકલ ડ્રાફ્ટમાં ખસેડવામાં આવ્યો.', 'Article moved to draft.')
-      );
+      
+      let msg = '';
+      if (status === 'published') {
+        msg = t('આર્ટિકલ સફળતાપૂર્વક પ્રકાશિત કરવામાં આવ્યો.', 'Article published successfully.');
+      } else if (status === 'archived') {
+        msg = t('આર્ટિકલ આર્કાઇવ કરવામાં આવ્યો.', 'Article archived successfully.');
+      } else {
+        msg = t('આર્ટિકલ ડ્રાફ્ટમાં ખસેડવામાં આવ્યો.', 'Article moved to draft.');
+      }
+      setSuccessMessage(msg);
+      
       setShowSuccess(true);
     } catch (err) {
       setAlertMessage(getErrorMessage(err, t));

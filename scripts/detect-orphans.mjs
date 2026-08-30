@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
-import path from 'path';
+import path from 'node:path';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
@@ -30,17 +30,15 @@ const s3 = new S3Client({
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function detectOrphans() {
-  console.log('Fetching all B2 objects...');
+async function fetchB2Keys(s3Client) {
   const s3Keys = new Set();
-  let continuationToken = undefined;
-
+  let continuationToken;
   do {
     const command = new ListObjectsV2Command({
       Bucket: B2_BUCKET_NAME,
       ContinuationToken: continuationToken,
     });
-    const response = await s3.send(command);
+    const response = await s3Client.send(command);
     if (response.Contents) {
       for (const obj of response.Contents) {
         if (obj.Key) s3Keys.add(obj.Key);
@@ -48,20 +46,17 @@ async function detectOrphans() {
     }
     continuationToken = response.NextContinuationToken;
   } while (continuationToken);
+  return s3Keys;
+}
 
-  console.log(`Found ${s3Keys.size} objects in B2.`);
-
-  console.log('Fetching database references...');
+async function fetchDatabaseKeys(dbClient) {
   const dbKeys = new Set();
 
-  // Articles
-  const { data: articles } = await supabase.from('articles').select('image_url, extra_images');
+  const { data: articles } = await dbClient.from('articles').select('image_url, extra_images');
   if (articles) {
     for (const a of articles) {
-      if (a.image_url && a.image_url.startsWith('/api/media/')) {
-        dbKeys.add(a.image_url.replace('/api/media/', ''));
-      }
-      if (a.extra_images && Array.isArray(a.extra_images)) {
+      if (a.image_url?.startsWith('/api/media/')) dbKeys.add(a.image_url.replace('/api/media/', ''));
+      if (Array.isArray(a.extra_images)) {
         for (const img of a.extra_images) {
           if (typeof img === 'string' && img.startsWith('/api/media/')) {
             dbKeys.add(img.replace('/api/media/', ''));
@@ -71,23 +66,31 @@ async function detectOrphans() {
     }
   }
 
-  // EPapers
-  const { data: epapers } = await supabase.from('epapers').select('thumbnail_url, pdf_url');
+  const { data: epapers } = await dbClient.from('epapers').select('thumbnail_url, pdf_url');
   if (epapers) {
     for (const e of epapers) {
-      if (e.thumbnail_url && e.thumbnail_url.startsWith('/api/media/')) dbKeys.add(e.thumbnail_url.replace('/api/media/', ''));
-      if (e.pdf_url && e.pdf_url.startsWith('/api/media/')) dbKeys.add(e.pdf_url.replace('/api/media/', ''));
+      if (e.thumbnail_url?.startsWith('/api/media/')) dbKeys.add(e.thumbnail_url.replace('/api/media/', ''));
+      if (e.pdf_url?.startsWith('/api/media/')) dbKeys.add(e.pdf_url.replace('/api/media/', ''));
     }
   }
 
-  // Ads
-  const { data: ads } = await supabase.from('ads').select('image_url');
+  const { data: ads } = await dbClient.from('ads').select('image_url');
   if (ads) {
     for (const ad of ads) {
-      if (ad.image_url && ad.image_url.startsWith('/api/media/')) dbKeys.add(ad.image_url.replace('/api/media/', ''));
+      if (ad.image_url?.startsWith('/api/media/')) dbKeys.add(ad.image_url.replace('/api/media/', ''));
     }
   }
 
+  return dbKeys;
+}
+
+async function detectOrphans() {
+  console.log('Fetching all B2 objects...');
+  const s3Keys = await fetchB2Keys(s3);
+  console.log(`Found ${s3Keys.size} objects in B2.`);
+
+  console.log('Fetching database references...');
+  const dbKeys = await fetchDatabaseKeys(supabase);
   console.log(`Found ${dbKeys.size} unique file references in database.`);
 
   const orphans = [];
@@ -109,4 +112,8 @@ async function detectOrphans() {
   }
 }
 
-detectOrphans().catch(console.error);
+try {
+  await detectOrphans();
+} catch (error) {
+  console.error(error);
+}

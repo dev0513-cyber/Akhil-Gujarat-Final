@@ -126,75 +126,85 @@ function prepareArticlePayload(form: FormState, cats: Category[], id: string | u
   return payload;
 }
 
-export default function ArticleEditor() {
-  const params = useParams();
-  const id = params?.id as string | undefined;
-  const router = useRouter();
-  const isNew = !id;
+function loadDraft(key: string): FormState | null {
+  const localDraft = localStorage.getItem(key);
+  if (localDraft) {
+    try {
+      return JSON.parse(localDraft);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function useArticleEditorData(id: string | undefined, isNew: boolean) {
   const [form, setForm] = useState<FormState>(empty);
   const [cats, setCats] = useState<Category[]>([]);
   const [cities, setCities] = useState<City[]>([]);
-  const [error, setError] = useState('');
   const [articleError, setArticleError] = useState<unknown>(null);
   const [catsError, setCatsError] = useState<unknown>(null);
   const [citiesError, setCitiesError] = useState<unknown>(null);
   const [isDraftRestored, setIsDraftRestored] = useState(false);
-
-  const [busy, setBusy] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(!isNew);
-
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
-  const { t, lang } = useAdminLang();
 
   useEffect(() => {
     fetchCategories().then(setCats).catch(setCatsError);
     fetchCities().then(setCities).catch(setCitiesError);
 
     const draftKey = `article_draft_${id || 'new'}`;
-    const localDraft = localStorage.getItem(draftKey);
+    const draft = loadDraft(draftKey);
 
     if (!isNew && id) {
       fetchArticle({ id })
         .then((a) => {
           const apiForm = fromArticle(a);
-          if (localDraft) {
-            try {
-              const parsed = JSON.parse(localDraft);
-              setForm(parsed);
+          setTimeout(() => {
+            if (draft) {
+              setForm(draft);
               setIsDraftRestored(true);
-            } catch {
+            } else {
               setForm(apiForm);
             }
-          } else {
-            setForm(apiForm);
-          }
+          }, 0);
         })
         .catch(setArticleError)
         .finally(() => setLoading(false));
     } else {
-      if (localDraft) {
-        try {
-          const parsed = JSON.parse(localDraft);
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setForm(parsed);
+      setTimeout(() => {
+        if (draft) {
+          setForm(draft);
           setIsDraftRestored(true);
-        } catch {}
-      }
-      setLoading(false);
+        }
+        setLoading(false);
+      }, 0);
     }
   }, [id, isNew]);
 
   useEffect(() => {
-    if (!loading) {
-      // Don't save the empty initial state
-      if (JSON.stringify(form) !== JSON.stringify(empty)) {
-        localStorage.setItem(`article_draft_${id || 'new'}`, JSON.stringify(form));
-      }
+    if (!loading && JSON.stringify(form) !== JSON.stringify(empty)) {
+      localStorage.setItem(`article_draft_${id || 'new'}`, JSON.stringify(form));
     }
   }, [form, loading, id]);
+
+  return { form, setForm, cats, cities, loading, articleError, catsError, citiesError, isDraftRestored };
+}
+
+export default function ArticleEditor() {
+  const params = useParams();
+  const id = params?.id as string | undefined;
+  const router = useRouter();
+  const isNew = !id;
+  
+  const { form, setForm, cats, cities, loading, articleError, catsError, citiesError, isDraftRestored } = useArticleEditorData(id, isNew);
+
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const { t, lang } = useAdminLang();
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => updateFormState(prev, key, value, isNew));
@@ -222,8 +232,9 @@ export default function ArticleEditor() {
     if (Object.keys(next).length > 0) {
       const errList = Object.values(next).join(' \n• ');
       setError(t('કૃપા કરીને નીચેની ભૂલો સુધારો', 'Please correct the following errors') + ':\n\n• ' + errList);
+      return false;
     }
-    return Object.keys(next).length === 0;
+    return true;
   };
 
   const submit = async (status: string) => {
@@ -325,15 +336,8 @@ export default function ArticleEditor() {
           </label>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
             {/* Upload Box */}
-            <div
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  document.getElementById('main-photo-upload')?.click();
-                }
-              }}
+            <button
+              type="button"
               onDragOver={e => { e.preventDefault(); setIsDraggingPhoto(true); }}
               onDragLeave={() => setIsDraggingPhoto(false)}
               onDrop={e => {
@@ -387,7 +391,7 @@ export default function ArticleEditor() {
                   )}
                 </div>
               )}
-            </div>
+            </button>
 
             {/* Divider */}
             <div className="hidden md:flex flex-col items-center justify-center">

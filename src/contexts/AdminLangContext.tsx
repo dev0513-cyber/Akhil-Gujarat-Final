@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 
 type Lang = 'gu' | 'en';
 
@@ -21,16 +21,16 @@ export function AdminLangProvider({ children }: Readonly<{ children: ReactNode }
     }
   }, []);
 
-  const setLang = React.useCallback((newLang: Lang) => {
+  const setLang = useCallback((newLang: Lang) => {
     setLangState(newLang);
     localStorage.setItem('admin_lang', newLang);
   }, []);
 
-  const t = React.useCallback((gu: string, en: string) => {
+  const t = useCallback((gu: string, en: string) => {
     return lang === 'en' ? en : gu;
   }, [lang]);
 
-  const value = React.useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
+  const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
 
   return (
     <AdminLangContext.Provider value={value}>

@@ -6,6 +6,36 @@ import sharp from 'sharp';
 
 import { s3, B2_BUCKET_NAME } from '../../../src/lib/b2';
 
+async function processAndValidateBinary(fileType: string, buffer: Buffer) {
+  if (fileType === 'application/pdf') {
+    if (buffer.length < 5 || buffer[0] !== 0x25 || buffer[1] !== 0x50 || buffer[2] !== 0x44 || buffer[3] !== 0x46 || buffer[4] !== 0x2D) {
+      return { error: 'Invalid PDF binary signature', status: 415 };
+    }
+    return { body: buffer, contentType: fileType };
+  }
+  
+  try {
+    const metadata = await sharp(buffer).metadata();
+    if (!['jpeg', 'png', 'webp', 'gif'].includes(metadata.format || '')) {
+      return { error: 'Invalid image format detected', status: 415 };
+    }
+    
+    if (metadata.format !== 'gif') {
+      const optimized = await sharp(buffer)
+        .rotate()
+        .resize({ width: 1600, withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+      if (optimized.length < buffer.length) {
+        return { body: optimized, contentType: 'image/webp' };
+      }
+    }
+    return { body: buffer, contentType: fileType };
+  } catch {
+    return { error: 'Invalid or corrupt image file', status: 415 };
+  }
+}
+
 export const POST = withAdminApi(async (req) => {
   try {
     const contentLength = req.headers.get('content-length');
@@ -39,43 +69,14 @@ export const POST = withAdminApi(async (req) => {
     const safe = String(file.name).replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `${Date.now()}-${safe}`;
 
-    // Convert File to Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    let body = buffer;
-    let contentType = file.type;
-
-    // Enforce binary validation
-    if (file.type === 'application/pdf') {
-      // PDF magic bytes: %PDF- (25 50 44 46 2D)
-      if (buffer.length < 5 || buffer[0] !== 0x25 || buffer[1] !== 0x50 || buffer[2] !== 0x44 || buffer[3] !== 0x46 || buffer[4] !== 0x2D) {
-        return NextResponse.json({ error: 'Invalid PDF binary signature' }, { status: 415 });
-      }
-    } else {
-      // For images, force Sharp to parse the metadata. If it fails, it's not a real image.
-      try {
-        const metadata = await sharp(buffer).metadata();
-        if (!['jpeg', 'png', 'webp', 'gif'].includes(metadata.format || '')) {
-          return NextResponse.json({ error: 'Invalid image format detected' }, { status: 415 });
-        }
-        
-        // Optimize images (except GIF) to WebP, max 1600px wide.
-        if (metadata.format !== 'gif') {
-          const optimized = await sharp(buffer)
-            .rotate()
-            .resize({ width: 1600, withoutEnlargement: true })
-            .webp({ quality: 80 })
-            .toBuffer();
-          if (optimized.length < buffer.length) {
-            body = optimized;
-            contentType = 'image/webp';
-          }
-        }
-      } catch {
-        return NextResponse.json({ error: 'Invalid or corrupt image file' }, { status: 415 });
-      }
+    const binaryResult = await processAndValidateBinary(file.type, buffer);
+    if (binaryResult.error) {
+      return NextResponse.json({ error: binaryResult.error }, { status: binaryResult.status });
     }
+    const { body, contentType } = binaryResult;
 
     // Upload to Backblaze B2
     const command = new PutObjectCommand({

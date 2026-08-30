@@ -12,11 +12,8 @@ if (!NEXT_PUBLIC_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-async function run() {
-  console.log("🔍 Validating Production Data Seed...");
-
-  // 1. Articles Validation
-  const { data: articles, error: artError } = await supabase.from('articles').select('*').like('slug', '%-seed-%');
+async function validateArticles(client) {
+  const { data: articles, error: artError } = await client.from('articles').select('*').like('slug', '%-seed-%');
   if (artError) {
     console.error("❌ Failed to fetch articles:", artError);
     return;
@@ -32,14 +29,13 @@ async function run() {
   const slugs = new Set();
   let duplicateSlugs = 0;
   let invalidCategory = 0;
-  let invalidCity = 0;
+
 
   for (const art of articles) {
     if (slugs.has(art.slug)) duplicateSlugs++;
     slugs.add(art.slug);
 
     if (!art.category_id) invalidCategory++;
-    if (!art.city_id) invalidCity++; // Add usage
     else categoriesCount[art.category_id] = (categoriesCount[art.category_id] || 0) + 1;
 
     if (art.city_id) {
@@ -47,7 +43,7 @@ async function run() {
     }
 
     if (art.video_url) withVideo++;
-    if (art.image_url && art.image_url.includes('/api/media/')) withImage++;
+    if (art.image_url?.includes('/api/media/')) withImage++;
 
     statusCount[art.status] = (statusCount[art.status] || 0) + 1;
   }
@@ -59,9 +55,10 @@ async function run() {
   console.log("-> Articles with Video URLs:", withVideo);
   console.log("-> Status distribution:", statusCount);
   console.log("-> Category distribution (Category ID: Count):", categoriesCount);
+}
 
-  // 2. E-papers Validation
-  const { data: epapers, error: epError } = await supabase.from('epapers').select('*').like('title', '%(Seed)%');
+async function validateEpapers(client) {
+  const { data: epapers, error: epError } = await client.from('epapers').select('*').like('title', '%(Seed)%');
   if (epError) {
     console.error("❌ Failed to fetch epapers:", epError);
     return;
@@ -76,14 +73,23 @@ async function run() {
     if (dates.has(ep.published_date)) duplicateDates++;
     dates.add(ep.published_date);
 
-    if (!ep.pdf_url || !ep.pdf_url.includes('/api/media/')) invalidPdf++;
+    if (!ep.pdf_url?.includes('/api/media/')) invalidPdf++;
   }
 
   console.log("-> Unique Publication Dates:", dates.size);
   console.log("-> Duplicate Dates:", duplicateDates);
   console.log("-> Invalid PDF References:", invalidPdf);
+}
 
+async function run() {
+  console.log("🔍 Validating Production Data Seed...");
+  await validateArticles(supabase);
+  await validateEpapers(supabase);
   console.log("\n✅ Validation completed.");
 }
 
-run().catch(console.error);
+try {
+  await run();
+} catch (error) {
+  console.error(error);
+}

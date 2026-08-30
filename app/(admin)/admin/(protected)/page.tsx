@@ -1,7 +1,6 @@
 import DashboardClient from '@/components/admin/Dashboard';
 import { createClient } from '@/utils/supabase/server';
-import { hydrateArticles } from '../../../api/utils';
-import { requireAdminServer } from '../../../api/utils';
+import { hydrateArticles, requireAdminServer } from '../../../api/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +10,7 @@ export default async function AdminDashboardPage() {
   // Fetch Stats securely on the server
   // Wait, fetchAdminStats uses the same exact logic as the API route. Let's just implement it here to avoid the API route entirely for the initial load.
   const [
-    _,
+    ,
     { count: published },
     { count: drafts },
     { count: archived },

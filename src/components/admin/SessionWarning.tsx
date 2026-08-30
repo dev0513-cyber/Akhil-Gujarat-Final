@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
 
-export default function SessionWarning({ lastSignIn }: { lastSignIn: number }) {
+export default function SessionWarning({ lastSignIn }: Readonly<{ lastSignIn: number }>) {
   const [showWarning, setShowWarning] = useState(false);
   const [minutesLeft, setMinutesLeft] = useState(0);
   const router = useRouter();

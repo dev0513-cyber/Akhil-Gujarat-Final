@@ -3,7 +3,7 @@ import { fetchCategories, saveCategory, deleteCategory } from '../../lib/api';
 import { TaxonomyManager } from './TaxonomyManager';
 import type { Category } from '../../lib/types';
 
-export default function Categories({ initialCategories }: { initialCategories: Category[] }) {
+export default function Categories({ initialCategories }: Readonly<{ initialCategories: Category[] }>) {
   return (
     <TaxonomyManager<Category>
       initialData={initialCategories}

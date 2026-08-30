@@ -53,19 +53,10 @@ async function generateThumbnail(file: File): Promise<{ thumbFile: File; thumbPr
   });
 }
 
-export default function AdminEPapers({ 
-  initialEpapers, 
-  initialMonth, 
-  initialYear 
-}: { 
-  initialEpapers: EPaper[]; 
-  initialMonth: number; 
-  initialYear: number; 
-}) {
+function useEPaperData(initialEpapers: EPaper[], initialMonth: number, initialYear: number) {
   const [currentMonth, setCurrentMonth] = useState(new Date(initialYear, initialMonth - 1, 1));
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
-  // Conditionally use fallbackData if the requested month matches the initial month
   const { data: monthEPapers = [], mutate } = useSWR(
     ['epapers', currentMonth.getMonth() + 1, currentMonth.getFullYear()],
     ([, month, year]) => fetchEPapers({ month: Number(month), year: Number(year) }),
@@ -76,26 +67,16 @@ export default function AdminEPapers({
       revalidateOnMount: false
     }
   );
-  const [showMobileCalendar, setShowMobileCalendar] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
 
+  return { currentMonth, setCurrentMonth, selectedDate, setSelectedDate, monthEPapers, mutate };
+}
+
+function useEPaperUpload(selectedDate: string, mutate: () => Promise<unknown>, t: (g: string, e: string) => string, setShowSuccess: (s: boolean) => void, setAlertMessage: (m: string) => void) {
   const [title, setTitle] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<EPaper | null>(null);
-  const [busyId, setBusyId] = useState<number | null>(null);
-
-  const { t, lang } = useAdminLang();
-
-  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-  const selectedEPaper = monthEPapers.find(e => e.published_date === selectedDate);
 
   const handlePdfSelection = async (file: File) => {
     const MAX_SIZE = 35 * 1024 * 1024; // 35MB
@@ -150,18 +131,18 @@ export default function AdminEPapers({
     }
   };
 
-  const onDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files?.[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type === 'application/pdf') {
-        await handlePdfSelection(file);
-      } else {
-        setAlertMessage(t('ફક્ત PDF ફાઈલ અપલોડ કરો', 'Please upload a PDF file only'));
-      }
-    }
+  const resetForm = () => {
+    setPdfFile(null);
+    setThumbFile(null);
+    setThumbPreview(null);
   };
+
+  return { title, setTitle, pdfFile, thumbPreview, uploading, handlePdfSelection, handleUpload, resetForm };
+}
+
+function useEPaperDelete(mutate: () => Promise<unknown>, t: (g: string, e: string) => string, setAlertMessage: (m: string) => void) {
+  const [deleteTarget, setDeleteTarget] = useState<EPaper | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
@@ -174,6 +155,48 @@ export default function AdminEPapers({
       setAlertMessage(err instanceof Error ? (err as Error).message : t('ડિલીટ નિષ્ફળ', 'Delete failed'));
     } finally {
       setBusyId(null);
+    }
+  };
+
+  return { deleteTarget, setDeleteTarget, busyId, confirmDelete };
+}
+
+export default function AdminEPapers({ 
+  initialEpapers, 
+  initialMonth, 
+  initialYear 
+}: Readonly<{ 
+  initialEpapers: EPaper[]; 
+  initialMonth: number; 
+  initialYear: number; 
+}>) {
+  const { currentMonth, setCurrentMonth, selectedDate, setSelectedDate, monthEPapers, mutate } = useEPaperData(initialEpapers, initialMonth, initialYear);
+  const [showMobileCalendar, setShowMobileCalendar] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const { t, lang } = useAdminLang();
+
+  const { title, setTitle, pdfFile, thumbPreview, uploading, handlePdfSelection, handleUpload, resetForm } = useEPaperUpload(selectedDate, mutate, t, setShowSuccess, setAlertMessage);
+  const { deleteTarget, setDeleteTarget, busyId, confirmDelete } = useEPaperDelete(mutate, t, setAlertMessage);
+
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+  const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const selectedEPaper = monthEPapers.find(e => e.published_date === selectedDate);
+
+  const onDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files?.[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'application/pdf') {
+        await handlePdfSelection(file);
+      } else {
+        setAlertMessage(t('ફક્ત PDF ફાઈલ અપલોડ કરો', 'Please upload a PDF file only'));
+      }
     }
   };
 
@@ -320,15 +343,8 @@ export default function AdminEPapers({
                   {t('PDF ફાઇલ', 'PDF File')}
                 </label>
                 
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      document.getElementById('pdf-upload')?.click();
-                    }
-                  }}
+                <button
+                  type="button"
                   onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={onDrop}
@@ -369,9 +385,7 @@ export default function AdminEPapers({
                         type="button" 
                         onClick={(e) => {
                           e.stopPropagation();
-                          setPdfFile(null);
-                          setThumbFile(null);
-                          setThumbPreview(null);
+                          resetForm();
                         }}
                         className={`mt-4 px-4 py-1.5 text-sm font-bold text-red-500 border border-red-500 rounded hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
                       >
@@ -389,7 +403,7 @@ export default function AdminEPapers({
                       </p>
                     </div>
                   )}
-                </div>
+                </button>
               </div>
 
               <button 

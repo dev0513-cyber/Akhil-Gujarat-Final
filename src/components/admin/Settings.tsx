@@ -7,7 +7,7 @@ import { Save, AlertCircle } from 'lucide-react';
 import { useAdminLang } from '../../contexts/AdminLangContext';
 import { SuccessModal } from '../SuccessModal';
 
-export default function Settings({ initialSettings }: { initialSettings: SiteSetting[] }) {
+export default function Settings({ initialSettings }: Readonly<{ initialSettings: SiteSetting[] }>) {
   const [links, setLinks] = useState({
     facebook_url: '',
     instagram_url: '',

@@ -16,10 +16,10 @@ import { AlertModal } from '../AlertModal';
 export default function Dashboard({ 
   initialStats, 
   initialArticles 
-}: { 
+}: Readonly<{ 
   initialStats: { published: number; drafts: number; archived: number; videos: number };
   initialArticles: Article[];
-}) {
+}>) {
   const { t, lang } = useAdminLang();
   const [dismissedError, setDismissedError] = useState(false);
   

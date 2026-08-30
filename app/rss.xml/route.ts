@@ -11,6 +11,14 @@ export async function GET() {
     const url = `${siteUrl}/news/${a.slug}`;
     const date = new Date(a.published_at || a.created_at).toUTCString();
 
+    let enclosure = '';
+    if (a.image_url) {
+      const fullImageUrl = a.image_url.startsWith('http') ? a.image_url : siteUrl + a.image_url;
+      enclosure = `<enclosure url="${fullImageUrl}" type="image/jpeg" />`;
+    }
+
+    const categoryTag = a.category?.name_gu ? `<category><![CDATA[${a.category.name_gu}]]></category>` : '';
+
     return `
       <item>
         <title><![CDATA[${a.headline}]]></title>
@@ -18,8 +26,8 @@ export async function GET() {
         <guid>${url}</guid>
         <pubDate>${date}</pubDate>
         <description><![CDATA[${a.description || ''}]]></description>
-        ${a.category?.name_gu ? `<category><![CDATA[${a.category.name_gu}]]></category>` : ''}
-        ${a.image_url ? `<enclosure url="${a.image_url.startsWith('http') ? a.image_url : siteUrl + a.image_url}" type="image/jpeg" />` : ''}
+        ${categoryTag}
+        ${enclosure}
       </item>
     `;
   }).join('');
