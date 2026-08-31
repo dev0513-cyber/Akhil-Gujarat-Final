@@ -190,21 +190,21 @@ function useArticleEditorData(id: string | undefined, isNew: boolean) {
   return { form, setForm, cats, cities, loading, articleError, catsError, citiesError, isDraftRestored };
 }
 
-export default function ArticleEditor() {
-  const params = useParams();
-  const id = params?.id as string | undefined;
-  const router = useRouter();
-  const isNew = !id;
-  
-  const { form, setForm, cats, cities, loading, articleError, catsError, citiesError, isDraftRestored } = useArticleEditorData(id, isNew);
-
+function useArticleEditorActions(
+  id: string | undefined,
+  isNew: boolean,
+  form: FormState,
+  setForm: React.Dispatch<React.SetStateAction<FormState>>,
+  cats: Category[],
+  t: (gu: string, en: string) => string,
+  router: ReturnType<typeof useRouter>,
+) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
-  const { t, lang } = useAdminLang();
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => updateFormState(prev, key, value, isNew));
@@ -228,10 +228,9 @@ export default function ArticleEditor() {
   };
 
   const validate = () => {
-    const next = validateArticleForm(form, t);
-    if (Object.keys(next).length > 0) {
-      const errList = Object.values(next).join(' \n• ');
-      setError(t('કૃપા કરીને નીચેની ભૂલો સુધારો', 'Please correct the following errors') + ':\n\n• ' + errList);
+    const errs = validateArticleForm(form, t);
+    if (Object.keys(errs).length > 0) {
+      setError(t('કૃપા કરીને નીચેની ભૂલો સુધારો', 'Please correct the following errors') + ':\n\n• ' + Object.values(errs).join(' \n• '));
       return false;
     }
     return true;
@@ -271,6 +270,22 @@ export default function ArticleEditor() {
       setShowDeleteConfirm(false);
     }
   };
+
+  return { error, setError, busy, uploading, showSuccess, showDeleteConfirm, setShowDeleteConfirm, isDraggingPhoto, setIsDraggingPhoto, set, onUpload, submit, onSubmit, handleDelete };
+}
+
+export default function ArticleEditor() {
+  const params = useParams();
+  const id = params?.id as string | undefined;
+  const router = useRouter();
+  const isNew = !id;
+
+  const { form, setForm, cats, cities, loading, articleError, catsError, citiesError, isDraftRestored } = useArticleEditorData(id, isNew);
+  const { t, lang } = useAdminLang();
+  const {
+    error, setError, busy, uploading, showSuccess, showDeleteConfirm, setShowDeleteConfirm,
+    isDraggingPhoto, setIsDraggingPhoto, set, onUpload, submit, onSubmit, handleDelete,
+  } = useArticleEditorActions(id, isNew, form, setForm, cats, t, router);
 
   const loadError = articleError || catsError || citiesError;
 

@@ -161,6 +161,172 @@ function useEPaperDelete(mutate: () => Promise<unknown>, t: (g: string, e: strin
   return { deleteTarget, setDeleteTarget, busyId, confirmDelete };
 }
 
+// --- Sub-components to reduce AdminEPapers cognitive complexity ---
+
+type CalendarGridProps = Readonly<{
+  currentMonth: Date;
+  monthEPapers: EPaper[];
+  selectedDate: string;
+  weekDays: string[];
+  onSelectDate: (dateStr: string, title: string) => void;
+}>;
+
+function CalendarGrid({ currentMonth, monthEPapers, selectedDate, weekDays, onSelectDate }: CalendarGridProps) {
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+  const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  return (
+    <>
+      <div className="grid grid-cols-7 gap-1 text-center mb-2">
+        {weekDays.map(d => <div key={d} className="text-sm font-semibold text-ink/50 py-2">{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: firstDay }).map((_, i) => {
+          const padDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i - firstDay + 1);
+          return <div key={`empty-${padDate.getFullYear()}-${padDate.getMonth()}-${padDate.getDate()}`} />;
+        })}
+        {days.map(day => {
+          const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const hasEPaper = monthEPapers.some(e => e.published_date === dateStr);
+          const isSelected = selectedDate === dateStr;
+          const borderCls = hasEPaper && !isSelected ? 'border-2 border-crimson/50' : '';
+          const colorCls = isSelected ? 'bg-crimson text-white shadow-md' : 'hover:bg-paper text-ink';
+          return (
+            <button type="button" key={day}
+              onClick={() => onSelectDate(dateStr, `${dateStr} E-Paper`)}
+              className={`aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${colorCls} ${borderCls}`}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+type EPaperViewProps = Readonly<{
+  epaper: EPaper;
+  lang: string;
+  t: (g: string, e: string) => string;
+  onDelete: (ep: EPaper) => void;
+}>;
+
+function EPaperView({ epaper, lang, t, onDelete }: EPaperViewProps) {
+  return (
+    <div className="max-w-md mx-auto w-full">
+      <div className="bg-white shadow-xl border border-rule/50 w-full aspect-[2/3] relative mb-8 overflow-hidden group">
+        {epaper.thumbnail_url ? (
+          <img src={epaper.thumbnail_url} alt={epaper.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        ) : (
+          <div className="w-full h-full bg-paper flex flex-col items-center justify-center text-ink/20">
+            <FileText size={64} strokeWidth={1} className="mb-4" />
+            <span className={`text-sm font-semibold ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+              {t('કવર પેજ ઉપલબ્ધ નથી', 'Cover page not available')}
+            </span>
+          </div>
+        )}
+        <div className="absolute inset-0 shadow-[inset_10px_0_20px_rgba(0,0,0,0.05)] pointer-events-none" />
+      </div>
+      <div className="text-center">
+        <p className={`text-ink/60 mb-6 font-mono ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+          {t('અપલોડ:', 'Uploaded:')} {new Date(epaper.created_at).toLocaleString()}
+        </p>
+        <div className="flex gap-4 justify-center">
+          <a href={epaper.pdf_url} target="_blank" rel="noreferrer"
+            className={`flex items-center gap-2 px-6 py-2 bg-crimson text-white rounded shadow hover:bg-crimson/90 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
+          >
+            <ExternalLink size={18} /> {t('ઓપન PDF', 'Open PDF')}
+          </a>
+          <button type="button" onClick={() => onDelete(epaper)}
+            className={`flex items-center gap-2 px-6 py-2 border border-red-500 text-red-500 rounded shadow hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
+          >
+            <Trash2 size={18} /> {t('ડિલીટ', 'Delete')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type EPaperUploadFormProps = Readonly<{
+  title: string;
+  pdfFile: File | null;
+  thumbPreview: string | null;
+  uploading: boolean;
+  isDragging: boolean;
+  lang: string;
+  t: (g: string, e: string) => string;
+  setTitle: (v: string) => void;
+  setIsDragging: (v: boolean) => void;
+  onDrop: (e: React.DragEvent) => void;
+  handlePdfSelection: (f: File) => void;
+  resetForm: () => void;
+  handleUpload: (e: React.FormEvent) => void;
+}>;
+
+function EPaperUploadForm({ title, pdfFile, thumbPreview, uploading, isDragging, lang, t, setTitle, setIsDragging, onDrop, handlePdfSelection, resetForm, handleUpload }: EPaperUploadFormProps) {
+  return (
+    <form onSubmit={handleUpload} className="space-y-6 max-w-xl mx-auto w-full">
+      <div>
+        <label className={`block text-sm font-semibold mb-2 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('શીર્ષક (Title)', 'Title')}</label>
+        <input required value={title} onChange={e => setTitle(e.target.value)}
+          className="w-full p-3 border border-rule rounded focus:outline-none focus:border-crimson bg-paper" />
+      </div>
+      <div>
+        <label className={`block text-sm font-semibold mb-2 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('PDF ફાઇલ', 'PDF File')}</label>
+        <button type="button"
+          onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={onDrop}
+          className={`w-full border-2 border-dashed rounded-lg p-10 text-center transition-colors cursor-pointer ${isDragging ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}`}
+          onClick={() => document.getElementById('pdf-upload')?.click()}
+        >
+          <input id="pdf-upload" type="file" accept="application/pdf" className="hidden"
+            onChange={e => { if (e.target.files?.[0]) handlePdfSelection(e.target.files[0]); }} />
+          {pdfFile ? (
+            <div className="flex flex-col items-center">
+              {thumbPreview ? (
+                <div className="mb-4 relative group">
+                  <img src={thumbPreview} alt="Cover Preview" className="h-40 object-contain shadow-md rounded" />
+                  <div className={`absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                    {t('ફાઇલ બદલો', 'Change File')}
+                  </div>
+                </div>
+              ) : (
+                <FileText size={48} className="text-crimson mb-4" />
+              )}
+              <span className="font-semibold text-ink">{pdfFile.name}</span>
+              <span className={`text-sm text-ink/60 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                {t('કવર પેજ આપમેળે જનરેટ થયું છે', 'Cover page automatically generated')}
+              </span>
+              <button type="button" onClick={(e) => { e.stopPropagation(); resetForm(); }}
+                className={`mt-4 px-4 py-1.5 text-sm font-bold text-red-500 border border-red-500 rounded hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                {t('રદ કરો (Remove PDF)', 'Remove PDF')}
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center text-ink/60">
+              <Upload size={40} className="mb-4 text-ink/40" />
+              <p className={`font-semibold text-ink mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                {t('PDF ફાઇલ અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop PDF here or click to browse')}
+              </p>
+              <p className={`text-xs ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                {t('અમે આપમેળે પ્રથમ પૃષ્ઠને કવર ઇમેજ તરીકે લઈશું', 'We will automatically extract the first page as the cover image')}
+              </p>
+            </div>
+          )}
+        </button>
+      </div>
+      <button type="submit" disabled={uploading || !pdfFile}
+        className={`flex items-center justify-center gap-2 w-full py-4 mt-8 bg-ink text-white font-bold rounded hover:bg-ink/90 transition-colors disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        {uploading ? t('અપલોડ થઈ રહ્યું છે...', 'Uploading...') : <><Upload size={18} /> {t('ઈ-પેપર પબ્લિશ કરો', 'Publish E-Paper')}</>}
+      </button>
+    </form>
+  );
+}
+
 export default function AdminEPapers({ 
   initialEpapers, 
   initialMonth, 
@@ -181,24 +347,7 @@ export default function AdminEPapers({
   const { title, setTitle, pdfFile, thumbPreview, uploading, handlePdfSelection, handleUpload, resetForm } = useEPaperUpload(selectedDate, mutate, t, setShowSuccess, setAlertMessage);
   const { deleteTarget, setDeleteTarget, busyId, confirmDelete } = useEPaperDelete(mutate, t, setAlertMessage);
 
-  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
   const selectedEPaper = monthEPapers.find(e => e.published_date === selectedDate);
-
-  const onDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files?.[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type === 'application/pdf') {
-        await handlePdfSelection(file);
-      } else {
-        setAlertMessage(t('ફક્ત PDF ફાઈલ અપલોડ કરો', 'Please upload a PDF file only'));
-      }
-    }
-  };
 
   const monthNamesGu = ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઓગસ્ટ", "સપ્ટેમ્બર", "ઓક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"];
   const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -207,6 +356,24 @@ export default function AdminEPapers({
 
   const monthNames = lang === 'gu' ? monthNamesGu : monthNamesEn;
   const weekDays = lang === 'gu' ? weekDaysGu : weekDaysEn;
+
+  const onDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (file.type === 'application/pdf') {
+      await handlePdfSelection(file);
+    } else {
+      setAlertMessage(t('ફક્ત PDF ફાઈલ અપલોડ કરો', 'Please upload a PDF file only'));
+    }
+  };
+
+  const handleSelectDate = (dateStr: string, title: string) => {
+    setSelectedDate(dateStr);
+    setTitle(t(`${dateStr} ઈ-પેપર`, title));
+    setShowMobileCalendar(false);
+  };
 
   return (
     <div className="p-6">
@@ -243,39 +410,13 @@ export default function AdminEPapers({
             </button>
           </div>
           
-          <div className={`grid grid-cols-7 gap-1 text-center mb-2 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-            {weekDays.map(d => <div key={d} className="text-sm font-semibold text-ink/50 py-2">{d}</div>)}
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: firstDay }).map((_, i) => {
-              const padDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i - firstDay + 1);
-              return <div key={`empty-${padDate.getFullYear()}-${padDate.getMonth()}-${padDate.getDate()}`} />;
-            })}
-            {days.map(day => {
-              const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-              const hasEPaper = monthEPapers.some(e => e.published_date === dateStr);
-              const isSelected = selectedDate === dateStr;
-              
-              return (
-                <button type="button"
-                  key={day}
-                  onClick={() => {
-                    setSelectedDate(dateStr);
-                    setTitle(t(`${dateStr} ઈ-પેપર`, `${dateStr} E-Paper`));
-                    setShowMobileCalendar(false);
-                  }}
-                  className={`
-                    aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all
-                    ${isSelected ? 'bg-crimson text-white shadow-md' : 'hover:bg-paper text-ink'}
-                    ${hasEPaper && !isSelected ? 'border-2 border-crimson/50' : ''}
-                  `}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
+          <CalendarGrid
+            currentMonth={currentMonth}
+            monthEPapers={monthEPapers}
+            selectedDate={selectedDate}
+            weekDays={weekDays}
+            onSelectDate={handleSelectDate}
+          />
         </div>
 
         <div className="w-full lg:w-2/3 bg-white p-6 md:p-10 flex flex-col justify-center">
@@ -285,135 +426,23 @@ export default function AdminEPapers({
           </h2>
 
           {selectedEPaper ? (
-            <div className="max-w-md mx-auto w-full">
-              <div className="bg-white shadow-xl border border-rule/50 w-full aspect-[2/3] relative mb-8 overflow-hidden group">
-                {selectedEPaper.thumbnail_url ? (
-                  <img src={selectedEPaper.thumbnail_url} alt={selectedEPaper.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full bg-paper flex flex-col items-center justify-center text-ink/20">
-                    <FileText size={64} strokeWidth={1} className="mb-4" />
-                    <span className={`text-sm font-semibold ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                      {t('કવર પેજ ઉપલબ્ધ નથી', 'Cover page not available')}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute inset-0 shadow-[inset_10px_0_20px_rgba(0,0,0,0.05)] pointer-events-none" />
-              </div>
-              
-              <div className="text-center">
-                <p className={`text-ink/60 mb-6 font-mono ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                  {t('અપલોડ:', 'Uploaded:')} {new Date(selectedEPaper.created_at).toLocaleString()}
-                </p>
-                
-                <div className="flex gap-4 justify-center">
-                  <a 
-                    href={selectedEPaper.pdf_url} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className={`flex items-center gap-2 px-6 py-2 bg-crimson text-white rounded shadow hover:bg-crimson/90 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
-                  >
-                    <ExternalLink size={18} /> {t('ઓપન PDF', 'Open PDF')}
-                  </a>
-                  <button type="button"
-                    onClick={() => setDeleteTarget(selectedEPaper)}
-                    className={`flex items-center gap-2 px-6 py-2 border border-red-500 text-red-500 rounded shadow hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
-                  >
-                    <Trash2 size={18} /> {t('ડિલીટ', 'Delete')}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <EPaperView epaper={selectedEPaper} lang={lang} t={t} onDelete={setDeleteTarget} />
           ) : (
-            <form onSubmit={handleUpload} className="space-y-6 max-w-xl mx-auto w-full">
-              
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                  {t('શીર્ષક (Title)', 'Title')}
-                </label>
-                <input 
-                  required
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  className="w-full p-3 border border-rule rounded focus:outline-none focus:border-crimson bg-paper"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                  {t('PDF ફાઇલ', 'PDF File')}
-                </label>
-                
-                <button
-                  type="button"
-                  onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={onDrop}
-                  className={`w-full border-2 border-dashed rounded-lg p-10 text-center transition-colors cursor-pointer
-                    ${isDragging ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}
-                  `}
-                  onClick={() => document.getElementById('pdf-upload')?.click()}
-                >
-                  <input 
-                    id="pdf-upload"
-                    type="file" 
-                    accept="application/pdf"
-                    className="hidden"
-                    onChange={e => {
-                      if (e.target.files?.[0]) {
-                        handlePdfSelection(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  
-                  {pdfFile ? (
-                    <div className="flex flex-col items-center">
-                      {thumbPreview ? (
-                        <div className="mb-4 relative group">
-                          <img src={thumbPreview} alt="Cover Preview" className="h-40 object-contain shadow-md rounded" />
-                          <div className={`absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                            {t('ફાઇલ બદલો', 'Change File')}
-                          </div>
-                        </div>
-                      ) : (
-                        <FileText size={48} className="text-crimson mb-4" />
-                      )}
-                      <span className="font-semibold text-ink">{pdfFile.name}</span>
-                      <span className={`text-sm text-ink/60 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                        {t('કવર પેજ આપમેળે જનરેટ થયું છે', 'Cover page automatically generated')}
-                      </span>
-                      <button 
-                        type="button" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          resetForm();
-                        }}
-                        className={`mt-4 px-4 py-1.5 text-sm font-bold text-red-500 border border-red-500 rounded hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
-                      >
-                        {t('રદ કરો (Remove PDF)', 'Remove PDF')}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center text-ink/60">
-                      <Upload size={40} className="mb-4 text-ink/40" />
-                      <p className={`font-semibold text-ink mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                        {t('PDF ફાઇલ અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop PDF here or click to browse')}
-                      </p>
-                      <p className={`text-xs ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                        {t('અમે આપમેળે પ્રથમ પૃષ્ઠને કવર ઇમેજ તરીકે લઈશું', 'We will automatically extract the first page as the cover image')}
-                      </p>
-                    </div>
-                  )}
-                </button>
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={uploading || !pdfFile}
-                className={`flex items-center justify-center gap-2 w-full py-4 mt-8 bg-ink text-white font-bold rounded hover:bg-ink/90 transition-colors disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
-              >
-                {uploading ? t('અપલોડ થઈ રહ્યું છે...', 'Uploading...') : <><Upload size={18} /> {t('ઈ-પેપર પબ્લિશ કરો', 'Publish E-Paper')}</>}
-              </button>
-            </form>
+            <EPaperUploadForm
+              title={title}
+              pdfFile={pdfFile}
+              thumbPreview={thumbPreview}
+              uploading={uploading}
+              isDragging={isDragging}
+              lang={lang}
+              t={t}
+              setTitle={setTitle}
+              setIsDragging={setIsDragging}
+              onDrop={onDrop}
+              handlePdfSelection={handlePdfSelection}
+              resetForm={resetForm}
+              handleUpload={handleUpload}
+            />
           )}
         </div>
 

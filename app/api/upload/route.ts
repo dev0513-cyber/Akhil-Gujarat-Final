@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import { s3, B2_BUCKET_NAME } from '../../../src/lib/b2';
 
 const MAX_SIZE = 3 * 1024 * 1024; // 3MB
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
 const ALLOWED_EXTENSIONS = /\.(jpg|jpeg|png|webp|gif|pdf)$/i;
 
 function validatePdfSignature(buffer: Buffer): boolean {
@@ -51,7 +51,7 @@ function validateFileInput(file: File): NextResponse | null {
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'File exceeds limit: 3MB' }, { status: 413 });
   }
-  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+  if (!ALLOWED_MIME_TYPES.has(file.type)) {
     return NextResponse.json({ error: 'Unsupported Media Type: ' + file.type }, { status: 415 });
   }
   if (!ALLOWED_EXTENSIONS.test(file.name)) {

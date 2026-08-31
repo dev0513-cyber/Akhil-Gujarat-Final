@@ -30,58 +30,92 @@ const s3 = new S3Client({
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/** Collect all object keys from a single paginated S3 response page */
+function collectPageKeys(contents, keySet) {
+  for (const obj of contents) {
+    if (obj.Key) keySet.add(obj.Key);
+  }
+}
+
+/** List all object keys in the B2 bucket, handling pagination. */
 async function fetchB2Keys(s3Client) {
   const s3Keys = new Set();
   let continuationToken;
   do {
-    const command = new ListObjectsV2Command({
+    const response = await s3Client.send(new ListObjectsV2Command({
       Bucket: B2_BUCKET_NAME,
       ContinuationToken: continuationToken,
-    });
-    const response = await s3Client.send(command);
-    if (response.Contents) {
-      for (const obj of response.Contents) {
-        if (obj.Key) s3Keys.add(obj.Key);
-      }
-    }
+    }));
+    if (response.Contents) collectPageKeys(response.Contents, s3Keys);
     continuationToken = response.NextContinuationToken;
   } while (continuationToken);
   return s3Keys;
 }
 
-async function fetchDatabaseKeys(dbClient) {
-  const dbKeys = new Set();
+/** Extract media keys referenced by a field that may start with /api/media/ */
+function addMediaKey(url, keySet) {
+  if (url?.startsWith('/api/media/')) keySet.add(url.replace('/api/media/', ''));
+}
 
-  const { data: articles } = await dbClient.from('articles').select('image_url, extra_images');
-  if (articles) {
-    for (const a of articles) {
-      if (a.image_url?.startsWith('/api/media/')) dbKeys.add(a.image_url.replace('/api/media/', ''));
-      if (Array.isArray(a.extra_images)) {
-        for (const img of a.extra_images) {
-          if (typeof img === 'string' && img.startsWith('/api/media/')) {
-            dbKeys.add(img.replace('/api/media/', ''));
-          }
-        }
+/** Collect all media keys referenced in article records. */
+function collectArticleKeys(articles, keySet) {
+  for (const a of articles) {
+    addMediaKey(a.image_url, keySet);
+    if (Array.isArray(a.extra_images)) {
+      for (const img of a.extra_images) {
+        if (typeof img === 'string') addMediaKey(img, keySet);
       }
     }
   }
+}
 
+/** Collect all media keys referenced in epaper records. */
+function collectEpaperKeys(epapers, keySet) {
+  for (const e of epapers) {
+    addMediaKey(e.thumbnail_url, keySet);
+    addMediaKey(e.pdf_url, keySet);
+  }
+}
+
+/** Collect all media keys referenced in ad records. */
+function collectAdKeys(ads, keySet) {
+  for (const ad of ads) {
+    addMediaKey(ad.image_url, keySet);
+  }
+}
+
+/** Fetch all media keys currently referenced in the database. */
+async function fetchDatabaseKeys(dbClient) {
+  const dbKeys = new Set();
+  const { data: articles } = await dbClient.from('articles').select('image_url, extra_images');
+  if (articles) collectArticleKeys(articles, dbKeys);
   const { data: epapers } = await dbClient.from('epapers').select('thumbnail_url, pdf_url');
-  if (epapers) {
-    for (const e of epapers) {
-      if (e.thumbnail_url?.startsWith('/api/media/')) dbKeys.add(e.thumbnail_url.replace('/api/media/', ''));
-      if (e.pdf_url?.startsWith('/api/media/')) dbKeys.add(e.pdf_url.replace('/api/media/', ''));
-    }
-  }
-
+  if (epapers) collectEpaperKeys(epapers, dbKeys);
   const { data: ads } = await dbClient.from('ads').select('image_url');
-  if (ads) {
-    for (const ad of ads) {
-      if (ad.image_url?.startsWith('/api/media/')) dbKeys.add(ad.image_url.replace('/api/media/', ''));
-    }
-  }
-
+  if (ads) collectAdKeys(ads, dbKeys);
   return dbKeys;
+}
+
+/** Find keys present in storage but not referenced by the database. */
+function findOrphans(s3Keys, dbKeys) {
+  const orphans = [];
+  for (const key of s3Keys) {
+    if (!dbKeys.has(key)) orphans.push(key);
+  }
+  return orphans;
+}
+
+/** Log the orphan report to stdout. */
+function reportOrphans(orphans) {
+  console.log(`\n=== ORPHAN REPORT ===`);
+  console.log(`Total Orphans Detected: ${orphans.length}`);
+  if (orphans.length > 0) {
+    console.log('Orphaned Keys (first 50):');
+    orphans.slice(0, 50).forEach(k => console.log(`- ${k}`));
+    console.log('\nTo clean up these files, a manual review is recommended before deletion.');
+  } else {
+    console.log('No orphaned files found! Storage is clean.');
+  }
 }
 
 async function detectOrphans() {
@@ -93,23 +127,7 @@ async function detectOrphans() {
   const dbKeys = await fetchDatabaseKeys(supabase);
   console.log(`Found ${dbKeys.size} unique file references in database.`);
 
-  const orphans = [];
-  for (const key of s3Keys) {
-    if (!dbKeys.has(key)) {
-      orphans.push(key);
-    }
-  }
-
-  console.log(`\n=== ORPHAN REPORT ===`);
-  console.log(`Total Orphans Detected: ${orphans.length}`);
-
-  if (orphans.length > 0) {
-    console.log('Orphaned Keys (first 50):');
-    orphans.slice(0, 50).forEach(k => console.log(`- ${k}`));
-    console.log('\nTo clean up these files, a manual review is recommended before deletion.');
-  } else {
-    console.log('No orphaned files found! Storage is clean.');
-  }
+  reportOrphans(findOrphans(s3Keys, dbKeys));
 }
 
 try {
