@@ -24,9 +24,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     const { key } = await params;
     if (!key) return new NextResponse('Not Found', { status: 404 });
 
+    const { searchParams } = new URL(req.url);
+    const isDownload = searchParams.get('download') === '1';
+
     const command = new GetObjectCommand({
       Bucket: B2_BUCKET_NAME,
       Key: key,
+      ...(isDownload && { ResponseContentDisposition: `attachment; filename="${key}"` }),
     });
 
     // Generate a pre-signed URL valid for 1 hour

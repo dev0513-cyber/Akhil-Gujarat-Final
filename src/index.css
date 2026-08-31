@@ -79,3 +79,15 @@ label {
   opacity: 1 !important;
   letter-spacing: 0.025em;
 }
+
+/* Mobile Touch Feedback */
+@media (hover: none) and (pointer: coarse) {
+  a, button, [role="button"] {
+    -webkit-tap-highlight-color: rgba(155, 29, 32, 0.15) !important;
+  }
+  
+  a:active, button:active, [role="button"]:active {
+    opacity: 0.7;
+    transition: opacity 0.05s ease-out;
+  }
+}

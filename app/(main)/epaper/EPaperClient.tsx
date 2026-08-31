@@ -179,7 +179,7 @@ export default function EPaperClient() {
                       <ExternalLink size={18} /> વાંચો (Read)
                     </a>
                     <a 
-                      href={selectedEPaper.pdf_url}
+                      href={`${selectedEPaper.pdf_url}?download=1`}
                       download
                       target="_blank"
                       rel="noreferrer"
