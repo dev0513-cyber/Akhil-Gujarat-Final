@@ -7,7 +7,7 @@ export const articleSchema = z.object({
   headline: z.string().min(1).max(500),
   description: z.string().optional().default(''),
   content: z.string().min(1),
-  image_url: z.string().min(1, 'કવર ફોટો જરૂરી છે (Cover photo is required)'),
+  image_url: z.string().nullable().optional(),
   extra_images: z.array(z.string()).default([]),
 
   category_id: z.number(),
@@ -22,6 +22,13 @@ export const articleSchema = z.object({
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_trending: z.boolean().default(false),
   author: z.string().nullable().optional(),
+}).refine(data => {
+  const hasImage = data.image_url && data.image_url.trim().length > 0;
+  const hasVideo = data.video_url && data.video_url.trim().length > 0;
+  return hasImage || hasVideo;
+}, {
+  message: 'મુખ્ય ફોટો અથવા વિડિયો લિંક જરૂરી છે (Cover photo or video link is required)',
+  path: ['image_url']
 });
 
 export const categorySchema = z.object({

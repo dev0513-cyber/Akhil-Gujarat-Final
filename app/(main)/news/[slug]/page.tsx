@@ -135,7 +135,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
 
         <ShareButtons title={article.headline} description={article.description} />
 
-        {article.image_url && (
+        {article.image_url ? (
           <figure className="mt-6">
             <div className="relative w-full aspect-video max-h-[460px] overflow-hidden">
               <Image src={article.image_url} alt={article.headline} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority unoptimized={article.image_url.startsWith('/api/media')} />
@@ -144,7 +144,11 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
               <figcaption className="text-[11px] text-ink/45 mt-1.5">સ્રોત / ક્રેડિટ: {article.source}</figcaption>
             )}
           </figure>
-        )}
+        ) : article.video_url ? (
+          <div className="mt-6">
+            <VideoEmbed url={article.video_url} title={article.headline} />
+          </div>
+        ) : null}
 
         <div className="mt-6 space-y-4 font-gujarati text-[17px] leading-[1.85] text-ink/90">
           {paragraphs.map((p: string, i: number) => (
@@ -168,7 +172,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
           </div>
         )}
 
-        {article.video_url && (
+        {article.video_url && article.image_url && (
           <div className="mt-8">
             <h2 className="font-display text-xl mb-3">વિડિયો</h2>
             <VideoEmbed url={article.video_url} title={article.headline} />

@@ -100,7 +100,7 @@ function validateArticleForm(form: FormState, t: (gu: string, en: string) => str
   if (!form.description.trim()) next.description = t('વર્ણન જરૂરી છે', 'Description is required');
   if (!form.content.trim()) next.content = t('સમાચાર જરૂરી છે', 'Content is required');
   if (!form.slug.trim()) next.slug = t('SEO URL / slug જરૂરી છે', 'SEO URL / slug is required');
-  if (!form.image_url) next.image_url = t('કવર ફોટો જરૂરી છે', 'Cover photo is required');
+  if (!form.image_url && !form.video_url?.trim()) next.image_url = t('મુખ્ય ફોટો અથવા વિડિયો લિંક જરૂરી છે', 'Cover photo or video link is required');
   if (!form.category_id) next.category_id = t('વિભાગ પસંદ કરો', 'Please select a category');
   return next;
 }
@@ -331,7 +331,7 @@ function ArticleMediaFields({ form, set, setForm, uploading, isDraggingPhoto, se
       
       <div>
         <label htmlFor="main-photo-upload" className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-          {t('મુખ્ય ફોટો', 'Main Photo')}
+          {t('મુખ્ય ફોટો (અથવા નીચે વિડિયો લિંક આપો)', 'Main Photo (or provide Video Link below)')}
         </label>
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
           {/* Upload Box */}
