@@ -12,25 +12,25 @@ interface AdminLangContextType {
 const AdminLangContext = createContext<AdminLangContextType | undefined>(undefined);
 
 export function AdminLangProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [lang, setLangState] = useState<Lang>('gu');
+  const [langValue, setLangValue] = useState<Lang>('gu');
 
   useEffect(() => {
     const saved = localStorage.getItem('admin_lang') as Lang;
     if (saved === 'en' || saved === 'gu') {
-      setTimeout(() => setLangState(saved), 0);
+      setTimeout(() => setLangValue(saved), 0);
     }
   }, []);
 
   const setLang = useCallback((newLang: Lang) => {
-    setLangState(newLang);
+    setLangValue(newLang);
     localStorage.setItem('admin_lang', newLang);
   }, []);
 
   const t = useCallback((gu: string, en: string) => {
-    return lang === 'en' ? en : gu;
-  }, [lang]);
+    return langValue === 'en' ? en : gu;
+  }, [langValue]);
 
-  const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
+  const value = useMemo(() => ({ lang: langValue, setLang, t }), [langValue, setLang, t]);
 
   return (
     <AdminLangContext.Provider value={value}>

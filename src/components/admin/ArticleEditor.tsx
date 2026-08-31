@@ -274,6 +274,335 @@ function useArticleEditorActions(
   return { error, setError, busy, uploading, showSuccess, showDeleteConfirm, setShowDeleteConfirm, isDraggingPhoto, setIsDraggingPhoto, set, onUpload, submit, onSubmit, handleDelete };
 }
 
+type ArticleCoreFieldsProps = Readonly<{
+  form: FormState;
+  set: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+  lang: string;
+  t: (g: string, e: string) => string;
+}>;
+
+function ArticleCoreFields({ form, set, lang, t }: ArticleCoreFieldsProps) {
+  return (
+    <fieldset className="mt-6 space-y-4 bg-white border border-rule p-5">
+      <legend className="px-3 py-1 text-sm font-bold tracking-wider uppercase text-ink bg-gray-50 border border-rule rounded shadow-sm">{t('મૂળ સમાચાર', 'Core Content')}</legend>
+      <Field label={t('ગુજરાતી શીર્ષક', 'Gujarati Headline')} lang={lang}>
+        <input
+          value={form.headline}
+          onChange={(e) => set('headline', e.target.value)}
+          className="mt-1 w-full border border-rule px-3 py-2 text-sm outline-none focus:border-crimson bg-white font-gujarati"
+        />
+      </Field>
+      <Field label={t('સંક્ષિપ્ત વર્ણન', 'Short Description')} lang={lang}>
+        <textarea
+          value={form.description}
+          onChange={(e) => set('description', e.target.value)}
+          rows={3}
+          className="mt-1 w-full border border-rule px-3 py-2 text-sm outline-none focus:border-crimson bg-white font-gujarati"
+        />
+      </Field>
+      <Field label={t('સંપૂર્ણ સમાચાર', 'Full News Content')} lang={lang}>
+        <textarea
+          value={form.content}
+          onChange={(e) => set('content', e.target.value)}
+          rows={10}
+          className="mt-1 w-full border border-rule px-3 py-2 text-sm outline-none focus:border-crimson bg-white font-gujarati"
+        />
+      </Field>
+    </fieldset>
+  );
+}
+
+type ArticleMediaFieldsProps = Readonly<{
+  form: FormState;
+  set: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  uploading: boolean;
+  isDraggingPhoto: boolean;
+  setIsDraggingPhoto: (v: boolean) => void;
+  onUpload: (f: File, isExtra?: boolean) => void;
+  lang: string;
+  t: (g: string, e: string) => string;
+}>;
+
+function ArticleMediaFields({ form, set, setForm, uploading, isDraggingPhoto, setIsDraggingPhoto, onUpload, lang, t }: ArticleMediaFieldsProps) {
+  return (
+    <fieldset className="mt-5 space-y-6 bg-white border border-rule p-6">
+      <legend className="px-3 py-1 text-sm font-bold tracking-wider uppercase text-ink bg-gray-50 border border-rule rounded shadow-sm">{t('મીડિયા', 'Media')}</legend>
+      
+      <div>
+        <label htmlFor="main-photo-upload" className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+          {t('મુખ્ય ફોટો', 'Main Photo')}
+        </label>
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
+          {/* Upload Box */}
+          <button
+            type="button"
+            onDragOver={e => { e.preventDefault(); setIsDraggingPhoto(true); }}
+            onDragLeave={() => setIsDraggingPhoto(false)}
+            onDrop={e => {
+              e.preventDefault();
+              setIsDraggingPhoto(false);
+              if (e.dataTransfer.files?.[0]) {
+                const file = e.dataTransfer.files[0];
+                if (file.type.startsWith('image/')) onUpload(file);
+              }
+            }}
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer relative min-h-[160px] flex flex-col justify-center items-center w-full
+              ${isDraggingPhoto ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}
+            `}
+            onClick={() => document.getElementById('main-photo-upload')?.click()}
+          >
+            <input 
+              id="main-photo-upload"
+              type="file" 
+              accept="image/*"
+              className="hidden"
+              onChange={e => {
+                if (e.target.files?.[0]) onUpload(e.target.files[0]);
+              }}
+            />
+            
+            {form.image_url?.includes('supabase') ? (
+              <div className="flex flex-col items-center">
+                <img src={form.image_url} alt="Article main preview" className="h-24 object-cover rounded shadow mb-3" />
+                <span className="font-semibold text-ink text-sm max-w-full truncate px-2">{t('ફોટો અપલોડ થયો', 'Photo uploaded')}</span>
+                <button 
+                  type="button" 
+                  onClick={(e) => { e.stopPropagation(); set('image_url', ''); }}
+                  className={`mt-3 px-4 py-1.5 text-xs font-bold text-red-500 border border-red-500 rounded hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
+                >
+                  {t('રદ કરો (Remove Photo)', 'Remove Photo')}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-ink/60">
+                {uploading ? (
+                  <span className={`text-ink/60 font-bold ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                    {t('અપલોડ થઈ રહ્યું છે...', 'Uploading...')}
+                  </span>
+                ) : (
+                  <>
+                    <ImageIcon size={32} className="mb-3 text-ink/40" />
+                    <p className={`font-semibold text-ink text-sm mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                      {t('ફોટો અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop image here or click to browse')}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+          </button>
+
+          {/* Divider */}
+          <div className="hidden md:flex flex-col items-center justify-center">
+            <div className="h-10 w-px bg-rule/80"></div>
+            <div className="py-2 text-xs font-bold text-ink/40">OR</div>
+            <div className="h-10 w-px bg-rule/80"></div>
+          </div>
+
+          {/* URL Box */}
+          <div className="bg-gray-50 border border-rule border-dashed p-6 rounded flex flex-col justify-center relative min-h-[160px] group transition-colors hover:border-crimson/50">
+            {form.image_url && !form.image_url.includes('supabase') ? (
+              <div className="flex flex-col items-center">
+                <img src={form.image_url} alt="Article main preview" className="h-32 object-cover rounded shadow mb-2" />
+                <button type="button" onClick={() => set('image_url', '')} className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">×</button>
+              </div>
+            ) : (
+              <div className="w-full">
+                <label className={`block text-sm font-bold text-ink/60 mb-2 text-center ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('ઇમેજ URL દાખલ કરો', 'Enter Image URL')}</label>
+                <input value={(!form.image_url || form.image_url.includes('supabase')) ? '' : form.image_url} onChange={(e) => set('image_url', e.target.value)} placeholder="https://..." className="w-full border border-rule px-4 py-3 outline-none focus:border-crimson bg-white text-center rounded" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Extra Photos Gallery - Locked until main photo is uploaded */}
+        <div className="mt-8 pt-6 border-t border-rule/50">
+          <label className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+            {t('વધારાના ફોટા (ગેલેરી)', 'Extra Photos (Gallery)')}
+          </label>
+          {!form.image_url ? (
+            <div className={`p-4 bg-gray-50 border border-rule border-dashed rounded text-center text-ink/60 text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+              {t('વધારાના ફોટા ઉમેરવા પહેલાં મુખ્ય કવર ફોટો અપલોડ કરો.', 'Please upload the main cover photo first before adding extra photos.')}
+            </div>
+          ) : (
+            <div>
+              <div className="flex flex-wrap gap-3 mb-4">
+                {form.extra_images.map((src) => (
+                  <div key={src} className="relative group">
+                    <img src={src} alt="" className="h-20 w-32 object-cover rounded shadow-sm border border-rule" />
+                    <button type="button" className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-sm font-bold shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10" onClick={() => setForm((p) => ({ ...p, extra_images: p.extra_images.filter((x) => x !== src) }))}>×</button>
+                  </div>
+                ))}
+              </div>
+              <div className="relative inline-block">
+                <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0], true)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="Upload extra photo" />
+                <div className={`px-5 py-2 text-sm font-bold bg-white text-ink/80 border border-rule rounded shadow-sm hover:bg-gray-50 hover:border-ink/30 transition-colors cursor-pointer ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                  + {t('વધુ ફોટા ઉમેરો', 'Add Extra Photos (Max 3MB)')}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-rule/50 pt-6">
+        <label className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+          {t('વિડિયો લિંક (વૈકલ્પિક)', 'Video Link (Optional)')}
+        </label>
+        <input
+          value={form.video_url}
+          onChange={(e) => set('video_url', e.target.value)}
+          placeholder="https://youtube.com/... or any link"
+          className="w-full border border-rule px-4 py-3 outline-none focus:border-crimson bg-white rounded"
+        />
+      </div>
+    </fieldset>
+  );
+}
+
+type ArticleCategorizationFieldsProps = Readonly<{
+  form: FormState;
+  set: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+  cats: Category[];
+  cities: City[];
+  lang: string;
+  t: (g: string, e: string) => string;
+}>;
+
+function ArticleCategorizationFields({ form, set, cats, cities, lang, t }: ArticleCategorizationFieldsProps) {
+  return (
+    <fieldset className="mt-5 space-y-4 bg-white border border-rule p-5">
+      <legend className="px-3 py-1 text-sm font-bold tracking-wider uppercase text-ink bg-gray-50 border border-rule rounded shadow-sm">{t('વર્ગીકરણ', 'Categorization')}</legend>
+      
+      <Field label={t('વિભાગ', 'Category')} lang={lang}>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {cats.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => set('category_id', String(c.id))}
+              className={`px-4 py-2 text-sm rounded-full border transition-colors font-bold shadow-sm ${form.category_id === String(c.id) ? 'bg-crimson text-white border-crimson' : 'bg-white text-ink/70 border-rule hover:bg-gray-50'}`}
+            >
+              {lang === 'gu' ? c.name_gu : c.name_en}
+            </button>
+          ))}
+          <Link
+            href="/admin/categories"
+            className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/60 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+          >
+            <Plus size={14} /> {t('વધુ ઉમેરો', 'Add more')}
+          </Link>
+        </div>
+      </Field>
+
+      <div className="pt-4 mt-4 border-t border-rule/50">
+        <Field label={t('શહેર (વૈકલ્પિક)', 'City (Optional)')} lang={lang}>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => set('city_id', '')}
+              className={`px-4 py-2 text-sm rounded-full border transition-colors font-bold shadow-sm ${!form.city_id ? 'bg-ink text-white border-ink' : 'bg-white text-ink/70 border-rule hover:bg-gray-50'}`}
+            >
+              {t('કોઈ નહીં', 'None')}
+            </button>
+            {cities.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => set('city_id', String(c.id))}
+                className={`px-4 py-2 text-sm rounded-full border transition-colors font-bold shadow-sm ${form.city_id === String(c.id) ? 'bg-ink text-white border-ink' : 'bg-white text-ink/70 border-rule hover:bg-gray-50'}`}
+              >
+                {lang === 'gu' ? c.name_gu : c.name_en}
+              </button>
+            ))}
+            <Link
+              href="/admin/cities"
+              className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/60 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+            >
+              <Plus size={14} /> {t('વધુ ઉમેરો', 'Add more')}
+            </Link>
+          </div>
+        </Field>
+      </div>
+
+      <div className="pt-2 mt-5">
+        <button 
+          type="button" 
+          role="switch"
+          aria-checked={form.is_trending}
+          className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} 
+          onClick={() => set('is_trending', !form.is_trending)}
+        >
+          <div className="text-left">
+            <div className={`font-bold flex items-center gap-2 ${form.is_trending ? 'text-crimson' : 'text-ink/70'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+              <span className="text-lg">{form.is_trending ? '⭐' : '☆'}</span> 
+              {t('ટ્રેન્ડિંગ / ટોપ ન્યૂઝ', 'Trending / Top News')}
+            </div>
+            <div className={`text-xs mt-1 ${form.is_trending ? 'text-crimson/70' : 'text-ink/50'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+              {t('આ સમાચારને હોમપેજ પર હાઇલાઇટ કરો', 'Highlight this news on the homepage')}
+            </div>
+          </div>
+          <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.is_trending ? 'bg-crimson' : 'bg-ink/20'}`}>
+            <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${form.is_trending ? 'translate-x-5' : 'translate-x-1'}`} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
+          </div>
+        </button>
+      </div>
+    </fieldset>
+  );
+}
+
+type ArticleActionButtonsProps = Readonly<{
+  busy: boolean;
+  isNew: boolean;
+  submit: (status: string) => void;
+  setShowDeleteConfirm: (v: boolean) => void;
+  lang: string;
+  t: (g: string, e: string) => string;
+}>;
+
+function ArticleActionButtons({ busy, isNew, submit, setShowDeleteConfirm, lang, t }: ArticleActionButtonsProps) {
+  return (
+    <div className="mt-6 flex flex-wrap gap-3">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => submit('draft')}
+        className={`border border-rule bg-white px-4 py-2 text-sm disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+      >
+        {t('ડ્રાફ્ટ સેવ કરો', 'Save Draft')}
+      </button>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => submit('published')}
+        className={`bg-crimson text-white px-4 py-2 text-sm disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+      >
+        {t('પ્રકાશિત કરો', 'Publish')}
+      </button>
+      {!isNew && (
+        <>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => submit('archived')}
+            className={`border border-rule px-4 py-2 text-sm text-ink/60 disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+          >
+            {t('આર્કાઇવ', 'Archive')}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setShowDeleteConfirm(true)}
+            className={`bg-red-500 text-white px-4 py-2 text-sm hover:bg-red-600 transition-colors disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+          >
+            {t('ડિલીટ', 'Delete')}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function ArticleEditor() {
   const params = useParams();
   const id = params?.id as string | undefined;
@@ -315,281 +644,23 @@ export default function ArticleEditor() {
         {t('ગુજરાતી શીર્ષક, વર્ણન, ફોટો, અને પ્રકાશન સ્થિતિ.', 'Gujarati headline, description, photo, and publishing status.')}
       </p>
 
-      <fieldset className="mt-6 space-y-4 bg-white border border-rule p-5">
-        <legend className="px-3 py-1 text-sm font-bold tracking-wider uppercase text-ink bg-gray-50 border border-rule rounded shadow-sm">{t('મૂળ સમાચાર', 'Core Content')}</legend>
-        <Field label={t('ગુજરાતી શીર્ષક', 'Gujarati Headline')} lang={lang}>
-          <input
-            value={form.headline}
-            onChange={(e) => set('headline', e.target.value)}
-            className="mt-1 w-full border border-rule px-3 py-2 text-sm outline-none focus:border-crimson bg-white font-gujarati"
-          />
-        </Field>
-        <Field label={t('સંક્ષિપ્ત વર્ણન', 'Short Description')} lang={lang}>
-          <textarea
-            value={form.description}
-            onChange={(e) => set('description', e.target.value)}
-            rows={3}
-            className="mt-1 w-full border border-rule px-3 py-2 text-sm outline-none focus:border-crimson bg-white font-gujarati"
-          />
-        </Field>
-        <Field label={t('સંપૂર્ણ સમાચાર', 'Full News Content')} lang={lang}>
-          <textarea
-            value={form.content}
-            onChange={(e) => set('content', e.target.value)}
-            rows={10}
-            className="mt-1 w-full border border-rule px-3 py-2 text-sm outline-none focus:border-crimson bg-white font-gujarati"
-          />
-        </Field>
-      </fieldset>
-
-      <fieldset className="mt-5 space-y-6 bg-white border border-rule p-6">
-        <legend className="px-3 py-1 text-sm font-bold tracking-wider uppercase text-ink bg-gray-50 border border-rule rounded shadow-sm">{t('મીડિયા', 'Media')}</legend>
-        
-        <div>
-          <label htmlFor="main-photo-upload" className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-            {t('મુખ્ય ફોટો', 'Main Photo')}
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
-            {/* Upload Box */}
-            <button
-              type="button"
-              onDragOver={e => { e.preventDefault(); setIsDraggingPhoto(true); }}
-              onDragLeave={() => setIsDraggingPhoto(false)}
-              onDrop={e => {
-                e.preventDefault();
-                setIsDraggingPhoto(false);
-                if (e.dataTransfer.files?.[0]) {
-                  const file = e.dataTransfer.files[0];
-                  if (file.type.startsWith('image/')) onUpload(file);
-                }
-              }}
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer relative min-h-[160px] flex flex-col justify-center items-center w-full
-                ${isDraggingPhoto ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}
-              `}
-              onClick={() => document.getElementById('main-photo-upload')?.click()}
-            >
-              <input 
-                id="main-photo-upload"
-                type="file" 
-                accept="image/*"
-                className="hidden"
-                onChange={e => {
-                  if (e.target.files?.[0]) onUpload(e.target.files[0]);
-                }}
-              />
-              
-              {form.image_url?.includes('supabase') ? (
-                <div className="flex flex-col items-center">
-                  <img src={form.image_url} alt="Article main preview" className="h-24 object-cover rounded shadow mb-3" />
-                  <span className="font-semibold text-ink text-sm max-w-full truncate px-2">{t('ફોટો અપલોડ થયો', 'Photo uploaded')}</span>
-                  <button 
-                    type="button" 
-                    onClick={(e) => { e.stopPropagation(); set('image_url', ''); }}
-                    className={`mt-3 px-4 py-1.5 text-xs font-bold text-red-500 border border-red-500 rounded hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}
-                  >
-                    {t('રદ કરો (Remove Photo)', 'Remove Photo')}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center text-ink/60">
-                  {uploading ? (
-                    <span className={`text-ink/60 font-bold ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                      {t('અપલોડ થઈ રહ્યું છે...', 'Uploading...')}
-                    </span>
-                  ) : (
-                    <>
-                      <ImageIcon size={32} className="mb-3 text-ink/40" />
-                      <p className={`font-semibold text-ink text-sm mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                        {t('ફોટો અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop image here or click to browse')}
-                      </p>
-                    </>
-                  )}
-                </div>
-              )}
-            </button>
-
-            {/* Divider */}
-            <div className="hidden md:flex flex-col items-center justify-center">
-              <div className="h-10 w-px bg-rule/80"></div>
-              <div className="py-2 text-xs font-bold text-ink/40">OR</div>
-              <div className="h-10 w-px bg-rule/80"></div>
-            </div>
-
-            {/* URL Box */}
-            <div className="bg-gray-50 border border-rule border-dashed p-6 rounded flex flex-col justify-center relative min-h-[160px] group transition-colors hover:border-crimson/50">
-              {form.image_url && !form.image_url.includes('supabase') ? (
-                <div className="flex flex-col items-center">
-                  <img src={form.image_url} alt="Article main preview" className="h-32 object-cover rounded shadow mb-2" />
-                  <button type="button" onClick={() => set('image_url', '')} className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">×</button>
-                </div>
-              ) : (
-                <div className="w-full">
-                  <label className={`block text-sm font-bold text-ink/60 mb-2 text-center ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('ઇમેજ URL દાખલ કરો', 'Enter Image URL')}</label>
-                  <input value={(!form.image_url || form.image_url.includes('supabase')) ? '' : form.image_url} onChange={(e) => set('image_url', e.target.value)} placeholder="https://..." className="w-full border border-rule px-4 py-3 outline-none focus:border-crimson bg-white text-center rounded" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Extra Photos Gallery - Locked until main photo is uploaded */}
-          <div className="mt-8 pt-6 border-t border-rule/50">
-            <label className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-              {t('વધારાના ફોટા (ગેલેરી)', 'Extra Photos (Gallery)')}
-            </label>
-            {!form.image_url ? (
-              <div className={`p-4 bg-gray-50 border border-rule border-dashed rounded text-center text-ink/60 text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                {t('વધારાના ફોટા ઉમેરવા પહેલાં મુખ્ય કવર ફોટો અપલોડ કરો.', 'Please upload the main cover photo first before adding extra photos.')}
-              </div>
-            ) : (
-              <div>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {form.extra_images.map((src) => (
-                    <div key={src} className="relative group">
-                      <img src={src} alt="" className="h-20 w-32 object-cover rounded shadow-sm border border-rule" />
-                      <button type="button" className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-sm font-bold shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10" onClick={() => setForm((p) => ({ ...p, extra_images: p.extra_images.filter((x) => x !== src) }))}>×</button>
-                    </div>
-                  ))}
-                </div>
-                <div className="relative inline-block">
-                  <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0], true)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="Upload extra photo" />
-                  <div className={`px-5 py-2 text-sm font-bold bg-white text-ink/80 border border-rule rounded shadow-sm hover:bg-gray-50 hover:border-ink/30 transition-colors cursor-pointer ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                    + {t('વધુ ફોટા ઉમેરો', 'Add Extra Photos (Max 3MB)')}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="border-t border-rule/50 pt-6">
-          <label className={`block font-bold text-ink mb-3 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-            {t('વિડિયો લિંક (વૈકલ્પિક)', 'Video Link (Optional)')}
-          </label>
-          <input
-            value={form.video_url}
-            onChange={(e) => set('video_url', e.target.value)}
-            placeholder="https://youtube.com/... or any link"
-            className="w-full border border-rule px-4 py-3 outline-none focus:border-crimson bg-white rounded"
-          />
-        </div>
-      </fieldset>
-
-      <fieldset className="mt-5 space-y-4 bg-white border border-rule p-5">
-        <legend className="px-3 py-1 text-sm font-bold tracking-wider uppercase text-ink bg-gray-50 border border-rule rounded shadow-sm">{t('વર્ગીકરણ', 'Categorization')}</legend>
-        
-        <Field label={t('વિભાગ', 'Category')} lang={lang}>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {cats.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => set('category_id', String(c.id))}
-                className={`px-4 py-2 text-sm rounded-full border transition-colors font-bold shadow-sm ${form.category_id === String(c.id) ? 'bg-crimson text-white border-crimson' : 'bg-white text-ink/70 border-rule hover:bg-gray-50'}`}
-              >
-                {lang === 'gu' ? c.name_gu : c.name_en}
-              </button>
-            ))}
-            <Link
-              href="/admin/categories"
-              className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/60 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
-            >
-              <Plus size={14} /> {t('વધુ ઉમેરો', 'Add more')}
-            </Link>
-          </div>
-        </Field>
-
-        <div className="pt-4 mt-4 border-t border-rule/50">
-          <Field label={t('શહેર (વૈકલ્પિક)', 'City (Optional)')} lang={lang}>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => set('city_id', '')}
-                className={`px-4 py-2 text-sm rounded-full border transition-colors font-bold shadow-sm ${!form.city_id ? 'bg-ink text-white border-ink' : 'bg-white text-ink/70 border-rule hover:bg-gray-50'}`}
-              >
-                {t('કોઈ નહીં', 'None')}
-              </button>
-              {cities.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => set('city_id', String(c.id))}
-                  className={`px-4 py-2 text-sm rounded-full border transition-colors font-bold shadow-sm ${form.city_id === String(c.id) ? 'bg-ink text-white border-ink' : 'bg-white text-ink/70 border-rule hover:bg-gray-50'}`}
-                >
-                  {lang === 'gu' ? c.name_gu : c.name_en}
-                </button>
-              ))}
-              <Link
-                href="/admin/cities"
-                className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/60 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
-              >
-                <Plus size={14} /> {t('વધુ ઉમેરો', 'Add more')}
-              </Link>
-            </div>
-          </Field>
-        </div>
-
-        <div className="pt-2 mt-5">
-          <button 
-            type="button" 
-            role="switch"
-            aria-checked={form.is_trending}
-            className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${form.is_trending ? 'bg-red-50 border-crimson/30 shadow-sm' : 'bg-gray-50 border-rule/60 hover:bg-gray-100'}`} 
-            onClick={() => set('is_trending', !form.is_trending)}
-          >
-            <div className="text-left">
-              <div className={`font-bold flex items-center gap-2 ${form.is_trending ? 'text-crimson' : 'text-ink/70'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                <span className="text-lg">{form.is_trending ? '⭐' : '☆'}</span> 
-                {t('ટ્રેન્ડિંગ / ટોપ ન્યૂઝ', 'Trending / Top News')}
-              </div>
-              <div className={`text-xs mt-1 ${form.is_trending ? 'text-crimson/70' : 'text-ink/50'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                {t('આ સમાચારને હોમપેજ પર હાઇલાઇટ કરો', 'Highlight this news on the homepage')}
-              </div>
-            </div>
-            <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.is_trending ? 'bg-crimson' : 'bg-ink/20'}`}>
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${form.is_trending ? 'translate-x-5' : 'translate-x-1'}`} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
-            </div>
-          </button>
-        </div>
-      </fieldset>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => submit('draft')}
-          className={`border border-rule bg-white px-4 py-2 text-sm disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
-        >
-          {t('ડ્રાફ્ટ સેવ કરો', 'Save Draft')}
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => submit('published')}
-          className={`bg-crimson text-white px-4 py-2 text-sm disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
-        >
-          {t('પ્રકાશિત કરો', 'Publish')}
-        </button>
-        {!isNew && (
-          <>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => submit('archived')}
-              className={`border border-rule px-4 py-2 text-sm text-ink/60 disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
-            >
-              {t('આર્કાઇવ', 'Archive')}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setShowDeleteConfirm(true)}
-              className={`bg-red-500 text-white px-4 py-2 text-sm hover:bg-red-600 transition-colors disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
-            >
-              {t('ડિલીટ', 'Delete')}
-            </button>
-          </>
-        )}
-      </div>
+      <ArticleCoreFields form={form} set={set} lang={lang} t={t} />
+      
+      <ArticleMediaFields 
+        form={form} 
+        set={set} 
+        setForm={setForm}
+        uploading={uploading}
+        isDraggingPhoto={isDraggingPhoto}
+        setIsDraggingPhoto={setIsDraggingPhoto}
+        onUpload={onUpload}
+        lang={lang}
+        t={t} 
+      />
+      
+      <ArticleCategorizationFields form={form} set={set} cats={cats} cities={cities} lang={lang} t={t} />
+      
+      <ArticleActionButtons busy={busy} isNew={isNew} submit={submit} setShowDeleteConfirm={setShowDeleteConfirm} lang={lang} t={t} />
 
       <ConfirmDeleteModal
         isOpen={showDeleteConfirm}
@@ -598,6 +669,7 @@ export default function ArticleEditor() {
           `શું તમે ખરેખર આ સમાચાર કાઢી નાખવા માંગો છો? આ ક્રિયા ઉલટાવી શકાતી નથી.`,
           `Are you sure you want to delete this article? This action cannot be undone.`
         )}
+
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
         isDeleting={busy}

@@ -266,6 +266,58 @@ type EPaperUploadFormProps = Readonly<{
   handleUpload: (e: React.FormEvent) => void;
 }>;
 
+type PdfPreviewProps = Readonly<{
+  pdfFile: File;
+  thumbPreview: string | null;
+  lang: string;
+  t: (g: string, e: string) => string;
+  resetForm: () => void;
+}>;
+
+function PdfPreview({ pdfFile, thumbPreview, lang, t, resetForm }: PdfPreviewProps) {
+  return (
+    <div className="flex flex-col items-center">
+      {thumbPreview ? (
+        <div className="mb-4 relative group">
+          <img src={thumbPreview} alt="Cover Preview" className="h-40 object-contain shadow-md rounded" />
+          <div className={`absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+            {t('ફાઇલ બદલો', 'Change File')}
+          </div>
+        </div>
+      ) : (
+        <FileText size={48} className="text-crimson mb-4" />
+      )}
+      <span className="font-semibold text-ink">{pdfFile.name}</span>
+      <span className={`text-sm text-ink/60 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        {t('કવર પેજ આપમેળે જનરેટ થયું છે', 'Cover page automatically generated')}
+      </span>
+      <button type="button" onClick={(e) => { e.stopPropagation(); resetForm(); }}
+        className={`mt-4 px-4 py-1.5 text-sm font-bold text-red-500 border border-red-500 rounded hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        {t('રદ કરો (Remove PDF)', 'Remove PDF')}
+      </button>
+    </div>
+  );
+}
+
+type PdfDropPlaceholderProps = Readonly<{
+  lang: string;
+  t: (g: string, e: string) => string;
+}>;
+
+function PdfDropPlaceholder({ lang, t }: PdfDropPlaceholderProps) {
+  return (
+    <div className="flex flex-col items-center text-ink/60">
+      <Upload size={40} className="mb-4 text-ink/40" />
+      <p className={`font-semibold text-ink mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        {t('PDF ફાઇલ અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop PDF here or click to browse')}
+      </p>
+      <p className={`text-xs ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        {t('અમે આપમેળે પ્રથમ પૃષ્ઠને કવર ઇમેજ તરીકે લઈશું', 'We will automatically extract the first page as the cover image')}
+      </p>
+    </div>
+  );
+}
+
 function EPaperUploadForm({ title, pdfFile, thumbPreview, uploading, isDragging, lang, t, setTitle, setIsDragging, onDrop, handlePdfSelection, resetForm, handleUpload }: EPaperUploadFormProps) {
   return (
     <form onSubmit={handleUpload} className="space-y-6 max-w-xl mx-auto w-full">
@@ -286,36 +338,9 @@ function EPaperUploadForm({ title, pdfFile, thumbPreview, uploading, isDragging,
           <input id="pdf-upload" type="file" accept="application/pdf" className="hidden"
             onChange={e => { if (e.target.files?.[0]) handlePdfSelection(e.target.files[0]); }} />
           {pdfFile ? (
-            <div className="flex flex-col items-center">
-              {thumbPreview ? (
-                <div className="mb-4 relative group">
-                  <img src={thumbPreview} alt="Cover Preview" className="h-40 object-contain shadow-md rounded" />
-                  <div className={`absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                    {t('ફાઇલ બદલો', 'Change File')}
-                  </div>
-                </div>
-              ) : (
-                <FileText size={48} className="text-crimson mb-4" />
-              )}
-              <span className="font-semibold text-ink">{pdfFile.name}</span>
-              <span className={`text-sm text-ink/60 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                {t('કવર પેજ આપમેળે જનરેટ થયું છે', 'Cover page automatically generated')}
-              </span>
-              <button type="button" onClick={(e) => { e.stopPropagation(); resetForm(); }}
-                className={`mt-4 px-4 py-1.5 text-sm font-bold text-red-500 border border-red-500 rounded hover:bg-red-50 transition-colors ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                {t('રદ કરો (Remove PDF)', 'Remove PDF')}
-              </button>
-            </div>
+            <PdfPreview pdfFile={pdfFile} thumbPreview={thumbPreview} lang={lang} t={t} resetForm={resetForm} />
           ) : (
-            <div className="flex flex-col items-center text-ink/60">
-              <Upload size={40} className="mb-4 text-ink/40" />
-              <p className={`font-semibold text-ink mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                {t('PDF ફાઇલ અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop PDF here or click to browse')}
-              </p>
-              <p className={`text-xs ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-                {t('અમે આપમેળે પ્રથમ પૃષ્ઠને કવર ઇમેજ તરીકે લઈશું', 'We will automatically extract the first page as the cover image')}
-              </p>
-            </div>
+            <PdfDropPlaceholder lang={lang} t={t} />
           )}
         </button>
       </div>
