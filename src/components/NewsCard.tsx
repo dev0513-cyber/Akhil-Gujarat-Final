@@ -86,7 +86,7 @@ export default function NewsCard({
               {article.description}
             </p>
             <p className="mt-3 text-white/55 text-xs flex items-center gap-2 pb-6 md:pb-0">
-              <Clock size={12} /> {formatDateGu(article.published_at)}
+              <Clock size={12} /> <span suppressHydrationWarning>{formatDateGu(article.published_at)}</span>
             </p>
           </div>
         </Link>
@@ -152,7 +152,7 @@ export default function NewsCard({
     return (
       <Link href={href} className="group block py-2.5 border-b border-rule/50 last:border-0 transition-transform active:scale-[0.98]">
         <h3 className="font-display text-[15px] leading-snug group-hover:text-crimson">{article.headline}</h3>
-        <p className="text-[11px] text-ink/45 mt-1">{formatDateGu(article.published_at)}</p>
+        <p className="text-[11px] text-ink/45 mt-1" suppressHydrationWarning>{formatDateGu(article.published_at)}</p>
       </Link>
     );
   }
@@ -178,7 +178,7 @@ export default function NewsCard({
         <h3 className="font-display text-base mt-2.5 leading-snug group-hover:text-crimson line-clamp-2">
           {article.headline}
         </h3>
-        <p className="text-xs text-ink/50 mt-1">{formatDateGu(article.published_at)}</p>
+        <p className="text-xs text-ink/50 mt-1" suppressHydrationWarning>{formatDateGu(article.published_at)}</p>
       </Link>
     );
   }
@@ -222,7 +222,7 @@ function Meta({ article }: Readonly<{ article: Article }>) {
         </>
       )}
       <span className="text-rule">•</span>
-      <span>{formatDateGu(article.published_at)}</span>
+      <span suppressHydrationWarning>{formatDateGu(article.published_at)}</span>
     </div>
   );
 }

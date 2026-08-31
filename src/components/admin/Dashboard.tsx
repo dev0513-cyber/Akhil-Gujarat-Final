@@ -85,7 +85,7 @@ export default function Dashboard({
                 <td className="px-3 py-2">
                   <StatusPill status={a.status} t={t} />
                 </td>
-                <td className="px-3 py-2 text-ink/50 whitespace-nowrap font-gujarati">
+                <td className="px-3 py-2 text-ink/50 whitespace-nowrap font-gujarati" suppressHydrationWarning>
                   {formatDateTimeGu(a.published_at || a.created_at)}
                 </td>
               </tr>

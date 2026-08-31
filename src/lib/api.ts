@@ -207,8 +207,14 @@ export async function deleteEPaper(id: number): Promise<void> {
   await readJson(res);
 }
 
-export async function fetchAds(): Promise<Ad[]> {
-  const res = await fetch('/api/ads');
+export async function fetchAds(params: Record<string, string | number | undefined> = {}): Promise<Ad[]> {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== '') qs.set(k, String(v));
+  });
+  let url = '/api/ads';
+  if (qs.toString()) url += `?${qs.toString()}`;
+  const res = await fetch(url);
   return readJson<Ad[]>(res);
 }
 

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
+import Image from 'next/image';
 import { Plus, Upload, Image as ImageIcon, Link2 } from 'lucide-react';
 import { fetchAds, saveAd, deleteAd, uploadFile } from '../../lib/api';
 import type { Ad } from '../../lib/types';
@@ -15,9 +17,13 @@ const emptyForm = { title: '', image_url: '', link_url: '', slot: AD_SLOTS[0].ke
 
 type AdForm = { title: string; image_url: string; link_url: string; slot: string; frame: string; is_active: boolean };
 
-function useAdsData(initialAds: Ad[]) {
-  const { data: ads = [], mutate } = useSWR(['ads'], fetchAds, { fallbackData: initialAds, revalidateOnMount: false });
-  return { ads, mutate };
+function useAdsData(initialAds: Ad[], page: number) {
+  const { data: rawAds = [], mutate } = useSWR(
+    ['ads', page],
+    () => fetchAds({ page, limit: 6 }),
+    { fallbackData: initialAds, revalidateOnMount: false }
+  );
+  return { ads: rawAds, mutate };
 }
 
 function useAdForm(mutate: () => Promise<unknown>, t: (g: string, e: string) => string) {
@@ -102,9 +108,24 @@ function useAdDelete(mutate: () => Promise<unknown>, t: (g: string, e: string) =
   return { deleteTarget, setDeleteTarget, deleting, busyId, handleDelete };
 }
 
-export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>) {
+export default function AdminAds({ initialAds, initialPage = 1 }: Readonly<{ initialAds: Ad[]; initialPage?: number }>) {
+  const router = useRouter();
+  const [page, setPage] = useState(initialPage);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (page > 1) params.set('page', page.toString());
+      router.push(`/admin/ads?${params.toString()}`);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [page, router]);
+
   const { t, lang } = useAdminLang();
-  const { ads, mutate } = useAdsData(initialAds);
+  const { ads, mutate } = useAdsData(initialAds, page);
+  
+  const displayAds = ads.slice(0, 5);
+  const hasNextPage = ads.length > 5;
   
   const { form, setForm, imagePreview, setImagePreview, setImageFile, uploading, showForm, setShowForm, showSuccess, setShowSuccess, alertMessage, setAlertMessage, startCreate, startEdit, handleImageSelection, handleSubmit, editingId } = useAdForm(mutate, t);
   const { deleteTarget, setDeleteTarget, deleting, busyId, handleDelete } = useAdDelete(mutate, t, setAlertMessage);
@@ -148,11 +169,12 @@ export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>)
         </button>
       </div>
 
-      {ads.length === 0 ? (
+      {displayAds.length === 0 ? (
         <p className="text-ink/50 py-10 text-center">{t('હજુ કોઈ જાહેરાત નથી.', 'No ads yet.')}</p>
       ) : (
-        <div className="bg-white border border-rule overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="flex flex-col gap-4">
+          <div className="bg-white border border-rule overflow-x-auto">
+            <table className="w-full text-sm min-w-[760px]">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-ink/50 border-b border-rule">
                 <th className="px-4 py-3">{t('ફોટો', 'Image')}</th>
@@ -165,12 +187,13 @@ export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>)
               </tr>
             </thead>
             <tbody>
-              {ads.map((ad: Ad) => (
+              {displayAds.map((ad: Ad) => (
                 <tr key={ad.id} className="border-b border-rule/50 last:border-0">
                   <td className="px-4 py-2">
                     {ad.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={ad.image_url} alt="" className="h-12 w-28 object-cover rounded border border-rule/50" />
+                      <div className="relative h-12 w-28 rounded overflow-hidden border border-rule/50 bg-paper-dark">
+                        <Image src={ad.image_url} alt="" fill sizes="112px" className="object-cover" unoptimized />
+                      </div>
                     ) : (
                       <span className="text-ink/30">—</span>
                     )}
@@ -219,6 +242,28 @@ export default function AdminAds({ initialAds }: Readonly<{ initialAds: Ad[] }>)
               ))}
             </tbody>
           </table>
+          </div>
+          <div className="flex items-center justify-between px-3 py-4 border border-rule bg-white">
+            <button 
+              type="button"
+              disabled={page <= 1} 
+              onClick={() => setPage(page - 1)}
+              className="px-3 py-1.5 text-sm bg-white border border-rule disabled:opacity-40 font-gujarati shadow-sm hover:bg-stone-50 transition-colors"
+            >
+              {t('પાછળ', 'Previous')}
+            </button>
+            <span className="text-sm text-ink/60 font-gujarati font-semibold">
+              {t('પાનું', 'Page')} {page}
+            </span>
+            <button 
+              type="button"
+              disabled={!hasNextPage} 
+              onClick={() => setPage(page + 1)}
+              className="px-3 py-1.5 text-sm bg-white border border-rule disabled:opacity-40 font-gujarati shadow-sm hover:bg-stone-50 transition-colors"
+            >
+              {t('આગળ', 'Next')}
+            </button>
+          </div>
         </div>
       )}
 

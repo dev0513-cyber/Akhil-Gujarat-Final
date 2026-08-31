@@ -196,7 +196,7 @@ export default function Articles({
                     colorClass="bg-stone-500"
                   />
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink/50 font-sans">
+                <td className="px-3 py-3 whitespace-nowrap text-ink/50 font-sans" suppressHydrationWarning>
                   {formatDateTime(a.published_at || a.created_at, lang)}
                 </td>
                 <td className="px-3 py-3 text-right">

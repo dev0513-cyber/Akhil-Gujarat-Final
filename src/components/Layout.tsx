@@ -78,8 +78,8 @@ export default function Layout({ children, initialCategories = [], initialCities
             <span className="font-gujarati text-[11px] md:text-sm font-medium whitespace-nowrap">
               {now ? (
                 <>
-                  <span className="sm:hidden">{formatTodayMastheadShort()}</span>
-                  <span className="hidden sm:inline">{formatTodayMasthead()}</span>
+                  <span className="sm:hidden" suppressHydrationWarning>{formatTodayMastheadShort()}</span>
+                  <span className="hidden sm:inline" suppressHydrationWarning>{formatTodayMasthead()}</span>
                 </>
               ) : '...'}
             </span>
