@@ -91,7 +91,7 @@ export default function Layout({ children, initialCategories = [], initialCities
         <div className="max-w-6xl mx-auto px-4 pt-4 pb-3">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <Link href="/" className="flex items-center justify-center md:justify-start gap-3 w-full md:w-auto">
-              <Image src="/logo.png" alt="Logo" width={120} height={56} className="h-10 md:h-14 w-auto object-contain" priority />
+              <Image src="/logo.png" alt="Logo" width={120} height={56} className="h-10 md:h-14 w-auto object-contain" style={{ width: 'auto' }} priority />
               <div className="flex flex-col items-center md:items-start">
                 <h1 className="font-display text-2xl md:text-3xl leading-none text-ink tracking-tight">
                   અખિલ ગુજરાત
@@ -111,6 +111,7 @@ export default function Layout({ children, initialCategories = [], initialCities
                 <span>ઈ-પેપર</span>
               </Link>
               <form 
+                action="/search"
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`);
@@ -118,6 +119,7 @@ export default function Layout({ children, initialCategories = [], initialCities
                 className="flex items-center border border-rule bg-white px-3 py-1.5 w-full md:w-64"
               >
                 <input
+                  name="q"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="સમાચાર શોધો..."
@@ -190,8 +192,9 @@ export default function Layout({ children, initialCategories = [], initialCities
                 <X size={22} />
               </button>
             </div>
-            <form onSubmit={onSearch} className="flex items-center border border-rule bg-white px-3 py-2 mb-5">
+            <form action="/search" onSubmit={onSearch} className="flex items-center border border-rule bg-white px-3 py-2 mb-5">
               <input
+                name="q"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="સમાચાર શોધો..."

@@ -230,8 +230,8 @@ function EPaperView({ epaper, lang, t, onDelete }: EPaperViewProps) {
         <div className="absolute inset-0 shadow-[inset_10px_0_20px_rgba(0,0,0,0.05)] pointer-events-none" />
       </div>
       <div className="text-center">
-        <p className={`text-ink/60 mb-6 font-mono ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-          {t('અપલોડ:', 'Uploaded:')} {new Date(epaper.created_at).toLocaleString()}
+        <p className={`text-ink/60 mb-6 font-mono ${lang === 'gu' ? 'font-gujarati' : ''}`} suppressHydrationWarning>
+          {t('અપલોડ:', 'Uploaded:')} {new Date(epaper.created_at).toLocaleString('en-IN')}
         </p>
         <div className="flex gap-4 justify-center">
           <a href={epaper.pdf_url} target="_blank" rel="noreferrer"
@@ -328,10 +328,13 @@ function EPaperUploadForm({ title, pdfFile, thumbPreview, uploading, isDragging,
       </div>
       <div>
         <label className={`block text-sm font-semibold mb-2 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('PDF ફાઇલ', 'PDF File')}</label>
-        <button type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={onDrop}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('pdf-upload')?.click(); }}
           className={`w-full border-2 border-dashed rounded-lg p-10 text-center transition-colors cursor-pointer ${isDragging ? 'border-crimson bg-red-50' : 'border-rule bg-gray-50 hover:bg-gray-100'}`}
           onClick={() => document.getElementById('pdf-upload')?.click()}
         >
@@ -342,7 +345,7 @@ function EPaperUploadForm({ title, pdfFile, thumbPreview, uploading, isDragging,
           ) : (
             <PdfDropPlaceholder lang={lang} t={t} />
           )}
-        </button>
+        </div>
       </div>
       <button type="submit" disabled={uploading || !pdfFile}
         className={`flex items-center justify-center gap-2 w-full py-4 mt-8 bg-ink text-white font-bold rounded hover:bg-ink/90 transition-colors disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>

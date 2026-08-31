@@ -155,8 +155,9 @@ export default function Articles({
 
       {loading && <p className={`mt-8 text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
 
-      <div className="mt-4 bg-white border border-rule overflow-x-auto">
-        <table className="w-full text-sm min-w-[760px]">
+      <div className="mt-4 bg-white border border-rule">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[760px]">
           <thead className="bg-paper-dark text-left text-xs uppercase tracking-wider text-ink/55">
             <tr>
               <th className="px-3 py-2">{t('શીર્ષક', 'Title')}</th>
@@ -224,6 +225,7 @@ export default function Articles({
             )}
           </tbody>
         </table>
+        </div>
         <div className="flex items-center justify-between px-3 py-4 border-t border-rule bg-white">
           <button 
             type="button"

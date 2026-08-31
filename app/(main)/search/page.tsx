@@ -17,9 +17,6 @@ export default async function SearchPage({ searchParams }: Readonly<{ searchPara
   const { q } = await searchParams;
   let term = q?.trim() || '';
   
-  if (term.length > 0 && term.length < 3) {
-    term = ''; // Too short for a full text scan
-  }
   if (term.length > 50) {
     term = term.substring(0, 50); // Bound the length
   }

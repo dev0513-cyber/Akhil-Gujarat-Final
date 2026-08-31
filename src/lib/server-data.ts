@@ -25,7 +25,14 @@ export const getArticles = async (params: Record<string, string | number | boole
       query = query.gte('published_at', from).lt('published_at', to);
     }
 
-    query = applyArticleSearchAndOrder(query, params.q as string | undefined);
+    let qTerms: string | string[] | undefined = params.q as string | undefined;
+    if (typeof qTerms === 'string' && qTerms.trim()) {
+      const trans = await getGujaratiTransliteration(qTerms);
+      if (trans && trans !== qTerms) {
+        qTerms = [qTerms, trans];
+      }
+    }
+    query = applyArticleSearchAndOrder(query, qTerms);
 
     const take = Math.min(Number(params.limit) || 40, 100);
     query = query.limit(take);
@@ -41,13 +48,40 @@ export const getArticles = async (params: Record<string, string | number | boole
   )();
 };
 
+async function getGujaratiTransliteration(text: string): Promise<string> {
+  if (!text || typeof text !== 'string') return text;
+  // If it already contains Gujarati, no need to transliterate
+  if (/[\u0A80-\u0AFF]/.test(text)) return text;
+  try {
+    const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=gu-t-i0-und&num=1`, {
+      signal: AbortSignal.timeout(2500)
+    });
+    if (!res.ok) return text;
+    const json = await res.json();
+    if (json[0] === 'SUCCESS' && json[1]?.[0]?.[1]?.[0]) {
+      return json[1][0][1][0];
+    }
+  } catch (e) {
+    // Ignore fetch timeout/errors
+  }
+  return text;
+}
+
 // Uncached specifically to prevent search cache poisoning (arbitrary 'q' params filling Next.js Data Cache)
 export const searchArticles = async (q: string, limit = 40) => {
   let query = supabase.from('articles')
     .select('id, headline, description, image_url, video_url, category_id, city_id, published_at, is_trending, slug, author')
     .eq('status', 'published');
 
-  query = applyArticleSearchAndOrder(query, q);
+  let qTerms: string | string[] = q;
+  if (typeof q === 'string' && q.trim()) {
+    const trans = await getGujaratiTransliteration(q);
+    if (trans && trans !== q) {
+      qTerms = [q, trans];
+    }
+  }
+
+  query = applyArticleSearchAndOrder(query, qTerms);
   query = query.limit(Math.min(limit, 100));
 
   const { data, error } = await query;

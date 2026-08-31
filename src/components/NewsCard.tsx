@@ -57,12 +57,12 @@ export default function NewsCard({
             <p className="mt-2 text-white/80 text-sm md:text-base line-clamp-2 max-w-3xl font-gujarati">
               {article.description}
             </p>
-            <p className="mt-3 text-white/55 text-xs flex items-center gap-2">
+            <p className="mt-3 text-white/55 text-xs flex items-center gap-2 pb-6 md:pb-0">
               <Clock size={12} /> {formatDateGu(article.published_at)}
             </p>
           </div>
         </Link>
-        <CardShareButton title={article.headline} description={article.description} slug={article.slug} light />
+        <CardShareButton title={article.headline} description={article.description} slug={article.slug} className="absolute bottom-4 right-4 md:bottom-6 md:right-6" light />
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function NewsCard({
             <Image src={img} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized={img.startsWith('/api/media')} />
             {hasVideo && <PlayBadge />}
           </div>
-          <div className="p-4 flex-1 flex flex-col">
+          <div className="p-4 pb-12 flex-1 flex flex-col">
             <Meta article={article} />
             <h3 className="font-display text-lg leading-snug mt-1.5 group-hover:text-crimson transition-colors">
               {article.headline}
@@ -83,7 +83,7 @@ export default function NewsCard({
             <p className="mt-2 text-sm text-ink/65 line-clamp-2 font-gujarati">{article.description}</p>
           </div>
         </Link>
-        <CardShareButton title={article.headline} description={article.description} slug={article.slug} />
+        <CardShareButton title={article.headline} description={article.description} slug={article.slug} className="absolute bottom-3 right-3" />
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function NewsCard({
   if (variant === 'row') {
     return (
       <div className="relative border-b border-rule/60 last:border-0">
-        <Link href={href} className="group flex gap-3 py-3 transition-transform active:scale-[0.98]">
+        <Link href={href} className="group flex gap-3 py-3 pr-14 transition-transform active:scale-[0.98]">
           <div className="relative w-28 h-20 shrink-0 overflow-hidden bg-paper-dark">
             <Image src={img} alt="" fill sizes="112px" className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized={img.startsWith('/api/media')} />
             {hasVideo && <PlayBadge small />}
@@ -103,7 +103,7 @@ export default function NewsCard({
             </h3>
           </div>
         </Link>
-        <CardShareButton title={article.headline} description={article.description} slug={article.slug} />
+        <CardShareButton title={article.headline} description={article.description} slug={article.slug} className="absolute bottom-3 right-0" />
       </div>
     );
   }
@@ -148,9 +148,9 @@ export default function NewsCard({
         <h3 className="font-display text-base md:text-lg leading-snug mt-1.5 group-hover:text-crimson">
           {article.headline}
         </h3>
-        <p className="mt-1.5 text-sm text-ink/60 line-clamp-2 font-gujarati">{article.description}</p>
+        <p className="mt-1.5 pb-10 text-sm text-ink/60 line-clamp-2 font-gujarati">{article.description}</p>
       </Link>
-      <CardShareButton title={article.headline} description={article.description} slug={article.slug} />
+      <CardShareButton title={article.headline} description={article.description} slug={article.slug} className="absolute bottom-1 right-0" />
     </div>
   );
 }
