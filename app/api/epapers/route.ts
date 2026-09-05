@@ -19,9 +19,10 @@ export const GET = withApi(async (req, supabase) => {
     if (!data) {
       return NextResponse.json({ error: 'E-Paper not found' }, { status: 404 });
     }
+    const isAdmin = req.headers.has('x-csrf-token') || req.headers.has('authorization');
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': isAdmin ? 'no-store' : 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
       },
     });
   }
@@ -39,9 +40,10 @@ export const GET = withApi(async (req, supabase) => {
   const { data, error } = await query;
   if (error) throw error;
   
+  const isAdmin = req.headers.has('x-csrf-token') || req.headers.has('authorization');
   return NextResponse.json(data || [], {
     headers: {
-      'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+      'Cache-Control': isAdmin ? 'no-store' : 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
     },
   });
 });
