@@ -62,10 +62,6 @@ export default function Login() {
     }
   };
 
-  const fillDemo = () => {
-    setEmail('admin@akhilgujarat.com');
-    setPassword('admin123');
-  };
 
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4 md:p-8 font-sans">
@@ -192,18 +188,6 @@ export default function Login() {
               </form>
             )}
 
-            {!requiresMfa && (
-              <div className="mt-10 pt-6 border-t border-rule text-center">
-                <p className="text-[11px] text-ink/50 mb-3 uppercase tracking-widest font-semibold">Demo Access</p>
-                <button
-                  type="button"
-                  onClick={fillDemo}
-                  className="w-full border border-rule py-2.5 text-sm text-ink/75 hover:border-ink hover:text-ink transition-colors font-medium bg-paper/50"
-                >
-                  Load Demo Credentials
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

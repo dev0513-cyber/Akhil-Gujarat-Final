@@ -11,6 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: data.name_gu,
     description: data.description || `${data.name_gu} ના તાજા ગુજરાતી સમાચાર — અખિલ ગુજરાત.`,
+    alternates: { canonical: `/category/${slug}` },
   };
 }
 

@@ -9,7 +9,7 @@ vi.mock('../app/api/utils', async (importOriginal) => {
 
 const createMockBuilder = (resolvedValue: unknown) => {
   const builder: Record<string, ReturnType<typeof vi.fn>> & { then?: (resolve: (val: unknown) => void) => void } = {};
-  const methods = ['select', 'eq', 'order', 'limit', 'single', 'insert', 'update', 'delete'];
+  const methods = ['select', 'eq', 'order', 'limit', 'single', 'insert', 'update', 'delete', 'range'];
   for (const method of methods) {
     builder[method] = vi.fn().mockReturnValue(builder);
   }

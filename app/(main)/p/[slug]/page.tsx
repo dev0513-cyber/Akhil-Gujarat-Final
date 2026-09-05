@@ -9,6 +9,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: data.seo_title || data.title_gu,
     description: data.seo_description || data.title_en,
+    alternates: { canonical: `/p/${slug}` },
   };
 }
 

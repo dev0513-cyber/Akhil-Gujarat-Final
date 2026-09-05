@@ -61,7 +61,7 @@ async function getGujaratiTransliteration(text: string): Promise<string> {
     if (json[0] === 'SUCCESS' && json[1]?.[0]?.[1]?.[0]) {
       return json[1][0][1][0];
     }
-  } catch (e) {
+  } catch {
     // Ignore fetch timeout/errors
   }
   return text;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import type { Article } from '../../src/lib/types';
@@ -187,6 +187,7 @@ export async function handleAdminDelete(req: Request, tableName: string, cacheTa
     }
     if (tableName === 'articles' && oldData?.slug) {
       (revalidateTag as (t: string) => void)(`article-detail-${oldData.slug}`);
+      revalidatePath('/sitemap.xml');
     }
     return NextResponse.json({ ok: true });
   } catch (err) {

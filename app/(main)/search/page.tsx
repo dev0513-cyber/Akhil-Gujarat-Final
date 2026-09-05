@@ -10,6 +10,7 @@ export async function generateMetadata({ searchParams }: Readonly<{ searchParams
   return {
     title: q ? `શોધ: ${q}` : 'સમાચાર શોધો',
     description: 'અખિલ ગુજરાત પર ગુજરાતી સમાચાર શોધો.',
+    robots: { index: false, follow: false },
   };
 }
 

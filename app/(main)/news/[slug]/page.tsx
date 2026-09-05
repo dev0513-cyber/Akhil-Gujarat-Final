@@ -95,7 +95,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
     publisher: {
       '@type': 'NewsMediaOrganization',
       name: 'Akhil Gujarat',
-      logo: { '@type': 'ImageObject', url: `https://akhilgujarat.com/favicon.svg` },
+      logo: { '@type': 'ImageObject', url: `https://akhilgujarat.com/logo.png` },
     },
     mainEntityOfPage: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`,
   };

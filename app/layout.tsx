@@ -4,7 +4,7 @@ import '@/index.css';
 export const metadata = {
   title: 'Akhil Gujarat - અખિલ ગુજરાત',
   description: 'Akhil Gujarat - Latest Gujarati News',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://akhilgujarat.com')),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'),
 }
 
 export default function RootLayout({

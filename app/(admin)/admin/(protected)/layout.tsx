@@ -1,6 +1,11 @@
 import AdminLayout from '@/components/AdminLayout';
 import SessionWarning from '@/components/admin/SessionWarning';
 import { requireAdminServer } from '../../../api/utils';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function Layout({children}: Readonly<{ children: React.ReactNode }>) { 
   const user = await requireAdminServer();

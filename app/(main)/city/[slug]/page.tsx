@@ -11,6 +11,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   return {
     title: data.name_gu,
     description: `${data.name_gu} શહેરના તાજા ગુજરાતી સમાચાર — અખિલ ગુજરાત.`,
+    alternates: { canonical: `/city/${slug}` },
   };
 }
 

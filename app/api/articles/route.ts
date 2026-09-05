@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
 import { requireAdminMutation, requireAdmin, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
 import { articleSchema, articleSearchSchema } from '../../../src/lib/validation';
@@ -168,6 +168,7 @@ const adminError = await requireAdminMutation(req);
     
     const [hydrated] = await hydrateArticles(data);
     (revalidateTag as (t: string) => void)('feed-articles');
+    revalidatePath('/sitemap.xml');
     return NextResponse.json(hydrated, { status: 201 });
   } catch (err) {
     return handleApiError(err);
@@ -192,7 +193,7 @@ const adminError = await requireAdminMutation(req);
 
     const { data: existing } = await supabase
       .from('articles')
-      .select('status')
+      .select('status, slug')
       .eq('id', body.id)
       .maybeSingle();
 
@@ -205,6 +206,10 @@ const adminError = await requireAdminMutation(req);
     const [hydrated] = await hydrateArticles(data);
     (revalidateTag as (t: string) => void)('feed-articles');
     (revalidateTag as (t: string) => void)(`article-detail-${data.slug}`);
+    if (existing?.slug && existing.slug !== data.slug) {
+      (revalidateTag as (t: string) => void)(`article-detail-${existing.slug}`);
+    }
+    revalidatePath('/sitemap.xml');
     return NextResponse.json(hydrated);
   } catch (err) {
     return handleApiError(err);
