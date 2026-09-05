@@ -42,13 +42,13 @@ export default function Pages({ initialPages }: Readonly<{ initialPages: StaticP
     }
   };
 
-  if (loading) return <p className={`text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>;
+  if (loading) return <p className={`text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>;
 
   return (
     <div className="max-w-4xl h-[calc(100vh-8rem)] flex flex-col">
       <div className="flex-shrink-0">
         <h1 className="font-display text-3xl">{t('સ્ટેટિક પેજીસ', 'Static Pages')}</h1>
-        <p className={`text-sm text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        <p className={`text-sm text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
           {t('અમારા વિશે, ગોપનીયતા, નિયમો અને અસ્વીકરણ.', 'About Us, Privacy, Terms and Disclaimer.')}
         </p>
 
@@ -71,10 +71,10 @@ export default function Pages({ initialPages }: Readonly<{ initialPages: StaticP
 
       {active && (
         <div className="mt-5 bg-white border border-rule p-5 flex flex-col flex-1 min-h-0">
-          <p className="text-xs text-ink/40 font-sans flex-shrink-0">/{active.slug}</p>
+          <p className="text-xs text-ink/70 font-sans flex-shrink-0">/{active.slug}</p>
           <div className="pb-4 mb-4 border-b border-rule flex-shrink-0">
             <h2 className={`text-xl font-bold text-ink ${lang === 'gu' ? 'font-gujarati' : ''}`}>
-              {active.title_gu} {active.title_en ? <span className="text-base text-ink/50 font-sans ml-2">({active.title_en})</span> : null}
+              {active.title_gu} {active.title_en ? <span className="text-base text-ink/70 font-sans ml-2">({active.title_en})</span> : null}
             </h2>
           </div>
           <label className="flex flex-col flex-1 min-h-0 text-sm font-bold text-ink mb-2">

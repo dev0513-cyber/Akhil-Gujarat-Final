@@ -76,7 +76,7 @@ export default async function Home() {
                   <Link
                     key={c.id}
                     href={`/city/${c.slug}`}
-                    className="px-3 py-1.5 text-sm border border-rule bg-white hover:border-crimson hover:text-crimson font-gujarati"
+                    className="touch-target px-3 py-1.5 text-sm border border-rule bg-white hover:border-crimson hover:text-crimson font-gujarati"
                   >
                     {c.name_gu}
                   </Link>
@@ -93,7 +93,7 @@ export default async function Home() {
 
           </>
         ) : (
-          <p className="py-20 text-center font-gujarati text-ink/50">હજુ કોઈ સમાચાર પ્રકાશિત નથી.</p>
+          <p className="py-20 text-center font-gujarati text-ink/70">હજુ કોઈ સમાચાર પ્રકાશિત નથી.</p>
         )}
       </div>
     </>
@@ -105,7 +105,7 @@ function SectionHead({ title, to }: Readonly<{ title: string; to?: string }>) {
     <div className="flex items-end justify-between mb-4 border-b-2 border-ink pb-1.5">
       <h2 className="font-display text-xl md:text-2xl">{title}</h2>
       {to && (
-        <Link href={to} className="text-xs text-crimson inline-flex items-center gap-0.5 hover:underline">
+        <Link href={to} className="touch-target text-xs text-crimson inline-flex items-center gap-0.5 hover:underline">
           બધા જુઓ <ChevronRight size={13} />
         </Link>
       )}

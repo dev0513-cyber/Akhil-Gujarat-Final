@@ -39,12 +39,12 @@ export default async function SearchPage({ searchParams }: Readonly<{ searchPara
         </button>
       </form>
 
-      {term && <p className="mt-5 text-sm text-ink/55 font-gujarati">“{term}” માટે પરિણામો</p>}
+      {term && <p className="mt-5 text-sm text-ink/70 font-gujarati">“{term}” માટે પરિણામો</p>}
       
       <AdBanner slot="search_top" className="mb-6" />
 
       {term && items.length === 0 ? (
-        <p className="py-12 font-gujarati text-ink/50">કોઈ સમાચાર મળ્યા નહીં. અન્ય શબ્દ અજમાવો.</p>
+        <p className="py-12 font-gujarati text-ink/70">કોઈ સમાચાર મળ્યા નહીં. અન્ય શબ્દ અજમાવો.</p>
       ) : (
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8">
           {items.map((a: Article) => (

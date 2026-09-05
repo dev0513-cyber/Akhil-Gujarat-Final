@@ -63,13 +63,13 @@ export default function Layout({ children, initialCategories = [], initialCities
               {now ? now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '...'}
             </span>
             <div className="flex items-center gap-2.5 md:gap-3 border-l border-white/20 pl-3 md:pl-4">
-              <a href={settings.instagram_url || '#'} target="_blank" rel="noreferrer" aria-label="Instagram" className="hover:text-white transition-colors">
+              <a href={settings.instagram_url || '#'} target="_blank" rel="noreferrer" aria-label="Instagram" className="hover:text-white transition-colors touch-target">
                 <InstagramIcon size={16} />
               </a>
-              <a href={settings.youtube_url || '#'} target="_blank" rel="noreferrer" aria-label="YouTube" className="hover:text-white transition-colors">
+              <a href={settings.youtube_url || '#'} target="_blank" rel="noreferrer" aria-label="YouTube" className="hover:text-white transition-colors touch-target">
                 <YoutubeIcon size={16} />
               </a>
-              <a href={settings.facebook_url || '#'} target="_blank" rel="noreferrer" aria-label="Facebook" className="hover:text-white transition-colors">
+              <a href={settings.facebook_url || '#'} target="_blank" rel="noreferrer" aria-label="Facebook" className="hover:text-white transition-colors touch-target">
                 <FacebookIcon size={16} />
               </a>
             </div>
@@ -96,7 +96,7 @@ export default function Layout({ children, initialCategories = [], initialCities
                 <h1 className="font-display text-2xl md:text-3xl leading-none text-ink tracking-tight">
                   અખિલ ગુજરાત
                 </h1>
-                <div className="text-[10px] tracking-[0.28em] text-ink/45 mt-1 uppercase text-center md:text-left">
+                <div className="text-[10px] tracking-[0.28em] text-ink/70 mt-1 uppercase text-center md:text-left">
                   Unity · Culture · Progress
                 </div>
               </div>
@@ -125,8 +125,8 @@ export default function Layout({ children, initialCategories = [], initialCities
                   placeholder="સમાચાર શોધો..."
                   className="flex-1 outline-none text-sm bg-transparent font-gujarati"
                 />
-                <button type="submit" aria-label="શોધ">
-                  <Search size={16} className="text-ink/50" />
+                <button type="submit" aria-label="શોધ" className="touch-target">
+                  <Search size={16} className="text-ink/70" />
                 </button>
               </form>
             </div>
@@ -150,9 +150,9 @@ export default function Layout({ children, initialCategories = [], initialCities
                         }
                         setGujaratOpen(!gujaratOpen);
                       }}
-                      className={`px-3 py-2.5 text-sm whitespace-nowrap border-b-2 font-gujarati flex items-center gap-1 outline-none ${gujaratOpen ? 'border-crimson text-crimson' : 'border-transparent text-ink/75 hover:text-crimson'}`}
+                      className={`touch-target px-3 py-2.5 text-sm whitespace-nowrap border-b-2 font-gujarati flex items-center gap-1 outline-none ${gujaratOpen ? 'border-crimson text-crimson' : 'border-transparent text-ink/75 hover:text-crimson'}`}
                     >
-                      {c.name_gu} <span className="text-[10px] text-ink/40">{gujaratOpen ? '▲' : '▼'}</span>
+                      {c.name_gu} <span className="text-[10px] text-ink/70">{gujaratOpen ? '▲' : '▼'}</span>
                     </button>
                     {gujaratOpen && (
                       <>
@@ -188,7 +188,7 @@ export default function Layout({ children, initialCategories = [], initialCities
           <aside className="absolute left-0 top-0 bottom-0 w-[82%] max-w-sm bg-paper shadow-xl p-5 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <span className="font-display text-2xl">અખિલ ગુજરાત</span>
-              <button type="button" onClick={() => setOpen(false)} aria-label="બંધ">
+              <button type="button" onClick={() => setOpen(false)} aria-label="બંધ" className="touch-target p-1">
                 <X size={22} />
               </button>
             </div>
@@ -200,7 +200,7 @@ export default function Layout({ children, initialCategories = [], initialCities
                 placeholder="સમાચાર શોધો..."
                 className="flex-1 outline-none text-sm bg-transparent font-gujarati"
               />
-              <button type="submit" aria-label="શોધ">
+              <button type="submit" aria-label="શોધ" className="touch-target p-1">
                 <Search size={16} />
               </button>
             </form>
@@ -214,7 +214,7 @@ export default function Layout({ children, initialCategories = [], initialCities
                 </MobileLink>
               ))}
 
-              <p className="mt-5 mb-1 text-[11px] tracking-[0.2em] uppercase text-ink/40">શહેરો</p>
+              <p className="mt-5 mb-1 text-[11px] tracking-[0.2em] uppercase text-ink/70">શહેરો</p>
               {cities.map((c) => (
                 <MobileLink key={c.id} to={`/city/${c.slug}`} onClick={() => setOpen(false)}>
                   {c.name_gu}
@@ -237,7 +237,7 @@ export default function Layout({ children, initialCategories = [], initialCities
             </p>
           </div>
           <div>
-            <h3 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">સંપર્ક (Contact)</h3>
+            <h2 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">સંપર્ક (Contact)</h2>
             <ul className="space-y-3 text-sm text-white/75 font-gujarati min-w-0">
               <li className="flex items-start gap-2 min-w-0">
                 <MapPin size={16} className="text-crimson shrink-0 mt-0.5" />
@@ -254,7 +254,7 @@ export default function Layout({ children, initialCategories = [], initialCities
             </ul>
           </div>
           <div>
-            <h3 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">માહિતી (Information)</h3>
+            <h2 className="text-xs tracking-[0.2em] uppercase text-gold mb-3">માહિતી (Information)</h2>
             <ul className="space-y-1.5 text-sm text-white/75 font-gujarati">
               <li>
                 <Link href="/p/about" className="hover:text-white">
@@ -292,7 +292,7 @@ function NavItem({ to, className, children }: Readonly<{ to: string; className?:
     <Link
       href={to}
       
-      className={`px-3 py-2.5 text-sm whitespace-nowrap border-b-2 font-gujarati border-transparent text-ink/75 hover:text-crimson ${className || ''}`}
+      className={`touch-target px-3 py-2.5 text-sm whitespace-nowrap border-b-2 font-gujarati border-transparent text-ink/75 hover:text-crimson ${className || ''}`}
     >
       {children}
     </Link>

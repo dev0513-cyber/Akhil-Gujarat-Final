@@ -76,7 +76,7 @@ function fromArticle(a: Article): FormState {
 
 function Field({ label, children, lang }: Readonly<{ label: string; children: ReactNode; lang: string }>) {
   return (
-    <label className={`block text-xs text-ink/55 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+    <label className={`block text-xs text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
       {label}
       {children}
     </label>
@@ -375,14 +375,14 @@ function ArticleMediaFields({ form, set, setForm, uploading, isDraggingPhoto, se
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center text-ink/60">
+              <div className="flex flex-col items-center text-ink/70">
                 {uploading ? (
-                  <span className={`text-ink/60 font-bold ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+                  <span className={`text-ink/70 font-bold ${lang === 'gu' ? 'font-gujarati' : ''}`}>
                     {t('અપલોડ થઈ રહ્યું છે...', 'Uploading...')}
                   </span>
                 ) : (
                   <>
-                    <ImageIcon size={32} className="mb-3 text-ink/40" />
+                    <ImageIcon size={32} className="mb-3 text-ink/70" />
                     <p className={`font-semibold text-ink text-sm mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
                       {t('ફોટો અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop image here or click to browse')}
                     </p>
@@ -395,7 +395,7 @@ function ArticleMediaFields({ form, set, setForm, uploading, isDraggingPhoto, se
           {/* Divider */}
           <div className="hidden md:flex flex-col items-center justify-center">
             <div className="h-10 w-px bg-rule/80"></div>
-            <div className="py-2 text-xs font-bold text-ink/40">OR</div>
+            <div className="py-2 text-xs font-bold text-ink/70">OR</div>
             <div className="h-10 w-px bg-rule/80"></div>
           </div>
 
@@ -408,7 +408,7 @@ function ArticleMediaFields({ form, set, setForm, uploading, isDraggingPhoto, se
               </div>
             ) : (
               <div className="w-full">
-                <label className={`block text-sm font-bold text-ink/60 mb-2 text-center ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('ઇમેજ URL દાખલ કરો', 'Enter Image URL')}</label>
+                <label className={`block text-sm font-bold text-ink/70 mb-2 text-center ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('ઇમેજ URL દાખલ કરો', 'Enter Image URL')}</label>
                 <input value={(!form.image_url || form.image_url.includes('supabase')) ? '' : form.image_url} onChange={(e) => set('image_url', e.target.value)} placeholder="https://..." className="w-full border border-rule px-4 py-3 outline-none focus:border-crimson bg-white text-center rounded" />
               </div>
             )}
@@ -421,7 +421,7 @@ function ArticleMediaFields({ form, set, setForm, uploading, isDraggingPhoto, se
             {t('વધારાના ફોટા (ગેલેરી)', 'Extra Photos (Gallery)')}
           </label>
           {!form.image_url ? (
-            <div className={`p-4 bg-gray-50 border border-rule border-dashed rounded text-center text-ink/60 text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+            <div className={`p-4 bg-gray-50 border border-rule border-dashed rounded text-center text-ink/70 text-sm ${lang === 'gu' ? 'font-gujarati' : ''}`}>
               {t('વધારાના ફોટા ઉમેરવા પહેલાં મુખ્ય કવર ફોટો અપલોડ કરો.', 'Please upload the main cover photo first before adding extra photos.')}
             </div>
           ) : (
@@ -488,7 +488,7 @@ function ArticleCategorizationFields({ form, set, cats, cities, lang, t }: Artic
           ))}
           <Link
             href="/admin/categories"
-            className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/60 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+            className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/70 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
           >
             <Plus size={14} /> {t('વધુ ઉમેરો', 'Add more')}
           </Link>
@@ -517,7 +517,7 @@ function ArticleCategorizationFields({ form, set, cats, cities, lang, t }: Artic
             ))}
             <Link
               href="/admin/cities"
-              className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/60 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+              className={`px-4 py-2 text-sm rounded-full border border-dashed border-ink/30 text-ink/70 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}
             >
               <Plus size={14} /> {t('વધુ ઉમેરો', 'Add more')}
             </Link>
@@ -538,7 +538,7 @@ function ArticleCategorizationFields({ form, set, cats, cities, lang, t }: Artic
               <span className="text-lg">{form.is_trending ? '⭐' : '☆'}</span> 
               {t('ટ્રેન્ડિંગ / ટોપ ન્યૂઝ', 'Trending / Top News')}
             </div>
-            <div className={`text-xs mt-1 ${form.is_trending ? 'text-crimson/70' : 'text-ink/50'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+            <div className={`text-xs mt-1 ${form.is_trending ? 'text-crimson/70' : 'text-ink/70'} ${lang === 'gu' ? 'font-gujarati' : ''}`}>
               {t('આ સમાચારને હોમપેજ પર હાઇલાઇટ કરો', 'Highlight this news on the homepage')}
             </div>
           </div>
@@ -585,7 +585,7 @@ function ArticleActionButtons({ busy, isNew, submit, setShowDeleteConfirm, lang,
             type="button"
             disabled={busy}
             onClick={() => submit('archived')}
-            className={`border border-rule px-4 py-2 text-sm text-ink/60 disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
+            className={`border border-rule px-4 py-2 text-sm text-ink/70 disabled:opacity-50 ${lang === 'gu' ? 'font-gujarati' : ''}`}
           >
             {t('આર્કાઇવ', 'Archive')}
           </button>
@@ -618,7 +618,7 @@ export default function ArticleEditor() {
 
   const loadError = articleError || catsError || citiesError;
 
-  if (loading) return <p className={`p-5 text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>;
+  if (loading) return <p className={`p-5 text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>;
   if (loadError) return <p className="p-5 text-crimson">{getErrorMessage(loadError, t)}</p>;
 
   return (
@@ -640,7 +640,7 @@ export default function ArticleEditor() {
           </button>
         )}
       </div>
-      <p className={`text-sm text-ink/50 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+      <p className={`text-sm text-ink/70 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
         {t('ગુજરાતી શીર્ષક, વર્ણન, ફોટો, અને પ્રકાશન સ્થિતિ.', 'Gujarati headline, description, photo, and publishing status.')}
       </p>
 

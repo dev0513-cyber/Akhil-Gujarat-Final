@@ -61,7 +61,7 @@ export function BaseModal({
           <button type="button"
             onClick={onClose}
             disabled={isActioning}
-            className="text-ink/40 hover:text-ink transition-colors p-1"
+            className="text-ink/70 hover:text-ink transition-colors p-1"
           >
             <X size={20} />
           </button>

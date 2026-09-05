@@ -40,7 +40,7 @@ export default function AdBannerClient({ ads, className = 'my-8' }: Readonly<{ a
 
   return (
     <div className={className}>
-      <p className="text-[10px] uppercase tracking-[0.2em] text-ink/40 mb-1.5 font-medium text-center">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-ink/70 mb-1.5 font-medium text-center">
         જાહેરાત / Advertisement
       </p>
       {ad.link_url ? (

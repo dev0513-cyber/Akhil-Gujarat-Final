@@ -56,7 +56,7 @@ export default function Settings({ initialSettings }: Readonly<{ initialSettings
     <div className="max-w-2xl">
       <div className="mb-6">
         <h1 className="text-2xl font-display">{t('સેટિંગ્સ', 'Settings')}</h1>
-        <p className={`text-sm text-ink/60 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        <p className={`text-sm text-ink/70 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
           {t('સાઇટના સામાન્ય સેટિંગ્સ અને સોશિયલ મીડિયા લિંક્સ મેનેજ કરો.', 'Manage general site settings and social media links.')}
         </p>
       </div>
@@ -78,7 +78,7 @@ export default function Settings({ initialSettings }: Readonly<{ initialSettings
 
 
       {loading ? (
-        <div className={`py-10 text-center text-ink/40 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+        <div className={`py-10 text-center text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
           {t('લોડ થઈ રહ્યું છે...', 'Loading...')}
         </div>
       ) : (

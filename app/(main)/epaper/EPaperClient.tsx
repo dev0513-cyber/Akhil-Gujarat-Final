@@ -55,7 +55,7 @@ export default function EPaperClient() {
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-10">
           <h1 className="font-display text-4xl text-ink mb-2">અખિલ ગુજરાત ઈ-પેપર</h1>
-          <p className="text-ink/60 font-gujarati">તમારું દૈનિક સમાચાર પત્ર, હવે ડિજિટલ ફોર્મેટમાં.</p>
+          <p className="text-ink/70 font-gujarati">તમારું દૈનિક સમાચાર પત્ર, હવે ડિજિટલ ફોર્મેટમાં.</p>
         </div>
 
         <div className="flex flex-col md:flex-row bg-white border border-rule shadow-sm">
@@ -71,12 +71,12 @@ export default function EPaperClient() {
           </div>
 
           <div className={`${showMobileCalendar ? 'block' : 'hidden'} md:block w-full md:w-[350px] p-6 border-b md:border-b-0 md:border-r border-rule bg-gray-50/50`}>
-            <h3 className="font-bold text-lg mb-6 border-b border-rule pb-2 text-ink">તારીખ પસંદ કરો</h3>
+            <h2 className="font-bold text-lg mb-6 border-b border-rule pb-2 text-ink">તારીખ પસંદ કરો</h2>
             
             <div className="flex items-center justify-between mb-6">
               <button type="button"
                 onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
-                className="p-1.5 hover:bg-rule/30 rounded-full transition-colors text-ink"
+                className="touch-target p-1.5 hover:bg-rule/30 rounded-full transition-colors text-ink"
               >
                 <ChevronLeft size={20} />
               </button>
@@ -85,14 +85,14 @@ export default function EPaperClient() {
               </h2>
               <button type="button"
                 onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
-                className="p-1.5 hover:bg-rule/30 rounded-full transition-colors text-ink"
+                className="touch-target p-1.5 hover:bg-rule/30 rounded-full transition-colors text-ink"
               >
                 <ChevronRight size={20} />
               </button>
             </div>
             
             <div className="grid grid-cols-7 gap-1 text-center font-gujarati mb-2">
-              {weekDays.map(d => <div key={d} className="text-xs font-semibold text-ink/40 py-2">{d}</div>)}
+              {weekDays.map(d => <div key={d} className="text-xs font-semibold text-ink/70 py-2">{d}</div>)}
             </div>
             
             <div className="grid grid-cols-7 gap-1 relative">
@@ -144,7 +144,7 @@ export default function EPaperClient() {
               })}
             </div>
             
-            <div className="mt-8 pt-6 border-t border-rule text-xs text-ink/50 flex items-center gap-2 justify-center">
+            <div className="mt-8 pt-6 border-t border-rule text-xs text-ink/70 flex items-center gap-2 justify-center">
               <span className="w-3 h-3 rounded-full border border-crimson/30 inline-block" /> 
               <span>ઈ-પેપર ઉપલબ્ધ છે</span>
             </div>
@@ -167,7 +167,7 @@ export default function EPaperClient() {
                 </div>
                 
                 <div className="text-center">
-                  <p className="text-ink/60 mb-6 font-mono font-semibold tracking-widest">{selectedEPaper.published_date}</p>
+                  <p className="text-ink/70 mb-6 font-mono font-semibold tracking-widest">{selectedEPaper.published_date}</p>
                   
                   <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                     <a 
@@ -198,9 +198,9 @@ export default function EPaperClient() {
                 </div>
               </div>
             ) : (
-              <div className="text-center flex flex-col items-center justify-center text-ink/40 animate-in fade-in">
+              <div className="text-center flex flex-col items-center justify-center text-ink/70 animate-in fade-in">
                 <FileText size={48} strokeWidth={1} className="mb-4" />
-                <h3 className="text-lg font-bold mb-1 font-gujarati text-ink/60">ઈ-પેપર ઉપલબ્ધ નથી</h3>
+                <h2 className="text-lg font-bold mb-1 font-gujarati text-ink/70">ઈ-પેપર ઉપલબ્ધ નથી</h2>
                 <p className="text-sm">{selectedDate} માટે ઈ-પેપર અપલોડ કરવામાં આવ્યું નથી.</p>
               </div>
             )}

@@ -115,7 +115,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
             </Link>
           )}
           {article.city && (
-            <Link href={`/city/${article.city.slug}`} className="inline-flex items-center gap-1 text-ink/55">
+            <Link href={`/city/${article.city.slug}`} className="inline-flex items-center gap-1 text-ink/70">
               <MapPin size={12} /> {article.city.name_gu}
             </Link>
           )}
@@ -124,7 +124,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         <h1 className="font-display text-3xl md:text-4xl leading-snug mt-3">{article.headline}</h1>
         <p className="mt-3 text-lg text-ink/70 font-gujarati leading-relaxed">{article.description}</p>
 
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/50">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/70">
           <span className="inline-flex items-center gap-1">
             <Clock size={12} /> {formatDateTimeGu(article.published_at)}
           </span>
@@ -141,7 +141,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
               <Image src={article.image_url} alt={article.headline} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority unoptimized={article.image_url.startsWith('/api/media')} />
             </div>
             {article.source && (
-              <figcaption className="text-[11px] text-ink/45 mt-1.5">સ્રોત / ક્રેડિટ: {article.source}</figcaption>
+              <figcaption className="text-[11px] text-ink/70 mt-1.5">સ્રોત / ક્રેડિટ: {article.source}</figcaption>
             )}
           </figure>
         ) : article.video_url ? (
@@ -181,7 +181,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
 
         {tags.length > 0 && (
           <div className="mt-8 flex flex-wrap items-center gap-2">
-            <Tag size={14} className="text-ink/40" />
+            <Tag size={14} className="text-ink/70" />
             {tags.map((t: string) => (
               <Link
                 key={t}

@@ -170,13 +170,13 @@ export default function AdminAds({ initialAds, initialPage = 1 }: Readonly<{ ini
       </div>
 
       {displayAds.length === 0 ? (
-        <p className="text-ink/50 py-10 text-center">{t('હજુ કોઈ જાહેરાત નથી.', 'No ads yet.')}</p>
+        <p className="text-ink/70 py-10 text-center">{t('હજુ કોઈ જાહેરાત નથી.', 'No ads yet.')}</p>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="bg-white border border-rule overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-ink/50 border-b border-rule">
+              <tr className="text-left text-xs uppercase tracking-wider text-ink/70 border-b border-rule">
                 <th className="px-4 py-3">{t('ફોટો', 'Image')}</th>
                 <th className="px-4 py-3">{t('શીર્ષક', 'Title')}</th>
                 <th className="px-4 py-3">{t('સ્લોટ', 'Slot')}</th>
@@ -195,15 +195,15 @@ export default function AdminAds({ initialAds, initialPage = 1 }: Readonly<{ ini
                         <Image src={ad.image_url} alt="" fill sizes="112px" className="object-cover" unoptimized />
                       </div>
                     ) : (
-                      <span className="text-ink/30">—</span>
+                      <span className="text-ink/70">—</span>
                     )}
                   </td>
                   <td className="px-4 py-2 font-semibold">{ad.title}</td>
-                  <td className="px-4 py-2 text-ink/60">{slotLabel(ad.slot)}</td>
+                  <td className="px-4 py-2 text-ink/70">{slotLabel(ad.slot)}</td>
                   <td className="px-4 py-2 whitespace-nowrap">
                     {frameLabel(ad.frame)}
                   </td>
-                  <td className="px-4 py-2 text-ink/60 max-w-[180px] truncate">
+                  <td className="px-4 py-2 text-ink/70 max-w-[180px] truncate">
                     {ad.link_url ? (
                       <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="hover:text-crimson">
                         {ad.link_url}
@@ -252,7 +252,7 @@ export default function AdminAds({ initialAds, initialPage = 1 }: Readonly<{ ini
             >
               {t('પાછળ', 'Previous')}
             </button>
-            <span className="text-sm text-ink/60 font-gujarati font-semibold">
+            <span className="text-sm text-ink/70 font-gujarati font-semibold">
               {t('પાનું', 'Page')} {page}
             </span>
             <button 
@@ -304,8 +304,8 @@ export default function AdminAds({ initialAds, initialPage = 1 }: Readonly<{ ini
                   onClick={() => document.getElementById('ad-image-upload')?.click()}
                   className="mt-2 w-full border-2 border-dashed border-rule p-6 flex flex-col items-center gap-2 hover:border-crimson transition-colors"
                 >
-                  <ImageIcon size={28} className="text-ink/40" />
-                  <span className="text-sm text-ink/50">{t('ફોટો પસંદ કરો', 'Select image')}</span>
+                  <ImageIcon size={28} className="text-ink/70" />
+                  <span className="text-sm text-ink/70">{t('ફોટો પસંદ કરો', 'Select image')}</span>
                 </button>
               )}
               <input
@@ -374,7 +374,7 @@ export default function AdminAds({ initialAds, initialPage = 1 }: Readonly<{ ini
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm text-ink/60 hover:text-ink"
+                className="px-4 py-2 text-sm text-ink/70 hover:text-ink"
               >
                 {t('રદ કરો', 'Cancel')}
               </button>

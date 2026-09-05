@@ -179,7 +179,7 @@ function CalendarGrid({ currentMonth, monthEPapers, selectedDate, weekDays, onSe
   return (
     <>
       <div className="grid grid-cols-7 gap-1 text-center mb-2">
-        {weekDays.map(d => <div key={d} className="text-sm font-semibold text-ink/50 py-2">{d}</div>)}
+        {weekDays.map(d => <div key={d} className="text-sm font-semibold text-ink/70 py-2">{d}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: firstDay }).map((_, i) => {
@@ -230,7 +230,7 @@ function EPaperView({ epaper, lang, t, onDelete }: EPaperViewProps) {
         <div className="absolute inset-0 shadow-[inset_10px_0_20px_rgba(0,0,0,0.05)] pointer-events-none" />
       </div>
       <div className="text-center">
-        <p className={`text-ink/60 mb-6 font-mono ${lang === 'gu' ? 'font-gujarati' : ''}`} suppressHydrationWarning>
+        <p className={`text-ink/70 mb-6 font-mono ${lang === 'gu' ? 'font-gujarati' : ''}`} suppressHydrationWarning>
           {t('અપલોડ:', 'Uploaded:')} {new Date(epaper.created_at).toLocaleString('en-IN')}
         </p>
         <div className="flex gap-4 justify-center">
@@ -288,7 +288,7 @@ function PdfPreview({ pdfFile, thumbPreview, lang, t, resetForm }: PdfPreviewPro
         <FileText size={48} className="text-crimson mb-4" />
       )}
       <span className="font-semibold text-ink">{pdfFile.name}</span>
-      <span className={`text-sm text-ink/60 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+      <span className={`text-sm text-ink/70 mt-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
         {t('કવર પેજ આપમેળે જનરેટ થયું છે', 'Cover page automatically generated')}
       </span>
       <button type="button" onClick={(e) => { e.stopPropagation(); resetForm(); }}
@@ -306,8 +306,8 @@ type PdfDropPlaceholderProps = Readonly<{
 
 function PdfDropPlaceholder({ lang, t }: PdfDropPlaceholderProps) {
   return (
-    <div className="flex flex-col items-center text-ink/60">
-      <Upload size={40} className="mb-4 text-ink/40" />
+    <div className="flex flex-col items-center text-ink/70">
+      <Upload size={40} className="mb-4 text-ink/70" />
       <p className={`font-semibold text-ink mb-1 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
         {t('PDF ફાઇલ અહીં ખેંચો અથવા ક્લિક કરો', 'Drag & drop PDF here or click to browse')}
       </p>

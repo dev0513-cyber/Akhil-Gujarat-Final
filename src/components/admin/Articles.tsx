@@ -125,7 +125,7 @@ export default function Articles({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl">{t('સમાચાર વ્યવસ્થાપન', 'Article Management')}</h1>
-          <p className={`text-sm text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+          <p className={`text-sm text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
             {t('સંપાદન, પ્રકાશન, અનપબ્લિશ અને આર્કાઇવ', 'Edit, publish, unpublish, and archive')}
           </p>
         </div>
@@ -153,12 +153,12 @@ export default function Articles({
         />
       </div>
 
-      {loading && <p className={`mt-8 text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
+      {loading && <p className={`mt-8 text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
 
       <div className="mt-4 bg-white border border-rule">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[760px]">
-          <thead className="bg-paper-dark text-left text-xs uppercase tracking-wider text-ink/55">
+          <thead className="bg-paper-dark text-left text-xs uppercase tracking-wider text-ink/70">
             <tr>
               <th className="px-3 py-2">{t('શીર્ષક', 'Title')}</th>
               <th className="px-3 py-2">{t('વિભાગ', 'Category')}</th>
@@ -175,7 +175,7 @@ export default function Articles({
                   <Link href={`/admin/articles/${a.id}`} className="hover:text-crimson font-medium">
                     {a.headline}
                   </Link>
-                  <div className="text-[11px] text-ink/40 mt-0.5 font-sans">/{a.slug}</div>
+                  <div className="text-[11px] text-ink/70 mt-0.5 font-sans">/{a.slug}</div>
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap font-gujarati">
                   {lang === 'en' ? (a.category?.slug || '—') : (a.category?.name_gu || '—')}
@@ -196,7 +196,7 @@ export default function Articles({
                     colorClass="bg-stone-500"
                   />
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink/50 font-sans" suppressHydrationWarning>
+                <td className="px-3 py-3 whitespace-nowrap text-ink/70 font-sans" suppressHydrationWarning>
                   {formatDateTime(a.published_at || a.created_at, lang)}
                 </td>
                 <td className="px-3 py-3 text-right">
@@ -218,7 +218,7 @@ export default function Articles({
             ))}
             {!loading && displayItems.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-ink/45 font-gujarati">
+                <td colSpan={6} className="px-3 py-10 text-center text-ink/70 font-gujarati">
                   {t('કોઈ સમાચાર નથી.', 'No articles found.')}
                 </td>
               </tr>
@@ -235,7 +235,7 @@ export default function Articles({
           >
             {t('પાછળ', 'Previous')}
           </button>
-          <span className="text-sm text-ink/60 font-gujarati">
+          <span className="text-sm text-ink/70 font-gujarati">
             {t('પાનું', 'Page')} {page}
           </span>
           <button 

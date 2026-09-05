@@ -159,7 +159,7 @@ export function TaxonomyManager<T extends TaxonomyItem>({
   return (
     <div className="max-w-3xl">
       <h1 className="font-display text-3xl">{t(titleGu, titleEn)}</h1>
-      <p className={`text-sm text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+      <p className={`text-sm text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
         {t(descriptionGu, descriptionEn)}
       </p>
 
@@ -219,7 +219,7 @@ export function TaxonomyManager<T extends TaxonomyItem>({
         </div>
       </form>
 
-      {loading && <p className={`mt-6 text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
+      {loading && <p className={`mt-6 text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
       <ul className="mt-6 bg-white border border-rule divide-y divide-rule/60">
         {items.map((c, index) => (
           <li key={c.id} className="px-4 py-3 flex items-center justify-between gap-3 group hover:bg-gray-50/50 transition-colors">
@@ -244,7 +244,7 @@ export function TaxonomyManager<T extends TaxonomyItem>({
               </div>
               <div>
                 <div className="font-display">{c.name_gu}</div>
-                <div className="text-xs text-ink/45 font-sans">
+                <div className="text-xs text-ink/70 font-sans">
                   {c.name_en} {c.slug ? `· /${c.slug}` : ''}
                 </div>
               </div>

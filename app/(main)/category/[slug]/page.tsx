@@ -39,7 +39,7 @@ export default async function CategoryPage({ params }: Readonly<{ params: Promis
       emptyMessage="આ વિભાગમાં હજુ સમાચાર નથી."
     >
       <p className="text-[11px] tracking-[0.3em] uppercase text-crimson">વિભાગ</p>
-      {cat.description && <p className="mt-2 text-ink/60 font-gujarati max-w-2xl">{cat.description}</p>}
+      {cat.description && <p className="mt-2 text-ink/70 font-gujarati max-w-2xl">{cat.description}</p>}
       
       {slug === 'gujarat' && cities.length > 0 && (
         <div className="mt-5 flex flex-wrap gap-2">

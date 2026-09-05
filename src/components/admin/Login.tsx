@@ -76,11 +76,11 @@ export default function Login() {
             <Image src="/logo.png" alt="Akhil Gujarat Logo" width={144} height={144} className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 object-contain mb-4 sm:mb-6 drop-shadow-sm mx-auto block" priority />
             <div className="font-display text-[11px] sm:text-[12px] md:text-[14px] tracking-[0.4em] uppercase text-crimson mb-2 sm:mb-3 font-bold">Akhil Gujarat</div>
             <h1 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-tight leading-none text-ink drop-shadow-sm whitespace-nowrap">અખિલ ગુજરાત</h1>
-            <p className="mt-4 sm:mt-5 text-[9px] sm:text-[10px] md:text-[12px] tracking-[0.3em] uppercase font-bold text-ink/50">Unity · Culture · Progress</p>
+            <p className="mt-4 sm:mt-5 text-[9px] sm:text-[10px] md:text-[12px] tracking-[0.3em] uppercase font-bold text-ink/70">Unity · Culture · Progress</p>
           </div>
 
           <div className="relative z-10 mt-12 pt-6 border-t border-rule w-full mx-auto text-center">
-            <div className="flex items-center justify-center gap-2.5 text-ink/50">
+            <div className="flex items-center justify-center gap-2.5 text-ink/70">
               <ShieldCheck size={18} className="text-crimson shrink-0" />
               <span className="text-xs tracking-[0.2em] uppercase font-semibold whitespace-nowrap">Secure Admin Portal</span>
             </div>
@@ -92,7 +92,7 @@ export default function Login() {
           <div className="w-full max-w-sm mx-auto">
             <div className="mb-8 md:mb-10 text-center md:text-left">
               <h1 className="font-display text-2xl sm:text-3xl text-ink font-bold">Sign In</h1>
-              <p className="text-xs sm:text-sm text-ink/60 mt-2 font-medium">Enter your credentials to access the dashboard</p>
+              <p className="text-xs sm:text-sm text-ink/70 mt-2 font-medium">Enter your credentials to access the dashboard</p>
             </div>
 
             {!requiresMfa ? (
@@ -102,14 +102,14 @@ export default function Login() {
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
+                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/70" />
                     <input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="e.g. admin@akhilgujarat.com"
-                      className="w-full border border-rule bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-crimson text-ink placeholder:text-ink/30 transition-colors"
+                      className="w-full border border-rule bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-crimson text-ink placeholder:text-ink/70 transition-colors"
                       required
                     />
                   </div>
@@ -120,14 +120,14 @@ export default function Login() {
                     Password
                   </label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/70" />
                     <input
                       id="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="w-full border border-rule bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-crimson text-ink placeholder:text-ink/30 transition-colors"
+                      className="w-full border border-rule bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-crimson text-ink placeholder:text-ink/70 transition-colors"
                       required
                       minLength={6}
                     />
@@ -156,14 +156,14 @@ export default function Login() {
                     Authenticator Code (MFA)
                   </label>
                   <div className="relative">
-                    <ShieldCheck size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
+                    <ShieldCheck size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/70" />
                     <input
                       id="otp"
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="Enter 6-digit code"
-                      className="w-full border border-rule bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-crimson text-ink placeholder:text-ink/30 transition-colors tracking-[0.5em] font-mono text-center"
+                      className="w-full border border-rule bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-crimson text-ink placeholder:text-ink/70 transition-colors tracking-[0.5em] font-mono text-center"
                       required
                       minLength={6}
                       maxLength={6}

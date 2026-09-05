@@ -114,7 +114,7 @@ export default function NewsCard({
             <h3 className="font-display text-lg leading-snug mt-1.5 group-hover:text-crimson transition-colors">
               {article.headline}
             </h3>
-            <p className="mt-2 text-sm text-ink/65 line-clamp-2 font-gujarati">{article.description}</p>
+            <p className="mt-2 text-sm text-ink/70 line-clamp-2 font-gujarati">{article.description}</p>
           </div>
         </Link>
         <CardShareButton title={article.headline} description={article.description} slug={article.slug} className="absolute bottom-3 right-3" />
@@ -152,7 +152,7 @@ export default function NewsCard({
     return (
       <Link href={href} className="group block py-2.5 border-b border-rule/50 last:border-0 transition-transform active:scale-[0.98]">
         <h3 className="font-display text-[15px] leading-snug group-hover:text-crimson">{article.headline}</h3>
-        <p className="text-[11px] text-ink/45 mt-1" suppressHydrationWarning>{formatDateGu(article.published_at)}</p>
+        <p className="text-[11px] text-ink/70 mt-1" suppressHydrationWarning>{formatDateGu(article.published_at)}</p>
       </Link>
     );
   }
@@ -178,7 +178,7 @@ export default function NewsCard({
         <h3 className="font-display text-base mt-2.5 leading-snug group-hover:text-crimson line-clamp-2">
           {article.headline}
         </h3>
-        <p className="text-xs text-ink/50 mt-1" suppressHydrationWarning>{formatDateGu(article.published_at)}</p>
+        <p className="text-xs text-ink/70 mt-1" suppressHydrationWarning>{formatDateGu(article.published_at)}</p>
       </Link>
     );
   }
@@ -201,7 +201,7 @@ export default function NewsCard({
           <h3 className="font-display text-base md:text-lg leading-snug mt-1.5 group-hover:text-crimson">
             {article.headline}
           </h3>
-          <p className="mt-1.5 pb-10 text-sm text-ink/60 line-clamp-2 font-gujarati">{article.description}</p>
+          <p className="mt-1.5 pb-10 text-sm text-ink/70 line-clamp-2 font-gujarati">{article.description}</p>
         </div>
       </Link>
       <CardShareButton title={article.headline} description={article.description} slug={article.slug} className="absolute bottom-1 right-0" />
@@ -211,7 +211,7 @@ export default function NewsCard({
 
 function Meta({ article }: Readonly<{ article: Article }>) {
   return (
-    <div className="flex items-center flex-wrap gap-2 text-[11px] text-ink/50 mt-2 pointer-events-none">
+    <div className="flex items-center flex-wrap gap-2 text-[11px] text-ink/70 mt-2 pointer-events-none">
       {article.category && (
         <span className="text-crimson font-semibold tracking-wide">{article.category.name_gu}</span>
       )}

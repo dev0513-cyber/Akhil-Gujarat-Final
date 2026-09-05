@@ -53,12 +53,12 @@ export default function ShareButtons({
   };
 
   const btn =
-    'inline-flex items-center gap-1.5 rounded-full border border-rule bg-white px-3 py-1.5 text-xs font-medium text-ink/80 hover:border-crimson hover:text-crimson transition-all active:scale-95 active:opacity-80';
+    'inline-flex items-center gap-1.5 rounded-full border border-rule bg-white px-3 py-1.5 text-xs font-medium text-ink/80 hover:border-crimson hover:text-crimson transition-all active:scale-95 active:opacity-80 touch-target';
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${compact ? '' : 'mt-3'}`}>
       {!compact && (
-        <span className="text-xs uppercase tracking-[0.16em] text-ink/45 font-medium">શેર</span>
+        <span className="text-xs uppercase tracking-[0.16em] text-ink/70 font-medium">શેર</span>
       )}
       <a
         className={btn}

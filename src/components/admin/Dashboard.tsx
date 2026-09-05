@@ -43,10 +43,10 @@ export default function Dashboard({
   return (
     <div>
       <h1 className="font-display text-3xl">{t('ડેશબોર્ડ', 'Dashboard')}</h1>
-      <p className={`text-sm text-ink/50 mb-6 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
+      <p className={`text-sm text-ink/70 mb-6 ${lang === 'gu' ? 'font-gujarati' : ''}`}>
         {t('અહીં તમને તમારી વેબસાઇટનો સંક્ષિપ્ત અહેવાલ મળશે.', 'Here you will find a brief report of your website.')}
       </p>
-      {loading && <p className={`mt-8 text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
+      {loading && <p className={`mt-8 text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{t('લોડ થઈ રહ્યું છે...', 'Loading...')}</p>}
 
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Stat icon={Newspaper} label={t('પ્રકાશિત', 'Published')} value={stats?.published ?? 0} lang={lang} />
@@ -67,7 +67,7 @@ export default function Dashboard({
       <h2 className="font-display text-xl mt-10 mb-3">{t('તાજેતરની એન્ટ્રીઓ', 'Recent Entries')}</h2>
       <div className="bg-white border border-rule overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-paper-dark text-left text-xs uppercase tracking-wider text-ink/55">
+          <thead className="bg-paper-dark text-left text-xs uppercase tracking-wider text-ink/70">
             <tr>
               <th className="px-3 py-2">{t('શીર્ષક', 'Title')}</th>
               <th className="px-3 py-2">{t('સ્થિતિ', 'Status')}</th>
@@ -85,7 +85,7 @@ export default function Dashboard({
                 <td className="px-3 py-2">
                   <StatusPill status={a.status} t={t} />
                 </td>
-                <td className="px-3 py-2 text-ink/50 whitespace-nowrap font-gujarati" suppressHydrationWarning>
+                <td className="px-3 py-2 text-ink/70 whitespace-nowrap font-gujarati" suppressHydrationWarning>
                   {formatDateTimeGu(a.published_at || a.created_at)}
                 </td>
               </tr>
@@ -93,7 +93,7 @@ export default function Dashboard({
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-ink/40">{stats?.archived ?? 0} {t('આર્કાઇવ્ડ આઇટમ', 'Archived Items')}</p>
+      <p className="mt-3 text-xs text-ink/70">{stats?.archived ?? 0} {t('આર્કાઇવ્ડ આઇટમ', 'Archived Items')}</p>
       <AlertModal
         isOpen={!!(error || statsError) && !dismissedError}
         message={(error || statsError) ? getErrorMessage(error || statsError, t) : ''}
@@ -118,7 +118,7 @@ function Stat({
     <div className="bg-white border border-rule p-4">
       <Icon size={16} className="text-crimson" />
       <div className="font-display text-3xl mt-2">{value}</div>
-      <div className={`text-xs text-ink/50 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{label}</div>
+      <div className={`text-xs text-ink/70 ${lang === 'gu' ? 'font-gujarati' : ''}`}>{label}</div>
     </div>
   );
 }
