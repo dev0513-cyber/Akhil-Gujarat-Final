@@ -101,21 +101,16 @@ async function checkRateLimit(request: NextRequest, pathname: string): Promise<{
   }
 }
 
-function setSecurityHeaders(res: NextResponse, rateLimitResult?: RateLimitResultType, nonce?: string) {
+function setSecurityHeaders(res: NextResponse, rateLimitResult?: RateLimitResultType) {
   res.headers.set('X-Content-Type-Options', 'nosniff');
   res.headers.set('X-Frame-Options', 'DENY');
   res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  const isDev = process.env.NODE_ENV === 'development';
-  const scriptSrc = isDev 
-    ? `'self' 'unsafe-inline' 'unsafe-eval'` 
-    : (nonce ? `'self' 'nonce-${nonce}' 'strict-dynamic'` : `'self' 'unsafe-inline'`);
-
-  // If using strict-dynamic, we don't strictly need unsafe-inline for modern browsers.
-  // We remove 'unsafe-inline' and 'unsafe-eval' for production.
-  // Added object-src 'none', base-uri 'self', form-action 'self'.
-  const cspHeader = `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';`;
+  // In Next.js App Router, statically generated pages require 'unsafe-inline' for inline scripts 
+  // (like hydration) unless dynamic rendering is enforced. We remove 'unsafe-eval' and use 
+  // other strict directives (object-src, base-uri) to maintain high security for Mozilla Observatory.
+  const cspHeader = `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';`;
 
   res.headers.set('Content-Security-Policy', cspHeader.replace(/\s{2,}/g, ' ').trim());
   res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
@@ -130,8 +125,7 @@ function setSecurityHeaders(res: NextResponse, rateLimitResult?: RateLimitResult
 async function verifyAdminSession(
   request: NextRequest, 
   initialResponse: NextResponse, 
-  rateLimitResult?: RateLimitResultType,
-  nonce?: string
+  rateLimitResult?: RateLimitResultType
 ): Promise<{ user: unknown; response: NextResponse }> {
   let response = initialResponse;
   const supabase = createServerClient(
@@ -145,7 +139,7 @@ async function verifyAdminSession(
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
-          setSecurityHeaders(response, rateLimitResult, nonce);
+          setSecurityHeaders(response, rateLimitResult);
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           )
@@ -173,9 +167,6 @@ async function verifyAdminSession(
 }
 
 export async function middleware(request: NextRequest) {
-  const nonce = crypto.randomUUID();
-  request.headers.set('x-nonce', nonce);
-
   const { pathname } = request.nextUrl;
   
   // Rate Limiting Logic
@@ -189,14 +180,14 @@ export async function middleware(request: NextRequest) {
   });
 
   // Apply Security Headers globally
-  setSecurityHeaders(supabaseResponse, rateLimitResult, nonce);
+  setSecurityHeaders(supabaseResponse, rateLimitResult);
 
   const isAdminRoute = pathname.startsWith('/admin');
   const isLoginRoute = pathname === '/admin/login';
 
   let user = null;
   if (isAdminRoute) {
-    const authResult = await verifyAdminSession(request, supabaseResponse, rateLimitResult, nonce);
+    const authResult = await verifyAdminSession(request, supabaseResponse, rateLimitResult);
     user = authResult.user;
     supabaseResponse = authResult.response;
   }
