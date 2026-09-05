@@ -59,7 +59,7 @@ function useEPaperData(initialEpapers: EPaper[], initialMonth: number, initialYe
   
   const { data: monthEPapers = [], mutate } = useSWR(
     ['epapers', currentMonth.getMonth() + 1, currentMonth.getFullYear()],
-    ([, month, year]) => fetchEPapers({ month: Number(month), year: Number(year), admin: true }),
+    ([, month, year]) => fetchEPapers({ month: Number(month), year: Number(year) }),
     { 
       fallbackData: (currentMonth.getMonth() + 1 === initialMonth && currentMonth.getFullYear() === initialYear) 
         ? initialEpapers 

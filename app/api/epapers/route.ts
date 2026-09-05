@@ -1,52 +1,63 @@
 import { NextResponse } from 'next/server';
 import { handleAdminDelete } from '../utils';
-import { withApi, withAdminApi } from '../wrappers';
+import { withAdminApi } from '../wrappers';
 import { ePaperSchema } from '../../../src/lib/validation';
 import { revalidateTag } from 'next/cache';
 
-export const GET = withApi(async (req, supabase) => {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
-  const month = searchParams.get('month');
-  const year = searchParams.get('year');
-  const date = searchParams.get('date');
+import { unstable_cache } from 'next/cache';
+import supabaseClient from '../../../src/lib/supabase';
 
-  let query = supabase.from('epapers').select('id, title, pdf_url, thumbnail_url, published_date, created_at, updated_at');
+const getCachedEpapers = async (id: string | null, date: string | null, month: string | null, year: string | null) => {
+  return unstable_cache(
+    async () => {
+      let query = supabaseClient.from('epapers').select('id, title, pdf_url, thumbnail_url, published_date, created_at, updated_at');
 
-  if (id) {
-    const { data, error } = await query.eq('id', id).maybeSingle();
-    if (error) throw error;
-    if (!data) {
-      return NextResponse.json({ error: 'E-Paper not found' }, { status: 404 });
-    }
-    const isAdmin = req.headers.has('x-csrf-token') || req.headers.has('authorization');
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': isAdmin ? 'no-store' : 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
-      },
-    });
-  }
+      if (id) {
+        const { data, error } = await query.eq('id', id).maybeSingle();
+        if (error) throw error;
+        return data ? [data] : null; // Wrap in array for consistent return type or handle separately
+      }
 
-  if (date) {
-    query = query.eq('published_date', date);
-  } else if (month && year) {
-    const start = `${year}-${String(month).padStart(2, '0')}-01`;
-    const nextMonthDate = new Date(Number(year), Number(month), 1);
-    const end = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
-    query = query.gte('published_date', start).lt('published_date', end);
-  }
+      if (date) {
+        query = query.eq('published_date', date);
+      } else if (month && year) {
+        const start = `${year}-${String(month).padStart(2, '0')}-01`;
+        const nextMonthDate = new Date(Number(year), Number(month), 1);
+        const end = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
+        query = query.gte('published_date', start).lt('published_date', end);
+      }
 
-  query = query.order('published_date', { ascending: false });
-  const { data, error } = await query;
-  if (error) throw error;
-  
-  const isAdmin = req.headers.has('x-csrf-token') || req.headers.has('authorization');
-  return NextResponse.json(data || [], {
-    headers: {
-      'Cache-Control': isAdmin ? 'no-store' : 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+      query = query.order('published_date', { ascending: false });
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      return data || [];
     },
-  });
-});
+    ['epapers-cache', id || 'all', date || 'none', month || 'none', year || 'none'],
+    { tags: ['epapers'], revalidate: 3600 }
+  )();
+};
+
+export const GET = async (req: Request) => {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const month = searchParams.get('month');
+    const year = searchParams.get('year');
+    const date = searchParams.get('date');
+
+    const data = await getCachedEpapers(id, date, month, year);
+
+    if (id) {
+      if (!data) return NextResponse.json({ error: 'E-Paper not found' }, { status: 404 });
+      return NextResponse.json(data[0] || data); 
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+};
 
 export const POST = withAdminApi(async (req, supabase) => {
   const body = await req.json();

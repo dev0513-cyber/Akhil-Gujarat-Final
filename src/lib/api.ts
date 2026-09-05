@@ -180,21 +180,15 @@ export async function saveSettings(payload: Record<string, string>): Promise<Sit
   return readJson<SiteSetting[]>(res);
 }
 
-export async function fetchEPapers(params: { month?: number; year?: number; date?: string; admin?: boolean } = {}): Promise<EPaper[]> {
+export async function fetchEPapers(params: { month?: number; year?: number; date?: string } = {}): Promise<EPaper[]> {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && k !== 'admin') qs.set(k, String(v));
+    if (v !== undefined) qs.set(k, String(v));
   });
   let url = '/api/epapers';
   if (qs.toString()) url += `?${qs.toString()}`;
-  
-  if (params.admin) {
-    const res = await adminFetch(url);
-    return readJson<EPaper[]>(res);
-  } else {
-    const res = await fetch(url);
-    return readJson<EPaper[]>(res);
-  }
+  const res = await fetch(url);
+  return readJson<EPaper[]>(res);
 }
 
 export async function saveEPaper(payload: Partial<EPaper>): Promise<EPaper> {
