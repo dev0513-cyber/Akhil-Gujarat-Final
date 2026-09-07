@@ -91,9 +91,9 @@ export default function Layout({ children, initialCategories = [], initialCities
         <div className="max-w-6xl mx-auto px-4 pt-4 pb-3">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <Link href="/" className="flex items-center justify-center md:justify-start gap-3 w-full md:w-auto">
-              <Image src="/logo.png" alt="Logo" width={120} height={56} className="h-10 md:h-14 w-auto object-contain" style={{ width: 'auto' }} priority />
+              <Image src="/logo.png" alt="Logo" width={130} height={60} className="h-[52px] md:h-[60px] w-auto object-contain" style={{ width: 'auto' }} priority />
               <div className="flex flex-col items-center md:items-start">
-                <h1 className="font-display text-2xl md:text-3xl leading-none text-ink tracking-tight">
+                <h1 className="font-display text-[30px] md:text-[32px] leading-none text-ink tracking-tight">
                   અખિલ ગુજરાત
                 </h1>
                 <div className="text-[10px] tracking-[0.28em] text-ink/70 mt-1 uppercase text-center md:text-left">

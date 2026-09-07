@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { createClient } from '../../../src/utils/supabase/server';
-import { requireAdminMutation, requireAdmin, hydrateArticles, handleApiError, handleAdminDelete } from '../utils';
+import { requireAdminMutation, requireAdmin, hydrateArticles, handleApiError, handleAdminDelete, getArticleCacheTag } from '../utils';
 import { articleSchema, articleSearchSchema } from '../../../src/lib/validation';
 import { applyArticleSearchAndOrder } from '../../../src/lib/query-utils';
 
@@ -205,9 +205,9 @@ const adminError = await requireAdminMutation(req);
     
     const [hydrated] = await hydrateArticles(data);
     (revalidateTag as (t: string) => void)('feed-articles');
-    (revalidateTag as (t: string) => void)(`article-detail-${data.slug}`);
+    (revalidateTag as (t: string) => void)(getArticleCacheTag(data.slug));
     if (existing?.slug && existing.slug !== data.slug) {
-      (revalidateTag as (t: string) => void)(`article-detail-${existing.slug}`);
+      (revalidateTag as (t: string) => void)(getArticleCacheTag(existing.slug));
     }
     revalidatePath('/sitemap.xml');
     return NextResponse.json(hydrated);

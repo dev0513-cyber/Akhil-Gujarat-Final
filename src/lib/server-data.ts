@@ -1,5 +1,5 @@
 import supabase from './supabase';
-import { hydrateArticles } from '../../app/api/utils';
+import { hydrateArticles, getArticleCacheTag, decodeSlug } from '../../app/api/utils';
 import { unstable_cache } from 'next/cache';
 import { applyArticleSearchAndOrder } from './query-utils';
 import { getISTDayRange } from './format';
@@ -164,7 +164,8 @@ export const getAdsForSlot = async (slot: string): Promise<Ad | null> => {
   return data[0] as Ad; // Return first ad for presence checks and tests
 };
 
-export const getArticleBySlug = async (slug: string) => {
+export const getArticleBySlug = async (rawSlug: string) => {
+  const slug = decodeSlug(rawSlug);
   return unstable_cache(
     async () => {
       const { data, error } = await supabase.from('articles').select('id, headline, description, content, image_url, extra_images, video_url, category_id, city_id, published_at, created_at, updated_at, status, is_trending, slug, author, source, tags, seo_title, seo_description').eq('slug', slug).maybeSingle();
@@ -172,6 +173,6 @@ export const getArticleBySlug = async (slug: string) => {
     return data;
     },
     ['article-by-slug', slug],
-    { revalidate: 60, tags: ['articles', `article-detail-${slug}`] }
+    { revalidate: 60, tags: ['articles', getArticleCacheTag(slug)] }
   )();
 };

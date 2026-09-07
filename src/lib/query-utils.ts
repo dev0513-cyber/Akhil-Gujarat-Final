@@ -5,7 +5,7 @@ export function applyArticleSearchAndOrder(query: any, q?: string | string[] | n
     const orConditions: string[] = [];
     for (const termRaw of terms) {
       if (!termRaw.trim()) continue;
-      const term = `%${termRaw.trim()}%`;
+      const term = `"%${termRaw.trim().replace(/"/g, '')}%"`;
       orConditions.push(`headline.ilike.${term}`, `description.ilike.${term}`, `tags.ilike.${term}`, `seo_title.ilike.${term}`);
     }
     if (orConditions.length > 0) {

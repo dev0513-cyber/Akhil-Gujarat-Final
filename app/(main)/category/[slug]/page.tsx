@@ -1,12 +1,14 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import supabase from '../../../../src/lib/supabase';
-import { getArticles, getCities } from '../../../../src/lib/server-data';
+import { getArticles, getCities, getCategories } from '../../../../src/lib/server-data';
 import { FilteredArticleView } from '../../../../src/components/FilteredArticleView';
+import { decodeSlug } from '../../../api/utils';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const { data } = await supabase.from('categories').select('id, name_en, name_gu, slug, sort_order, description').eq('slug', slug).maybeSingle();
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlug(rawSlug);
+  const categories = await getCategories();
+  const data = categories.find((c: any) => c.slug === slug);
   if (!data) return { title: 'વિભાગ' };
   return {
     title: data.name_gu,
@@ -18,8 +20,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 import { notFound } from 'next/navigation';
 
 export default async function CategoryPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
-  const { slug } = await params;
-  const { data: cat } = await supabase.from('categories').select('id, name_en, name_gu, slug, sort_order, description').eq('slug', slug).maybeSingle();
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlug(rawSlug);
+  const categories = await getCategories();
+  const cat = categories.find((c: any) => c.slug === slug);
   
   if (!cat) {
     notFound();

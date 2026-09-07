@@ -1,12 +1,14 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import supabase from '../../../../src/lib/supabase';
-import { getArticles } from '../../../../src/lib/server-data';
+import { getArticles, getCities } from '../../../../src/lib/server-data';
 import { FilteredArticleView } from '../../../../src/components/FilteredArticleView';
+import { decodeSlug } from '../../../api/utils';
 
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
-  const { slug } = await params;
-  const { data } = await supabase.from('cities').select('id, name_en, name_gu, slug, sort_order').eq('slug', slug).maybeSingle();
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlug(rawSlug);
+  const cities = await getCities();
+  const data = cities.find((c: any) => c.slug === slug);
   if (!data) return { title: 'શહેર' };
   return {
     title: data.name_gu,
@@ -18,8 +20,10 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
 import { notFound } from 'next/navigation';
 
 export default async function CityPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
-  const { slug } = await params;
-  const { data: city } = await supabase.from('cities').select('id, name_en, name_gu, slug, sort_order').eq('slug', slug).maybeSingle();
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlug(rawSlug);
+  const cities = await getCities();
+  const city = cities.find((c: any) => c.slug === slug);
   
   if (!city) {
     notFound();

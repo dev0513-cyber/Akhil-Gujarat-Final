@@ -131,9 +131,9 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
           {article.author && <span>{article.author}</span>}
         </div>
 
-        <AdBanner slot="article_top" className="mt-6" />
+        <ShareButtons title={article.headline} description={article.description} url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`} />
 
-        <ShareButtons title={article.headline} description={article.description} />
+        <AdBanner slot="article_top" className="mt-6" />
 
         {article.image_url ? (
           <figure className="mt-6">
@@ -195,7 +195,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         )}
 
         <div className="mt-6 border-t border-rule pt-4">
-<ShareButtons title={article.headline} description={article.description} />
+<ShareButtons title={article.headline} description={article.description} url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`} />
         </div>
 
         <AdBanner slot="article_bottom" className="mt-8" />

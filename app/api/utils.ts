@@ -12,6 +12,19 @@ import { getCategories, getCities } from '../../src/lib/server-data';
 export { validateCsrfToken };
 export { getCsrfToken } from '../../src/lib/csrf';
 
+export function getArticleCacheTag(slug: string) {
+  const tag = `article-detail-${slug}`;
+  return tag.length > 256 ? tag.substring(0, 256) : tag;
+}
+
+export function decodeSlug(rawSlug: string): string {
+  try {
+    return decodeURIComponent(rawSlug);
+  } catch (e) {
+    return rawSlug;
+  }
+}
+
 export const verifyAdminAccess = cache(async () => {
   const supabaseAuth = await createClient();
   
@@ -186,7 +199,7 @@ export async function handleAdminDelete(req: Request, tableName: string, cacheTa
       (revalidateTag as (t: string) => void)(cacheTag);
     }
     if (tableName === 'articles' && oldData?.slug) {
-      (revalidateTag as (t: string) => void)(`article-detail-${oldData.slug}`);
+      (revalidateTag as (t: string) => void)(getArticleCacheTag(oldData.slug));
       revalidatePath('/sitemap.xml');
     }
     return NextResponse.json({ ok: true });

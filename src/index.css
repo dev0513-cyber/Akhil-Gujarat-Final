@@ -92,5 +92,5 @@ label {
   }
 }
 
-.touch-target { position: relative; }
+.touch-target:not(.absolute):not(.fixed) { position: relative; }
 .touch-target::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); min-width: 44px; min-height: 44px; }
