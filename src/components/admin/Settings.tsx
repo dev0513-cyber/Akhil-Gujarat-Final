@@ -12,6 +12,7 @@ export default function Settings({ initialSettings }: Readonly<{ initialSettings
     facebook_url: '',
     instagram_url: '',
     youtube_url: '',
+    twitter_url: '',
   });
   const { data: settingsData, error: loadError, isLoading: loading, mutate } = useSWR('settings', fetchSettings, { fallbackData: initialSettings, revalidateOnMount: false });
   const [saving, setSaving] = useState(false);
@@ -25,6 +26,7 @@ export default function Settings({ initialSettings }: Readonly<{ initialSettings
         facebook_url: '',
         instagram_url: '',
         youtube_url: '',
+        twitter_url: '',
       };
       settingsData.forEach((s) => {
         if (s.key in newLinks) {
@@ -120,6 +122,18 @@ export default function Settings({ initialSettings }: Readonly<{ initialSettings
               value={links.youtube_url}
               onChange={(e) => setLinks({ ...links, youtube_url: e.target.value })}
               placeholder="https://youtube.com/..."
+            />
+          </div>
+
+          <div>
+            <label htmlFor="twitter_url" className="block text-sm font-semibold mb-1">Twitter URL</label>
+            <input
+              id="twitter_url"
+              type="url"
+              className="w-full border border-rule px-3 py-2 text-sm focus:outline-none focus:border-crimson"
+              value={links.twitter_url}
+              onChange={(e) => setLinks({ ...links, twitter_url: e.target.value })}
+              placeholder="https://twitter.com/..."
             />
           </div>
 
