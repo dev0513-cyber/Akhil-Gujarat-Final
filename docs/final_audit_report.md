@@ -47,7 +47,7 @@ All previously identified client-handover conditions have been successfully met,
 **Status: 🟢 PASS**
 - **Verified on Live Deployment:**
   - `/robots.txt` correctly allows `/` and disallows `/admin`, `/login`, `/api/`.
-  - `/sitemap.xml` generates dynamically and outputs correct absolute URLs (`https://akhilgujarat.com/...`). 
+  - `/sitemap.xml` generates dynamically and outputs correct absolute URLs (`https://akhilgujaratdaily.com/...`). 
   - Canonical URLs and OpenGraph tags are correctly structured in `generateMetadata`.
 
 ## PART 10 & 11 & 12 — SECURITY, API, & DATABASE
@@ -84,7 +84,7 @@ All previously identified client-handover conditions have been successfully met,
 ## PART 20 — PRODUCTION DATA
 **Status: 🟠 HIGH (Needs Cleanup)**
 - **Verified on Live Deployment (Sitemap):**
-  - The live `sitemap.xml` contains leftover test data (e.g., `https://akhilgujarat.com/news/gujarati-test-article-1788161068619-4`). 
+  - The live `sitemap.xml` contains leftover test data (e.g., `https://akhilgujaratdaily.com/news/gujarati-test-article-1788161068619-4`). 
   - **Recommendation:** These seeded test articles should be deleted from the live Supabase database prior to final client handover so they are not indexed by Google.
 
 ---

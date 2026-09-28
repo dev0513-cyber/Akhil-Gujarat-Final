@@ -5,7 +5,7 @@ export const revalidate = 3600; // Cache for 1 hour
 
 export async function GET() {
   const articles = await getArticles({ limit: 50 });
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujaratdaily.com';
 
   const items = articles.map((a: Article) => {
     const url = `${siteUrl}/news/${a.slug}`;

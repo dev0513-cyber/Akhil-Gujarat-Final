@@ -4,7 +4,7 @@ import supabase from '../src/lib/supabase';
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com';
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujaratdaily.com';
 
   const [{ data: articles }, { data: categories }, { data: cities }, { data: pages }] =
     await Promise.all([

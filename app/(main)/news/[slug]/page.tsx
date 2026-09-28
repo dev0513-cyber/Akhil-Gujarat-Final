@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   const title = data.seo_title || data.headline;
   const description = data.seo_description || data.description;
   
-  let siteUrl = 'https://akhilgujarat.com';
+  let siteUrl = 'https://akhilgujaratdaily.com';
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   } else if (process.env.VERCEL_URL) {
@@ -95,9 +95,9 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
     publisher: {
       '@type': 'NewsMediaOrganization',
       name: 'Akhil Gujarat',
-      logo: { '@type': 'ImageObject', url: `https://akhilgujarat.com/logo.png` },
+      logo: { '@type': 'ImageObject', url: `https://akhilgujaratdaily.com/logo.png` },
     },
-    mainEntityOfPage: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`,
+    mainEntityOfPage: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujaratdaily.com'}/news/${slug}`,
   };
 
   const paragraphs = splitParagraphs(article.content);
@@ -131,7 +131,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
           {article.author && <span>{article.author}</span>}
         </div>
 
-        <ShareButtons title={article.headline} description={article.description} url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`} />
+        <ShareButtons title={article.headline} description={article.description} url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujaratdaily.com'}/news/${slug}`} />
 
         <AdBanner slot="article_top" className="mt-6" />
 
@@ -195,7 +195,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
         )}
 
         <div className="mt-6 border-t border-rule pt-4">
-<ShareButtons title={article.headline} description={article.description} url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujarat.com'}/news/${slug}`} />
+<ShareButtons title={article.headline} description={article.description} url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://akhilgujaratdaily.com'}/news/${slug}`} />
         </div>
 
         <AdBanner slot="article_bottom" className="mt-8" />
