@@ -24,8 +24,6 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   let siteUrl = 'https://akhilgujaratdaily.com';
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  } else if (process.env.VERCEL_URL) {
-    siteUrl = `https://${process.env.VERCEL_URL}`;
   }
 
   const url = `${siteUrl}/news/${slug}`;
