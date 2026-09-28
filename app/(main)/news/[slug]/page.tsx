@@ -88,10 +88,13 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
     '@type': 'NewsArticle',
     headline: article.headline,
     description: article.description,
-    image: article.image_url,
+    image: `https://akhilgujaratdaily.com${article.image_url}`,
     datePublished: article.published_at,
     dateModified: article.updated_at,
-    author: { '@type': 'Organization', name: article.author || 'અખિલ ગુજરાત' },
+    author: {
+      "@type": "Organization",
+      name: "Shailesh Parmar"
+    },
     publisher: {
       '@type': 'NewsMediaOrganization',
       name: 'Akhil Gujarat',
