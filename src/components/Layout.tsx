@@ -329,7 +329,7 @@ function GujaratDropdownItems({ cities, onNavigate }: Readonly<{ cities: City[];
         className="block px-4 py-2 text-sm font-gujarati font-bold text-crimson hover:bg-paper"
         onClick={onNavigate}
       >
-        બધા ગુજરાત સમાચાર →
+        બધા ગુજરાતના સમાચાર →
       </Link>
     </div>
   );
