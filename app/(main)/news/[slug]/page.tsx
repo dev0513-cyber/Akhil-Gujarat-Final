@@ -92,7 +92,7 @@ export default async function NewsPage({ params }: Readonly<{ params: Promise<{ 
     datePublished: article.published_at,
     dateModified: article.updated_at,
     author: {
-      "@type": "Organization",
+      "@type": "Person",
       name: "Shailesh Parmar"
     },
     publisher: {
