@@ -1,5 +1,6 @@
 
 import '@/index.css';
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   title: 'Akhil Gujarat - અખિલ ગુજરાત',
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="gu" data-scroll-behavior="smooth">
       <body>
         {children}
+        <Analytics />
       </body>
     </html>
   )
